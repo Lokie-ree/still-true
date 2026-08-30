@@ -4,7 +4,7 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Answers public questions by email with the source page and verification date behind each answer, flags answers stale when the source page changes, and routes unanswered questions to a named owner.
 - **Live app:** not deployed
-- **Repo:** none
+- **Repo:** private
 - **Frontend:** Convex static hosting
 - **Convex deployment:** not deployed
 - **Components:** none
@@ -12,7 +12,7 @@
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-08-30T22:44:10Z
+- **Last updated:** 2026-08-30T23:02:00Z
 
 ## Log
 
@@ -69,3 +69,9 @@ the running backend: an unauthenticated `/api/action` call for `spike:check` is
 refused with "Could not find public function", while the public `answers:board`
 query still serves. Added an internal `dropSource` mutation that deletes a source
 and its answers, and used it to clear disposable seed rows (`convex/spike.ts`).
+
+### 2026-08-30 - working tree
+Created the GitHub repository as private and pushed the history: the bootstrap
+commit on `main`, then the scaffold, schema, and spike branches as three ordered
+single-concern pull requests, each self-merged with a merge commit. The repository
+must be public at submission; that flip is a deliberate later step.
