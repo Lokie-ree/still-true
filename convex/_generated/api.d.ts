@@ -9,6 +9,7 @@
  */
 
 import type * as answers from "../answers.js";
+import type * as spike from "../spike.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   answers: typeof answers;
+  spike: typeof spike;
 }>;
 
 /**
