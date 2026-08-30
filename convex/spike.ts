@@ -2,7 +2,7 @@
 // Deliberately ugly and hardcoded — this exists to answer one gate question,
 // not to be the shipped architecture.
 import { v } from "convex/values";
-import { action, internalMutation } from "./_generated/server";
+import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 const INBOX = "still-true@agentmail.to";
@@ -68,7 +68,7 @@ export const recordCrawl = internalMutation({
   },
 });
 
-export const check = action({
+export const check = internalAction({
   args: { url: v.string() },
   handler: async (ctx, args): Promise<CheckResult> => {
     // maxAge: 0 forces a live fetch. Firecrawl v2 serves cached content by
@@ -118,5 +118,28 @@ export const check = action({
     if (!mail.ok) throw new Error(`agentmail ${mail.status}: ${await mail.text()}`);
 
     return { changed: true, hash, emailed: result.ownerEmail, stale: result.questions.length };
+  },
+});
+
+// Seed rows are disposable and get re-created constantly during the build.
+// Internal: nothing public should be able to delete a source.
+export const dropSource = internalMutation({
+  args: { url: v.string() },
+  handler: async (ctx, args) => {
+    const source = await ctx.db
+      .query("sources")
+      .withIndex("by_url", (q) => q.eq("url", args.url))
+      .unique();
+    if (!source) return { dropped: 0 };
+
+    const answers = await ctx.db
+      .query("answers")
+      .withIndex("by_source", (q) => q.eq("sourceId", source._id))
+      .take(100);
+    for (const a of answers) {
+      await ctx.db.delete(a._id);
+    }
+    await ctx.db.delete(source._id);
+    return { dropped: answers.length };
   },
 });
