@@ -12,7 +12,7 @@
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-08-30T22:32:23Z
+- **Last updated:** 2026-08-30T22:44:10Z
 
 ## Log
 
@@ -60,3 +60,12 @@ the edit immediately.
 
 No secrets are stored in the repository. The Firecrawl and AgentMail keys are set
 as Convex deployment environment variables, and the app is not deployed.
+
+### 2026-08-30 - bec710b
+Changed `spike.check` from `action` to `internalAction`. As a public action any
+caller who found the deployment could trigger crawls and spend Firecrawl credits;
+it is invoked only by the CLI today and by a scheduled job later. Verified against
+the running backend: an unauthenticated `/api/action` call for `spike:check` is
+refused with "Could not find public function", while the public `answers:board`
+query still serves. Added an internal `dropSource` mutation that deletes a source
+and its answers, and used it to clear disposable seed rows (`convex/spike.ts`).
