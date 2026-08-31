@@ -9,6 +9,7 @@
  */
 
 import type * as answers from "../answers.js";
+import type * as env from "../env.js";
 import type * as spike from "../spike.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   answers: typeof answers;
+  env: typeof env;
   spike: typeof spike;
 }>;
 
@@ -48,4 +50,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  staticHosting: import("@convex-dev/static-hosting/_generated/component.js").ComponentApi<"staticHosting">;
+};
