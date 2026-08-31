@@ -18,4 +18,8 @@ Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
 ## Status
 
-Setup only. No application code yet.
+In progress. The schema, the answer board, and the change-detection spike (crawl a
+source page, notice it changed, mark its answers stale, email the owner) are working.
+The email front door and question matching are not built yet.
+
+Build log: [`hackathon.md`](hackathon.md).
