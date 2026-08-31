@@ -8,9 +8,9 @@ build/
 *.log
 .DS_Store
 
-# duplicate of .agents/ written by the skills CLI; .claude/skills junctions point at .agents/
+# Vendored third-party agent skills. Not ours to republish (no LICENSE), and
+# untracking them shrinks what a judge browses. Restore with:
+#   npx convex ai-files install
+.agents/
 agent/
-
-# .claude/skills/* are junctions into .agents/skills/; only the hackathon skill is unique
-.claude/skills/*
-!.claude/skills/convex-hackathon-skill/
+.claude/skills/
