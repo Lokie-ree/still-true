@@ -3,16 +3,16 @@
 - **Project:** still-true
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Answers public questions by email with the source page and verification date behind each answer, flags answers stale when the source page changes, and routes unanswered questions to a named owner.
-- **Live app:** not deployed
-- **Repo:** private
+- **Live app:** https://impressive-marten-163.convex.site
+- **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
-- **Convex deployment:** not deployed
-- **Components:** none
-- **Convex features:** schema, tables, indexes, queries, mutations, internal mutations, actions, realtime queries
+- **Convex deployment:** impressive-marten-163 (production)
+- **Components:** @convex-dev/static-hosting
+- **Convex features:** schema, tables, indexes, queries, mutations, internal mutations, internal actions, realtime queries
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-08-30T23:02:00Z
+- **Last updated:** 2026-08-31T18:50:24Z
 
 ## Log
 
@@ -75,3 +75,32 @@ Created the GitHub repository as private and pushed the history: the bootstrap
 commit on `main`, then the scaffold, schema, and spike branches as three ordered
 single-concern pull requests, each self-merged with a merge commit. The repository
 must be public at submission; that flip is a deliberate later step.
+
+### 2026-08-31 - working tree
+Claimed the anonymous deployment into a cloud project and deployed the board.
+Production is `impressive-marten-163`. `npm run deploy` pushes the Convex functions,
+builds the Vite client with the production `VITE_CONVEX_URL` baked into the bundle, and
+uploads the static files through the `@convex-dev/static-hosting` component. The board is
+live and a stranger can open it with no login.
+
+The live URL is on `convex.site`, not `convex.app`. `convex.config.ts` mounts static
+hosting on the HTTP router (`app.use(staticHosting, { httpPrefix: "/" })`) and pushes the
+app's own endpoints under `/api`, so the site is served from the deployment's HTTP-actions
+domain by construction. Verified from outside the project: the document, stylesheet and
+bundle all return 200, the bundle carries the production `.convex.cloud` address, and the
+board renders "No answers yet." rather than "Loading..." — a string only the
+`answers.length === 0` branch can produce, so the reactive query resolved against
+production instead of hanging on a bad connection.
+
+Two things are not yet true in production, both found by checking rather than assuming.
+The AgentMail key is set on the production deployment under the name `AGENTMAIL_API_KEY`,
+while `spike.check` reads `requireEnv("AGENT_MAIL_API_KEY")` — the names disagree, so the
+first alert send in production would throw. This is the deployment-variables-do-not-travel
+hazard that `convex/env.ts` was written for, arriving as a renamed key rather than a
+missing one; `FIRECRAWL_API_KEY` matches on both deployments. Separately, the production
+database is empty: the deploy created the tables and their three indexes, but rows do not
+travel between deployments, so the seed still exists only on the local deployment.
+
+The repository was flipped to public the same day, after a re-run of the pre-flight secret
+scan across all 17 commits on every ref came back clean: no `.env` file was ever added,
+`.env.local` is gitignored and untracked, and no key material appears in any diff.
