@@ -4,6 +4,7 @@
 import { v } from "convex/values";
 import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { requireEnv } from "./env";
 
 const INBOX = "still-true@agentmail.to";
 
@@ -43,11 +44,11 @@ export const recordCrawl = internalMutation({
 
     const now = Date.now();
     if (source.contentHash === args.hash) {
-      await ctx.db.patch(source._id, { lastCheckedAt: now });
+      await ctx.db.patch("sources", source._id, { lastCheckedAt: now });
       return { changed: false };
     }
 
-    await ctx.db.patch(source._id, { contentHash: args.hash, lastCheckedAt: now });
+    await ctx.db.patch("sources", source._id, { contentHash: args.hash, lastCheckedAt: now });
 
     // First crawl of a new source establishes the baseline; nothing went stale.
     if (source.contentHash === "") return { changed: false };
@@ -57,7 +58,7 @@ export const recordCrawl = internalMutation({
       .withIndex("by_source", (q) => q.eq("sourceId", source._id))
       .take(100);
     for (const a of answers) {
-      await ctx.db.patch(a._id, { status: "stale" });
+      await ctx.db.patch("answers", a._id, { status: "stale" });
     }
 
     return {
@@ -76,7 +77,7 @@ export const check = internalAction({
     const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`,
+        Authorization: `Bearer ${requireEnv("FIRECRAWL_API_KEY")}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -101,7 +102,7 @@ export const check = internalAction({
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.AGENT_MAIL_API_KEY}`,
+          Authorization: `Bearer ${requireEnv("AGENT_MAIL_API_KEY")}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -137,9 +138,9 @@ export const dropSource = internalMutation({
       .withIndex("by_source", (q) => q.eq("sourceId", source._id))
       .take(100);
     for (const a of answers) {
-      await ctx.db.delete(a._id);
+      await ctx.db.delete("answers", a._id);
     }
-    await ctx.db.delete(source._id);
+    await ctx.db.delete("sources", source._id);
     return { dropped: answers.length };
   },
 });

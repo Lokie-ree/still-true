@@ -10,7 +10,7 @@ export const board = query({
     return Promise.all(
       answers.map(async (a) => ({
         ...a,
-        source: await ctx.db.get(a.sourceId),
+        source: await ctx.db.get("sources", a.sourceId),
       })),
     );
   },
