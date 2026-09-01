@@ -2,7 +2,7 @@
 
 - **Project:** still-true
 - **Event:** Convex All Gas Hackathon
-- **What it does:** Answers public questions by email with the source page and verification date behind each answer, flags answers stale when the source page changes, and routes unanswered questions to a named owner.
+- **What it does:** Keeps an organization's public answers true. Each answer is pinned to the source page it came from and carries a verification date; when that page changes in a way that affects the answer, the answer is repaired from the new page and re-dated, and a named owner is emailed only when the new answer cannot be verified against the page. Questions arrive, and answers return, by email.
 - **Live app:** https://impressive-marten-163.convex.site
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
@@ -12,7 +12,7 @@
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-08-31T18:50:24Z
+- **Last updated:** 2026-09-01T18:45:30Z
 
 ## Log
 
@@ -104,3 +104,55 @@ travel between deployments, so the seed still exists only on the local deploymen
 The repository was flipped to public the same day, after a re-run of the pre-flight secret
 scan across all 17 commits on every ref came back clean: no `.env` file was ever added,
 `.env.local` is gitignored and untracked, and no key material appears in any diff.
+
+### 2026-09-01 - working tree
+Two defects closed, one absence found, and then the product's claim changed.
+
+`answers:board` was returning the whole `sources` document to every caller, so `ownerEmail`
+was served by a public query on a public deployment. `App.tsx` renders only the URL, which
+hid the field on screen without removing it from the response. The query now projects the
+source down to its URL (PR #8), deployed and verified against production: `source` comes
+back carrying `url` and nothing else.
+
+Production was seeded with four disposable answers across two invented sources — a fictional
+"Northgate Unified School District," adult-facing and obviously synthetic, published as two
+public gists so a watched page can be edited on demand. The board is no longer empty.
+
+Then the absence. Editing a watched gist changed nothing, and the reason is that **nothing
+invokes `spike:check`**: there is no cron, no scheduled function and no HTTP route anywhere
+in the project, and the only reference to `internal.spike` is the action calling its own
+mutation. A watched page has no path to the database. Both seeded sources still carry
+`contentHash: ""` with `lastCheckedAt` equal to their creation timestamp, so no crawl has
+ever run against production. This is missing work rather than a regression — the scheduled
+re-crawl was Block 2 on the build schedule and was never written.
+
+**The hero claim changed as a result.** The product was "flags answers stale when the source
+page changes." That flips every answer on a source whenever any byte of the page moves, so a
+nav tweak or a footer year marks a whole board stale, the alerts become noise, and the email
+can only say "re-verify" — handing back the exact labor the product exists to remove. It is
+now **the answer repairs itself**: a change is judged against the facts an answer actually
+depends on, the answer is re-extracted from the new page, and a human is involved only when
+that cannot be verified.
+
+Three things follow, none of them built yet.
+
+- Firecrawl's own `changeTracking` format supersedes the hand-rolled hashing. It holds the
+  previous scrape per URL and reports `changeStatus`, plus — in `json` mode — field-level
+  previous/current values against a declared schema, so a cosmetic edit outside that schema
+  reports no change at all. `contentHash`, the SHA-256 helper and the empty-hash baseline
+  branch all become deletions.
+- Repairs are gated on grounding rather than confidence: the model must quote the verbatim
+  sentence from the new page that supports its proposed answer, and that quote is checked
+  against the crawled text before anything is published. A confidently wrong answer carrying
+  a fresh verification date is worse than an honest stale one. Naive substring matching is
+  brittle against markdown normalization, and that is an open question, not a solved one.
+- OpenAI enters the product for the first time — extraction, question matching, and repair
+  judgment. No model is wired yet, and the `AI models` field above still reads `none`
+  because that is still true.
+
+The 09-01 dry submission was **deliberately not filed**. The build is not demo-ready and the
+footage would be discarded on the first real rebuild; multiple submissions are allowed, so
+nothing is spent by deferring. A research day was called before any further building, on the
+grounds that the project twice reached for custom code where the stack already provides the
+capability: the hashing above, and a crawl/extract/repair pipeline over four flaky
+third-party APIs written as loose internal actions while no Convex component is in use.
