@@ -8,10 +8,12 @@ export const board = query({
     // ponytail: unbounded — paginate once the board outgrows one screen.
     const answers = await ctx.db.query("answers").order("desc").take(100);
     return Promise.all(
-      answers.map(async (a) => ({
-        ...a,
-        source: await ctx.db.get("sources", a.sourceId),
-      })),
+      answers.map(async (a) => {
+        // Only the URL. This is a public query and the source row also carries
+        // the owner's email address, which nothing public should be able to read.
+        const source = await ctx.db.get("sources", a.sourceId);
+        return { ...a, source: source && { url: source.url } };
+      }),
     );
   },
 });
