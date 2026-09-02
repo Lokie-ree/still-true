@@ -8,9 +8,8 @@
  * @module
  */
 
-import type * as answers from "../answers.js";
+import type * as documents from "../documents.js";
 import type * as env from "../env.js";
-import type * as spike from "../spike.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +18,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  answers: typeof answers;
+  documents: typeof documents;
   env: typeof env;
-  spike: typeof spike;
 }>;
 
 /**
