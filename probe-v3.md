@@ -87,3 +87,89 @@ First matching rule wins, read top to bottom. **Do not negotiate with the result
 - [ ] `PRESENT __ · BURIED __ · AMBIG __ · ABSENT __`
 - [ ] AgentMail attachment support: confirmed / not confirmed
 - [ ] Result written into `hackathon.md` before any schema work
+
+---
+
+# Results — 2026-09-02
+
+## Run 1 failed to execute. Not coded.
+
+Six URLs. Netflix returned **360 chars** and Planet Fitness **389** — JS-rendered,
+so Firecrawl got nothing. Coding those `ABSENT` would repeat this morning's
+error exactly. Worse, two of the three "leases" were **articles about leases**,
+not leases: TurboTenant's page reads *"New York law does not specifically
+dictate…"* and LegalTemplates' reads *"Our dataset shows that 69% of rental
+agreements…"*. I fetched pages **about** documents instead of documents.
+
+Discarded whole. A fetch-failure guard (`< 6,000 chars → EXCLUDED`) was added
+before run 2.
+
+## Run 2 — 15 coded cells, all terms-of-service
+
+All three leases failed to fetch, including HUD's model lease at **15 chars**.
+So the lease hypothesis — where omission was most likely — remains **untested**.
+
+`PRESENT(shallow) 8 (53%) · BURIED 3 (20%) · ABSENT 4 (27%)`
+
+**① omission** — needs ≥30%. Has 27%. **Does not fire.**
+**② retrieval** — needs `BURIED` ≥40%. Has 20%. **Does not fire.**
+**③ STOP** — needs `PRESENT`-shallow ≥70%. Has 53%. **Does not fire.**
+
+**No rule fires.** Second no-fire of the day.
+
+## Why — the instrument was wrong, and this is the finding
+
+The tally is not trustworthy, and the reason matters more than the tally.
+
+- **`ABSENT` is contaminated.** Apple coded `ABSENT` on *"they can change
+  terms"* — Apple's agreement certainly says so; the regex missed it. PayPal
+  coded `ABSENT` on auto-renew, but PayPal is not a subscription, so the cell
+  is not-applicable rather than absent.
+- **`BURIED` is contaminated the other way.** The first regex hit is not the
+  best hit. PayPal's `T4` matched at 100% depth on *"personal data provided to
+  you by PayPal"* — not a third-party sharing clause at all. Noise.
+- **`AMBIG` was never measurable.** The code exists in the taxonomy and no
+  regex can assign it. *Stated but not in terms a person could act on* is the
+  distinction the entire product turns on, and only a model can draw it.
+
+A keyword sweep worked on the school handbook because policy sentences are
+distinctive and self-contained. Legalese is diffuse, hedged, and cross-
+referenced. **The sweep is the wrong instrument for this corpus.**
+
+> **The extractor is the instrument.** No further sweep has information value.
+> The remaining uncertainty is answerable only by building the thing.
+
+## What does not need a probe
+
+Not a hypothesis. A measurement, taken at 238 wpm:
+
+| Agreement | Words | Reading time |
+|---|---|---|
+| **AT&T Consumer Service Agreement** | **51,654** | **3 h 37 m** |
+| PayPal User Agreement | 26,403 | 1 h 51 m |
+| Spotify End User Agreement | 8,670 | 36 m |
+| Apple Media Services T&C | 8,467 | 36 m |
+
+People click *I agree* on these. No probe is required to establish that they
+did not read 3 hours 37 minutes of text.
+
+And one fact reproduced across both runs, in the two largest documents:
+**the arbitration opt-out sits at the 89th percentile.** PayPal line 1005 of
+1135; Spotify line 293 of 328. It is the most time-limited right in a consumer
+agreement — typically 30 days, after which the right to sue or join a class
+action is waived — and it is at the bottom of the longest document the person
+will ever be asked to accept.
+
+## Technical gate — CLEARED
+
+**AgentMail receives attachments.** A `Message` carries an `attachments` array
+with `attachment_id`; `GET` returns the raw file. PDFs supported.
+`docs.agentmail.to/attachments`. The forward-a-lease path is viable.
+
+## Carry forward
+
+- [x] Winning rule: **none fired.** Recorded as a no-fire, not negotiated.
+- [x] `PRESENT 8 · BURIED 3 · ABSENT 4` — **unreliable**, instrument too crude
+- [x] AgentMail attachment support: **confirmed**
+- [ ] Lease corpus: still untested, all three fetches failed
+- [ ] Next measurement uses the real extractor, as P1's exit test
