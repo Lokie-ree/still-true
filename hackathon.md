@@ -208,3 +208,62 @@ alarm it was in the monitor framing.
 Nothing is built yet. `Auth` still reads `none` and `AI models` still reads `none`, because
 both are still true. Deadline confirmed as **September 22, 12:00 PM PT** — two days later than
 the plan had assumed, and the submission targets the 21st so the last day is margin.
+
+## 2026-09-02 (later) — the assessment, and what it cost
+
+Consulted an external agent for a pre-build assessment. It found four method errors in the
+morning's probe and two real defects in the code. Verified every one before acting on it, and
+all six hold. Recording what they cost, because the cost is the point of keeping this log.
+
+**The `② GO` was wrong.** Two rows were coded `SILENT` because their HTML carried no rule —
+without following the link each one carries to the district's controlling **2026-2028
+Procedures & Policies** handbook. That is precisely how probe v1 failed nine hours earlier. I
+repeated the mistake in the fix for it. Scraped the handbook: 363 KB, 3,505 lines after reflow.
+Line 618 reads *"Each school will establish and communicate consequences for violating its
+electronic device policy"* — the district **delegates** consequences, so the Haynes-warning
+vs. Adams-referral finding was never a finding. Line 608 states the possession rule with no
+such delegation clause. Also struck: the Adams `STALE` label (the `2024-2025` reference sits in
+the grading section, verified by direct fetch), the `CONFLICT` code (never predeclared,
+introduced after seeing results, and `VARIANT` then vanished from the summary line that STOP
+rule ① depends on), and the "90 seconds vs. 20 minutes" claim (the 20 minutes produced zero
+rows under a different protocol — not equivalent tasks). Recoded one primary code per row:
+`MATCH 4 · VARIANT 2 (22%) · STALE 1 · DEAD 2`. **No decision rule fires.** Writing that down
+instead of reaching for a rule that flatters the build.
+
+**The finding is omission, not contradiction.** The taxonomy asked whether restatements
+contradict the authority; repaired, mostly they don't — one adjudicable case in nine, and it is
+now text-against-text (the handbook says *properly stowed away*, Adams says *not visible*, a
+pocket passes both the school's test and neither of the district's). What the taxonomy could
+not see is that the handbook publishes material facts the school pages **do not carry at all**:
+an IEP/504/IHP exemption at lines 622-623, and testing confiscation that invalidates the
+assessment at line 616. Neither appears on Haynes, Adams, or Ehret. Haynes does not even link
+the handbook. A parent whose child runs a glucose monitor on their phone cannot learn from
+their school's page that the ban does not apply to them. Nobody is wrong; the parent is still
+uninformed. Pre-registered the coverage threshold **before** extending the sample, so it cannot
+be tuned the way the `GO` was.
+
+**The axis was wrong, and that is the real re-scope.** The probe design says *one authority,
+many restatements* — then the MVP scoped to ten districts, which compares ten different
+authorities and abandons the axis the finding lives on. Rows are now **schools under one
+handbook**: Jefferson Parish, 8 schools, 3 questions, 27 cells against a document already
+parsed clean. The P1 discovery tail that was the plan's largest risk disappears, because the
+corpus is already in hand. Auth comes out — not an eligibility requirement, and `publish` has
+to become internal regardless.
+
+**Two code defects confirmed by grep.** `answers.publish` is a public unauthenticated mutation:
+anyone who finds it can write arbitrary answers, URLs, and owner emails into production. And
+`spike.ts` still reads `AGENT_MAIL_API_KEY` while the deployment holds `AGENTMAIL_API_KEY`.
+Both die in P0 with the schema, but the first one is live right now.
+
+**Where the assessment was wrong: the two-day validation gate.** It proposed spending days 7
+and 8 on research, including interviewing five parents inside 24 hours during the school year,
+behind a gate — *"proceed only if users recognize an actionable problem"* — that cannot fail
+cleanly. A gate that cannot fail gets fudged. That is the AIDA failure mode with a rubric
+stapled to it. The evidence repair that actually mattered took twenty minutes. It also
+conflates *unvalidated* with *wrong*: most of its seven unsupported claims are product
+decisions, not empirical propositions. And its own **Recommended MVP** section describes the
+locked build at smaller scope — parent-facing, one district, receipted cells, explicit refusal,
+same sponsor boundaries — while its executive summary says not to build it. Took the scope cut
+and the corrections. Declined the gate.
+
+Still `none` for `Auth` and `AI models`. Still true.
