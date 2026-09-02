@@ -2,7 +2,7 @@
 
 - **Project:** still-true
 - **Event:** Convex All Gas Hackathon
-- **What it does:** Keeps an organization's public answers true. Each answer is pinned to the source page it came from and carries a verification date; when that page changes in a way that affects the answer, the answer is repaired from the new page and re-dated, and a named owner is emailed only when the new answer cannot be verified against the page. Questions arrive, and answers return, by email.
+- **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes. CC it on a thread and the same cited reply lands in the thread.
 - **Live app:** https://impressive-marten-163.convex.site
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
@@ -12,7 +12,7 @@
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-01T18:45:30Z
+- **Last updated:** 2026-09-02T00:00:00Z
 
 ## Log
 
@@ -267,3 +267,60 @@ same sponsor boundaries — while its executive summary says not to build it. To
 and the corrections. Declined the gate.
 
 Still `none` for `Auth` and `AI models`. Still true.
+
+## 2026-09-02 (evening) — the domain changed, the engine did not
+
+Builder was not sold on the school build and asked for something not tied to school business.
+That is the fourth direction question in one day, and unlike the first three it came from a
+feeling rather than from evidence. So it was converted into evidence before it was acted on.
+
+**Probe v3 was predeclared and committed before a single document was fetched** — taxonomy,
+two expectation lists, and all three thresholds fixed in `c970533`. That is the direct fix for
+the morning's `② GO`, which was called on codes invented after seeing results.
+
+**Run 1 was discarded whole.** Netflix returned 360 chars and Planet Fitness 389 — JS-rendered,
+so Firecrawl got nothing, and coding those `ABSENT` would have repeated the morning's error
+exactly. Two of three "leases" were **articles about leases**, not leases. Added a
+`< 6,000 chars → EXCLUDED` guard and re-ran.
+
+**Run 2 fired no rule either.** 15 coded cells, all terms-of-service, all three lease fetches
+failed including HUD's model lease at 15 chars: `PRESENT 53% · BURIED 20% · ABSENT 27%`.
+Omission needed 30%, retrieval needed 40% buried, stop needed 70% shallow.
+
+**And the reason is the finding.** The tally is untrustworthy in both directions — `ABSENT` is
+contaminated by regex misses (Apple obviously says it can change terms) and by
+not-applicable cells (PayPal is not a subscription); `BURIED` by first-match noise (PayPal's
+data hit at 100% depth matched "personal data provided to you by PayPal", not a sharing
+clause). And `AMBIG` — *stated, but not in terms a person could act on* — **cannot be assigned
+by any regex at all**, which is the distinction the whole product turns on. Keyword sweeps
+worked on the handbook because policy sentences are short and self-contained; legalese is
+diffuse and cross-referenced. **The extractor is the instrument, so no further sweep has
+information value.** That ends the probing phase on evidence rather than on impatience.
+
+**What needed no probe**, measured at 238 wpm: AT&T's consumer service agreement is **51,654
+words, 3 h 37 m of reading**. PayPal is 26,403 words. People click *I agree* on these. And in
+both of the two largest documents the **arbitration opt-out sits at the 89th percentile** —
+PayPal line 1005 of 1135, Spotify line 293 of 328 — the most time-limited right in the
+document, typically a 30-day window, parked at the bottom.
+
+**AgentMail attachments confirmed:** a message carries an `attachments` array with
+`attachment_id`, `GET` returns the raw file, PDFs supported. The forward-a-lease path is real.
+
+**Why this direction and not the school one.** The corpus problem disappears — no handbook
+discovery, no seed URLs, no curation, no hand-fixing. Users bring their own documents, and
+that was the largest remaining risk in the school plan. Everything else survives intact:
+line-index grounding, the reflow and TOC filter, Firecrawl `changeTracking`, the Convex cron
+and reactive UI, and AgentMail now carrying two real jobs instead of one bolted-on alarm. The
+name fits better than before — *is this still true?*
+
+**The hedge that makes this safe to commit on day 6.** The engine is domain-agnostic and the
+corpus is config. If extraction on legalese proves unreliable, the identical code points at
+the Jefferson Parish handbook, where the omissions are already found and quoted. The downside
+is bounded by work already done, so no further validation day is warranted.
+
+One caution carried into the build: *"summarize my contract"* is crowded. Three things
+separate this and the demo must show all three — fabrication is **structurally impossible**
+rather than merely unlikely, it reports **what the document does not say**, and it **keeps
+watching** after you have stopped caring.
+
+Still `none` for `Auth` and `AI models`. Still true, for a few more hours.
