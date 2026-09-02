@@ -156,3 +156,55 @@ nothing is spent by deferring. A research day was called before any further buil
 grounds that the project twice reached for custom code where the stack already provides the
 capability: the hashing above, and a crawl/extract/repair pipeline over four flaky
 third-party APIs written as loose internal actions while no Convex component is in use.
+
+## 2026-09-02 — the probe ran, and the front door changed
+
+The v1 probe did not execute. Twenty minutes on the first district produced zero rows: facts
+live in PDFs and in outbound links to LDOE, not in comparable HTML on two pages. That is a
+finding about the probe's design, not about the product, and it is not the null result that
+would have justified falling back to the monitor. **v1 looked for a claim page and an
+authority page inside one organization. K-12 does not store contradictions on that axis.** It
+stores them on the fan-out: one authority, restated by dozens of downstream pages, each
+maintained by a different person on a different day.
+
+Rewritten and swept machine-assisted: ten pages, about twelve minutes, against
+`R.S. 17:239` (Act 313, 2024) as the authority. `MATCH 2 · CONFLICT 2 · STALE 2 · SILENT 3 ·
+DEAD 2`. Three schools in Jefferson Parish give three incompatible answers to where a phone
+goes — Haynes says a school bag and calls a pocket illegal, Adams says off and not visible so
+a pocket passes, Woods collects them in a box. Only Haynes tracks the statute; Woods lawfully
+exceeds it; **Adams falls short of it, and "not visible" versus "on his person" is adjudicable
+against quoted text.** The district's own online-policies page still cites a 2019-2021
+handbook, and two `/Page/NNNN` URLs that live web search still returns are hard 404s.
+
+One hypothesis died. LDOE's January 2025 migration from `louisianabelieves.com` to
+`doe.louisiana.gov` is a clean path-preserving 301, deep links included. There is no link rot
+to exploit and no link checker to build. LDOE's problem is retrieval, not drift — a different
+product, deliberately not chosen.
+
+**The grounding invention broke on PDFs and was repaired.** Two real handbooks through
+Firecrawl `/v2/scrape` with `parsers:["pdf"]`: EBR at 324 KB and LPSS at 372 KB of markdown.
+1,688 and 981 lines respectively continue mid-sentence, because a PDF hard-wraps at the visual
+column — so `lines[n]` returns half a clause, the quote is unreadable, and the receipt fails
+even though fabrication remains impossible. A five-line reflow pass that joins continuation
+lines before numbering takes both to **zero**, and EBR line 606 becomes one complete citable
+rule. Two different PDF producers, same result; on HTML the pass is a near no-op, so one code
+path serves both. A second hazard surfaced that the structural guarantee cannot catch: LPSS's
+first keyword match was a table-of-contents dot-leader line, which really is in the document.
+That is a relevance failure, the class that survives by design, and `/\.{6,}\s*\d+$/` removes
+56 of them. The stored citation is now the quote **and** the index, not the index alone —
+Firecrawl's parser output can shift between scrapes, and `lines[n] !== storedQuote` is then not
+a bug but the change signal, re-locating for free.
+
+**The MVP is locked: a comparison matrix.** Ten districts, five questions parents actually
+ask, fifty cells, each carrying the district's own words with the line it came from and the
+date it was checked — or an explicit refusal naming how many lines were searched. The sweep
+found only one hard legal conflict in ten pages, which is too thin to headline; it found
+variation everywhere, which is plentiful. Reporting variation with receipts dissolves the
+`AMBIG` kill criterion that was the largest risk on the audit path, because the tool never has
+to rule, only to quote. Email a question in and get a cited answer back; subscribe to a cell
+and get the diff when it moves. That gives AgentMail a native job instead of the bolted-on
+alarm it was in the monitor framing.
+
+Nothing is built yet. `Auth` still reads `none` and `AI models` still reads `none`, because
+both are still true. Deadline confirmed as **September 22, 12:00 PM PT** — two days later than
+the plan had assumed, and the submission targets the 21st so the last day is margin.
