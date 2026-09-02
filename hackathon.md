@@ -6,13 +6,13 @@
 - **Live app:** https://impressive-marten-163.convex.site
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
-- **Convex deployment:** impressive-marten-163 (production)
+- **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
 - **Components:** @convex-dev/static-hosting
-- **Convex features:** schema, tables, indexes, queries, mutations, internal mutations, internal actions, realtime queries
+- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries. No mutations or actions exist — every write in the new design is internal, and none are written yet.
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-02T00:00:00Z
+- **Last updated:** 2026-09-02T18:00:00Z
 
 ## Log
 
@@ -324,3 +324,68 @@ rather than merely unlikely, it reports **what the document does not say**, and 
 watching** after you have stopped caring.
 
 Still `none` for `Auth` and `AI models`. Still true, for a few more hours.
+
+## 2026-09-02 (deploy) — the local deployment, and a hole that was open for four days
+
+P0 was reported as closing the public-write hole. It had not. `npx convex dev` had been
+pushing to a **local** deployment — `CONVEX_DEPLOYMENT=local:local-randall_p_lapoint_jr-still_true`,
+`VITE_CONVEX_URL=http://127.0.0.1:3210` — so the new schema existed only on this machine.
+`npx convex function-spec --prod` showed production still serving `answers.js:publish` as a
+**public mutation**, exactly as it had since 08-29. Four days, on a public deployment, with
+`ownerEmail` writable by anyone who found the name. The 08-31 entry already contained the tell
+— *"the seed still exists only on the local deployment"* — and nobody read it as a warning.
+
+Every `convex env set` run without `--prod` had also been landing on that local instance. The
+production `AGENTMAIL_API_KEY` rename was real because it used `--prod`; the dev-side ones were
+not.
+
+Switched to a real cloud dev deployment, `charming-kookabura-768`, with both API keys carried
+across, and deployed P0 to production. Confirmed from outside the project rather than from the
+CLI's own success message:
+
+- Production's public surface is now exactly two queries, `documents:recent` and
+  `documents:findingsFor`. No mutations, no actions, no `spike`.
+- `answers:publish` returns the same generic error as `nope:nothing`, a name that never
+  existed — the control that distinguishes *removed* from *erroring*.
+- `documents:recent` answers `{"status":"success","value":[]}`.
+- The live bundle carries `impressive-marten-163.convex.cloud`. The second URL in it,
+  `happy-otter-123`, is Convex's own example string inside `node_modules/convex`.
+
+Two things found and deliberately not fixed in this pass. The live page still carries the
+scaffold title **"Vite + React + TS"**, which a judge sees in the tab; it goes in the P6
+reconcile. And the production board is now empty, which is correct — the fictional Northgate
+rows described a product that no longer exists.
+
+The lesson is narrower than "verify deploys." It is that a success message from the tool you
+just ran is not evidence about the system you meant to change. `convex dev` reported success
+every time; it was succeeding against the wrong machine.
+
+## 2026-09-02 (cleanup) — making the repository describe the product it is
+
+The repository still advertised the abandoned monitor. `README.md` opened with
+*"answers that tell you when they stopped being true"* and claimed the change-detection
+spike was working — a file that no longer exists, describing a product that was replaced
+twice. Rewritten around the forwarded document, including the two things this tool
+deliberately does not do: it never interprets or advises, and it is not legal advice.
+
+Other stale context removed. The live page carried the scaffold title **"Vite + React + TS"**,
+which is what a judge would have seen in the browser tab. `convex/README.md` was 90 lines of
+untouched Convex template. `src/index.css` declared two near-identical media queries whose
+only real content was the scaffold's default font stack; collapsed to one rule with a
+dark-mode override, on a platform stack, because the interface is designed in P3 and choosing
+a webfont now would be guessing.
+
+The evidence files moved to `docs/` — `probe.md`, `probe-v3.md`, `ASSESSMENT.md` — so the root
+holds the README, the log, and configuration. **They were kept rather than deleted for two
+reasons:** the Jefferson Parish handbook is the written STOP fallback if extraction on legalese
+fails in P2, so `docs/probe.md` is a live dependency and not history; and a log claiming two
+probes fired no decision rule is worth less without the probes.
+
+Verified rather than assumed: production holds only `documents`, `findings` and `threads`. The
+old `sources`, `answers` and `questions` tables are gone, and the fictional Northgate rows with
+them. Header fields corrected — the log claimed mutations and internal actions among the
+project's Convex features, and there are none; every write in the new design is internal and
+none are written yet.
+
+Still outside this repository and still to be removed by hand: the two public GitHub gists that
+stood in for watched pages during the 08-30 spike.

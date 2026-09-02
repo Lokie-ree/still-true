@@ -5,18 +5,20 @@
   --color-dark: #171717;
 }
 
+/* The scaffold declared two near-identical media queries whose only real
+   content was its default font stack. One rule with a dark-mode override does
+   the same job. The typeface is deliberately the platform's own for now — the
+   interface is designed in P3, and picking a webfont before then would be
+   guessing. */
+body {
+  color: var(--color-dark);
+  background: var(--color-light);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     color: var(--color-light);
     background: var(--color-dark);
-    font-family: Arial, Helvetica, sans-serif;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  body {
-    color: var(--color-dark);
-    background: var(--color-light);
-    font-family: Arial, Helvetica, sans-serif;
   }
 }
