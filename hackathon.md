@@ -156,3 +156,114 @@ nothing is spent by deferring. A research day was called before any further buil
 grounds that the project twice reached for custom code where the stack already provides the
 capability: the hashing above, and a crawl/extract/repair pipeline over four flaky
 third-party APIs written as loose internal actions while no Convex component is in use.
+
+## 2026-09-02 — the probe ran, and the front door changed
+
+The v1 probe did not execute. Twenty minutes on the first district produced zero rows: facts
+live in PDFs and in outbound links to LDOE, not in comparable HTML on two pages. That is a
+finding about the probe's design, not about the product, and it is not the null result that
+would have justified falling back to the monitor. **v1 looked for a claim page and an
+authority page inside one organization. K-12 does not store contradictions on that axis.** It
+stores them on the fan-out: one authority, restated by dozens of downstream pages, each
+maintained by a different person on a different day.
+
+Rewritten and swept machine-assisted: ten pages, about twelve minutes, against
+`R.S. 17:239` (Act 313, 2024) as the authority. `MATCH 2 · CONFLICT 2 · STALE 2 · SILENT 3 ·
+DEAD 2`. Three schools in Jefferson Parish give three incompatible answers to where a phone
+goes — Haynes says a school bag and calls a pocket illegal, Adams says off and not visible so
+a pocket passes, Woods collects them in a box. Only Haynes tracks the statute; Woods lawfully
+exceeds it; **Adams falls short of it, and "not visible" versus "on his person" is adjudicable
+against quoted text.** The district's own online-policies page still cites a 2019-2021
+handbook, and two `/Page/NNNN` URLs that live web search still returns are hard 404s.
+
+One hypothesis died. LDOE's January 2025 migration from `louisianabelieves.com` to
+`doe.louisiana.gov` is a clean path-preserving 301, deep links included. There is no link rot
+to exploit and no link checker to build. LDOE's problem is retrieval, not drift — a different
+product, deliberately not chosen.
+
+**The grounding invention broke on PDFs and was repaired.** Two real handbooks through
+Firecrawl `/v2/scrape` with `parsers:["pdf"]`: EBR at 324 KB and LPSS at 372 KB of markdown.
+1,688 and 981 lines respectively continue mid-sentence, because a PDF hard-wraps at the visual
+column — so `lines[n]` returns half a clause, the quote is unreadable, and the receipt fails
+even though fabrication remains impossible. A five-line reflow pass that joins continuation
+lines before numbering takes both to **zero**, and EBR line 606 becomes one complete citable
+rule. Two different PDF producers, same result; on HTML the pass is a near no-op, so one code
+path serves both. A second hazard surfaced that the structural guarantee cannot catch: LPSS's
+first keyword match was a table-of-contents dot-leader line, which really is in the document.
+That is a relevance failure, the class that survives by design, and `/\.{6,}\s*\d+$/` removes
+56 of them. The stored citation is now the quote **and** the index, not the index alone —
+Firecrawl's parser output can shift between scrapes, and `lines[n] !== storedQuote` is then not
+a bug but the change signal, re-locating for free.
+
+**The MVP is locked: a comparison matrix.** Ten districts, five questions parents actually
+ask, fifty cells, each carrying the district's own words with the line it came from and the
+date it was checked — or an explicit refusal naming how many lines were searched. The sweep
+found only one hard legal conflict in ten pages, which is too thin to headline; it found
+variation everywhere, which is plentiful. Reporting variation with receipts dissolves the
+`AMBIG` kill criterion that was the largest risk on the audit path, because the tool never has
+to rule, only to quote. Email a question in and get a cited answer back; subscribe to a cell
+and get the diff when it moves. That gives AgentMail a native job instead of the bolted-on
+alarm it was in the monitor framing.
+
+Nothing is built yet. `Auth` still reads `none` and `AI models` still reads `none`, because
+both are still true. Deadline confirmed as **September 22, 12:00 PM PT** — two days later than
+the plan had assumed, and the submission targets the 21st so the last day is margin.
+
+## 2026-09-02 (later) — the assessment, and what it cost
+
+Consulted an external agent for a pre-build assessment. It found four method errors in the
+morning's probe and two real defects in the code. Verified every one before acting on it, and
+all six hold. Recording what they cost, because the cost is the point of keeping this log.
+
+**The `② GO` was wrong.** Two rows were coded `SILENT` because their HTML carried no rule —
+without following the link each one carries to the district's controlling **2026-2028
+Procedures & Policies** handbook. That is precisely how probe v1 failed nine hours earlier. I
+repeated the mistake in the fix for it. Scraped the handbook: 363 KB, 3,505 lines after reflow.
+Line 618 reads *"Each school will establish and communicate consequences for violating its
+electronic device policy"* — the district **delegates** consequences, so the Haynes-warning
+vs. Adams-referral finding was never a finding. Line 608 states the possession rule with no
+such delegation clause. Also struck: the Adams `STALE` label (the `2024-2025` reference sits in
+the grading section, verified by direct fetch), the `CONFLICT` code (never predeclared,
+introduced after seeing results, and `VARIANT` then vanished from the summary line that STOP
+rule ① depends on), and the "90 seconds vs. 20 minutes" claim (the 20 minutes produced zero
+rows under a different protocol — not equivalent tasks). Recoded one primary code per row:
+`MATCH 4 · VARIANT 2 (22%) · STALE 1 · DEAD 2`. **No decision rule fires.** Writing that down
+instead of reaching for a rule that flatters the build.
+
+**The finding is omission, not contradiction.** The taxonomy asked whether restatements
+contradict the authority; repaired, mostly they don't — one adjudicable case in nine, and it is
+now text-against-text (the handbook says *properly stowed away*, Adams says *not visible*, a
+pocket passes both the school's test and neither of the district's). What the taxonomy could
+not see is that the handbook publishes material facts the school pages **do not carry at all**:
+an IEP/504/IHP exemption at lines 622-623, and testing confiscation that invalidates the
+assessment at line 616. Neither appears on Haynes, Adams, or Ehret. Haynes does not even link
+the handbook. A parent whose child runs a glucose monitor on their phone cannot learn from
+their school's page that the ban does not apply to them. Nobody is wrong; the parent is still
+uninformed. Pre-registered the coverage threshold **before** extending the sample, so it cannot
+be tuned the way the `GO` was.
+
+**The axis was wrong, and that is the real re-scope.** The probe design says *one authority,
+many restatements* — then the MVP scoped to ten districts, which compares ten different
+authorities and abandons the axis the finding lives on. Rows are now **schools under one
+handbook**: Jefferson Parish, 8 schools, 3 questions, 27 cells against a document already
+parsed clean. The P1 discovery tail that was the plan's largest risk disappears, because the
+corpus is already in hand. Auth comes out — not an eligibility requirement, and `publish` has
+to become internal regardless.
+
+**Two code defects confirmed by grep.** `answers.publish` is a public unauthenticated mutation:
+anyone who finds it can write arbitrary answers, URLs, and owner emails into production. And
+`spike.ts` still reads `AGENT_MAIL_API_KEY` while the deployment holds `AGENTMAIL_API_KEY`.
+Both die in P0 with the schema, but the first one is live right now.
+
+**Where the assessment was wrong: the two-day validation gate.** It proposed spending days 7
+and 8 on research, including interviewing five parents inside 24 hours during the school year,
+behind a gate — *"proceed only if users recognize an actionable problem"* — that cannot fail
+cleanly. A gate that cannot fail gets fudged. That is the AIDA failure mode with a rubric
+stapled to it. The evidence repair that actually mattered took twenty minutes. It also
+conflates *unvalidated* with *wrong*: most of its seven unsupported claims are product
+decisions, not empirical propositions. And its own **Recommended MVP** section describes the
+locked build at smaller scope — parent-facing, one district, receipted cells, explicit refusal,
+same sponsor boundaries — while its executive summary says not to build it. Took the scope cut
+and the corrections. Declined the gate.
+
+Still `none` for `Auth` and `AI models`. Still true.
