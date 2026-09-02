@@ -6,13 +6,13 @@
 - **Live app:** https://impressive-marten-163.convex.site
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
-- **Convex deployment:** impressive-marten-163 (production)
+- **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
 - **Components:** @convex-dev/static-hosting
-- **Convex features:** schema, tables, indexes, queries, mutations, internal mutations, internal actions, realtime queries
+- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries. No mutations or actions exist — every write in the new design is internal, and none are written yet.
 - **Auth:** none
 - **AI models:** none
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-02T00:00:00Z
+- **Last updated:** 2026-09-02T18:00:00Z
 
 ## Log
 
@@ -359,3 +359,33 @@ rows described a product that no longer exists.
 The lesson is narrower than "verify deploys." It is that a success message from the tool you
 just ran is not evidence about the system you meant to change. `convex dev` reported success
 every time; it was succeeding against the wrong machine.
+
+## 2026-09-02 (cleanup) — making the repository describe the product it is
+
+The repository still advertised the abandoned monitor. `README.md` opened with
+*"answers that tell you when they stopped being true"* and claimed the change-detection
+spike was working — a file that no longer exists, describing a product that was replaced
+twice. Rewritten around the forwarded document, including the two things this tool
+deliberately does not do: it never interprets or advises, and it is not legal advice.
+
+Other stale context removed. The live page carried the scaffold title **"Vite + React + TS"**,
+which is what a judge would have seen in the browser tab. `convex/README.md` was 90 lines of
+untouched Convex template. `src/index.css` declared two near-identical media queries whose
+only real content was the scaffold's default font stack; collapsed to one rule with a
+dark-mode override, on a platform stack, because the interface is designed in P3 and choosing
+a webfont now would be guessing.
+
+The evidence files moved to `docs/` — `probe.md`, `probe-v3.md`, `ASSESSMENT.md` — so the root
+holds the README, the log, and configuration. **They were kept rather than deleted for two
+reasons:** the Jefferson Parish handbook is the written STOP fallback if extraction on legalese
+fails in P2, so `docs/probe.md` is a live dependency and not history; and a log claiming two
+probes fired no decision rule is worth less without the probes.
+
+Verified rather than assumed: production holds only `documents`, `findings` and `threads`. The
+old `sources`, `answers` and `questions` tables are gone, and the fictional Northgate rows with
+them. Header fields corrected — the log claimed mutations and internal actions among the
+project's Convex features, and there are none; every write in the new design is internal and
+none are written yet.
+
+Still outside this repository and still to be removed by hand: the two public GitHub gists that
+stood in for watched pages during the 08-30 spike.
