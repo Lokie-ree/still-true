@@ -250,3 +250,152 @@ it *is* the change signal, and it re-locates for free.
 
 EBR's currently-linked handbook is the **2024-2025** edition, still served in
 September 2026. Add one `STALE` to the sweep.
+
+---
+
+# Repair — 2026-09-02, after external assessment
+
+An external review caught four method errors. All four are real. This section
+supersedes the tally above. **The repaired count fires no decision rule.**
+
+## The error that mattered: I never opened the handbook
+
+Rows 6 and 7 were coded `SILENT` because the HTML carried no rule. Both link
+the district's **2026-2028 Procedures & Policies for Students and Families** —
+the controlling document. Coding a page `SILENT` without following its link to
+the authority is exactly how probe v1 failed. I repeated it.
+
+Followed it. Firecrawl `/v2/scrape`, `parsers:["pdf"]`, HTTP 200,
+363,191 chars, 3,505 lines after reflow + TOC filter.
+
+`eastjefferson.jpschools.org/fs/resource-manager/view/e3f26617-b433-48e5-a80a-c3c063554933`
+
+**Line 608 — the possession rule, stated flatly, no delegation clause:**
+
+> No student shall possess, **on his person**, an electronic telecommunication
+> device throughout the instructional day\*, including wearable technology …
+> the electronic device shall either be turned off and **properly stowed away**
+> for the duration of the instructional day …
+
+**Line 618 — consequences, explicitly delegated:**
+
+> **Each school will establish and communicate consequences** for violating its
+> electronic device policy.
+
+## What this kills
+
+**The consequence finding is dead.** I reported Haynes-warning vs.
+Adams-referral as drift. Line 618 says the district *delegates* that. Variation
+in consequences is the design, not a defect. Struck.
+
+**The Adams `STALE` label is dead.** Verified 2026-09-02: the `2024-2025`
+reference sits in the **grading** section. The phone section carries no year.
+Struck.
+
+**Woods was never a `CONFLICT`.** Line 150 of this file already said Woods
+lawfully exceeds the statute, then the table called it a conflict anyway.
+`CONFLICT` was never a predeclared code — I introduced it after seeing results,
+and `VARIANT` then vanished from the summary line even though STOP rule ①
+keys on its percentage. Recoded to the predeclared taxonomy, one primary code
+per row, legal adjudicability kept as a separate reviewed flag.
+
+**The "90 seconds vs. 20 minutes" claim is dead.** The 20 minutes produced
+zero rows under a different, failed protocol. Not equivalent tasks. Any timing
+claim needs the same question, same starting point, both methods. Struck until
+measured.
+
+**Row 10 (`stpsb.org`) is out of population.** St. Tammany, not Jefferson.
+Excluded from the tally.
+
+## Repaired tally — 9 in-population rows, one primary code each
+
+| # | Page | Primary | Flag |
+|---|------|---------|------|
+| 1 | `haynes` cell-phone-smartwatch-policy | `MATCH` | fills the blank: school bag, pocket banned |
+| 2 | `ehret` policies-procedures | `MATCH` | quotes statute, blank left unfilled |
+| 3 | `adams` policies-procedures | `VARIANT` | ⚠ **adjudicable** — see below |
+| 4 | `woods` news/school-news | `VARIANT` | lawfully exceeds |
+| 5 | `jpschools.org` …/online-policies | `STALE` | cites 2019-2021 procedures |
+| 6 | `eastjefferson` policies-procedures | `MATCH` | links current handbook |
+| 7 | `jeffersonvirtual` policies-procedures | `MATCH` | links current handbook |
+| 8 | `jpschools.org/Page/2104` | `DEAD` | 404 |
+| 9 | `jpschools.org/Page/452` | `DEAD` | 404 |
+
+`MATCH 4 · VARIANT 2 (22%) · STALE 1 · SILENT 0 · DEAD 2`
+
+**Rule ①** — `VARIANT` 22%, under the 40% floor. Does not fire.
+**Rule ②** — needs ≥2 `STALE` or ≥3 actionable `VARIANT`. Has 1 and 2. **Does not fire.**
+**Rule ③** — needs zero `STALE`. Has 1. Does not fire.
+**Rule ④** — not all `MATCH`. Does not fire.
+
+**No rule fires.** The ② GO called above was wrong, and it was wrong because
+the tally that produced it double-counted Adams, invented a code, and rested
+on two rows I had not actually read. Recording that plainly rather than
+reaching for a rule that flatters the build.
+
+## The one surviving adjudicable case
+
+The handbook says **not on his person** and **properly stowed away**. It never
+says *where*. Each school fills that blank:
+
+- **Haynes** — "powered off and **placed in their school bag**." Fills it.
+- **Woods** — surrender to a **cellphone box**. Exceeds it. Permitted.
+- **Adams** — "turned **OFF/Shutdown and Not visible**." **A pocket passes.**
+
+A phone in a pocket is *not visible* and *is on his person*. That is the only
+row adjudicable against quoted text — and now it is **text against text**, the
+district's own handbook against its school's page. No legal opinion required.
+Drop every "violates state law" framing; it was never necessary and it was the
+riskiest sentence in the file.
+
+## The finding that actually survives: omission, not contradiction
+
+The taxonomy asked *do restatements contradict the authority?* Repaired answer:
+**mostly no.** One adjudicable variant out of nine. That is thin.
+
+It measured the wrong thing. The handbook publishes material facts that school
+pages simply **do not carry** — and `SILENT` was defined page-level ("no
+mention anywhere"), so it could not count them.
+
+Three material facts in the controlling document:
+
+- **F1** — not on person, properly stowed away *(location undefined)* — line 608
+- **F2** — the rule **does not apply** where an IEP, 504, or Individualized
+  Health Plan requires the device — lines 622-623
+- **F3** — devices confiscated during testing; being caught **invalidates the
+  assessment** — line 616
+
+| School | F1 | F2 | F3 |
+|--------|----|----|----|
+| Haynes | ✓ fills | ✗ | ✗ |
+| Adams | ⚠ diverges | ✗ | ✗ |
+| Ehret | ✓ defers | ✗ | ✗ |
+
+Verified 2026-09-02 by direct fetch. Haynes does not even link the handbook.
+
+**6 of 9 cells omitted. F2 and F3 are absent from every school page checked.**
+
+A parent whose child runs a continuous glucose monitor on their phone cannot
+learn from their school's page that the ban does not apply to them. Nobody is
+wrong. The parent is still uninformed. That is a better product than the
+contradiction was, and it runs on the refusal path already at the core of the
+build — which is what rule ③ described.
+
+## Pre-registered before extending the sample
+
+Declared **now**, before counting more schools, so the threshold cannot be
+tuned to the result the way the ② GO was:
+
+> **GO on coverage** if, across 8 schools × 3 facts, **≥40% of cells are
+> omitted** by the school page while the controlling handbook publishes them.
+> **STOP** if <20% — the schools are already carrying the district's material
+> facts and the product has no gap to close.
+
+Current n=3: 67%. Not a decision. A prior.
+
+## Method debts carried forward
+
+- Sample is 9, not the 12 the protocol specified. Search order was not preserved.
+  Any future sweep snapshots the query and the result list first.
+- Ehret's F1/F2/F3 row is from the earlier sweep, not re-fetched during repair.
+- One district. Nothing here generalizes past Jefferson Parish yet.
