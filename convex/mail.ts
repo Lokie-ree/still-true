@@ -1,9 +1,14 @@
 import { AgentMail } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
+import type { ActionCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
+import { classify, extract } from "./extract";
 import { toLines } from "./lines";
+import { CHECKLISTS } from "./questions";
+import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
 // from outside is the component's verified webhook, because a document row is
@@ -207,26 +212,81 @@ export const ingest = internalAction({
         : args.url;
     if (source === null) throw new Error("ingest scheduled with nothing to read");
 
-    const lines = toLines(await scrape(source));
-    await ctx.runMutation(internal.mail.attach, {
-      threadRowId: args.threadRowId,
+    return await readAndPublish(ctx, {
+      source,
       // The signed attachment URL is deliberately not stored: it expires, and a
       // forwarded PDF is a fixed artifact with nothing to re-check. Only
       // url-backed documents are ever watched.
       url: args.url,
       title: args.title,
-      lineCount: lines.length,
+      threadRowId: args.threadRowId,
     });
-    return null;
   },
 });
 
+// scrape → classify → extract → publish. The one path from something readable
+// to a published finding set. `ingest` arrives here with a thread attached;
+// `probe` arrives with none, and P4's re-check will too.
+async function readAndPublish(
+  ctx: ActionCtx,
+  args: {
+    source: string;
+    url: string | null;
+    title: string;
+    threadRowId: Id<"threads"> | null;
+  },
+): Promise<null> {
+  const lines = toLines(await scrape(args.source));
+
+  // The document is only in memory here, and it is never written down — the
+  // parsed markdown does not go in the database and the PDF never touches this
+  // system at all. So classification and extraction both happen now, while the
+  // lines exist, and what survives is the citation into them.
+  const kind = await classify(args.title, lines);
+  const findings = await extract(lines, CHECKLISTS[kind]);
+
+  await ctx.runMutation(internal.mail.attach, {
+    threadRowId: args.threadRowId,
+    url: args.url,
+    title: args.title,
+    kind,
+    lineCount: lines.length,
+    findings,
+  });
+  return null;
+}
+
+// The P2 gate, runnable by hand:
+//
+//   npx convex run mail:probe '{"url":"https://www.paypal.com/us/legalhub/useragreement-full"}'
+//
+// The same pipeline the mail path takes, minus the mail. It exists because the
+// STOP gate is the most consequential measurement in this project, and running
+// it through three forwarded emails would conflate a delivery failure with an
+// extraction failure. Internal like everything else that can publish a claim —
+// `convex run` reaches it with an admin key, the open internet does not.
+export const probe = internalAction({
+  args: { url: v.string(), title: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) =>
+    await readAndPublish(ctx, {
+      source: args.url,
+      url: args.url,
+      title: args.title ?? args.url,
+      threadRowId: null,
+    }),
+});
+
+// The document and its findings land in one transaction, so a document is
+// never visible with half of its answers published.
 export const attach = internalMutation({
   args: {
-    threadRowId: v.id("threads"),
+    threadRowId: v.union(v.id("threads"), v.null()),
     url: v.union(v.string(), v.null()),
     title: v.string(),
+    kind: documentKind,
     lineCount: v.number(),
+    findings: v.array(extractedFinding),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -242,15 +302,12 @@ export const attach = internalMutation({
             .withIndex("by_url", (q) => q.eq("url", url))
             .first();
 
-    let documentId;
+    let documentId: Id<"documents">;
     if (existing === null) {
       documentId = await ctx.db.insert("documents", {
         url,
         title: args.title,
-        // ponytail: P2's extractor is already reading the whole document and
-        // can set this properly. Guessing from a filename now would be a
-        // second, worse classifier.
-        kind: "other",
+        kind: args.kind,
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: null,
@@ -258,12 +315,45 @@ export const attach = internalMutation({
     } else {
       documentId = existing._id;
       await ctx.db.patch("documents", documentId, {
+        kind: args.kind,
         lineCount: args.lineCount,
         fetchedAt: now,
       });
+
+      // ponytail: a re-forward replaces the finding set outright. P4's re-check
+      // is the path that has to DIFF — reading the old answer before it goes,
+      // to set previousAnswer and changedAt — and it will do that here. A
+      // checklist is five rows, so the bounded read covers it many times over.
+      for (const stale of await ctx.db
+        .query("findings")
+        .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+        .take(50)) {
+        await ctx.db.delete("findings", stale._id);
+      }
     }
 
-    await ctx.db.patch("threads", args.threadRowId, { documentId });
+    for (const finding of args.findings) {
+      await ctx.db.insert(
+        "findings",
+        finding.verdict === "answered"
+          ? {
+              ...finding,
+              documentId,
+              verifiedAt: now,
+              // P4 sets these when a re-check moves the answer. A first
+              // reading has nothing it used to say.
+              previousAnswer: null,
+              changedAt: null,
+            }
+          : { ...finding, documentId, verifiedAt: now },
+      );
+    }
+
+    // The probe publishes with no thread, and P4's re-check will too. A
+    // document is a document whether or not somebody emailed about it.
+    if (args.threadRowId !== null) {
+      await ctx.db.patch("threads", args.threadRowId, { documentId });
+    }
     return null;
   },
 });

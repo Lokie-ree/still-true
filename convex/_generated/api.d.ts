@@ -10,9 +10,11 @@
 
 import type * as documents from "../documents.js";
 import type * as env from "../env.js";
+import type * as extract from "../extract.js";
 import type * as http from "../http.js";
 import type * as lines from "../lines.js";
 import type * as mail from "../mail.js";
+import type * as questions from "../questions.js";
 
 import type {
   ApiFromModules,
@@ -23,9 +25,11 @@ import type {
 declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   env: typeof env;
+  extract: typeof extract;
   http: typeof http;
   lines: typeof lines;
   mail: typeof mail;
+  questions: typeof questions;
 }>;
 
 /**
