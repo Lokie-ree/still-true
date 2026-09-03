@@ -3,9 +3,9 @@
 //
 // Two calls to the model, and the model is trusted with a sentence in neither.
 // `classify` picks which predeclared checklist to fire. `extract` answers that
-// checklist and returns LINE NUMBERS. Every quote this product publishes is
-// then read out of the lines array by index, here, on the server, after the
-// model has finished talking.
+// checklist and returns ONE LINE NUMBER per question. Every quote this product
+// publishes is then read out of the lines array by index, here, on the server,
+// after the model has finished talking.
 //
 // That is the whole grounding claim, and it is a structural one rather than a
 // confidence one. The model can be wrong about WHICH line answers a question.
@@ -61,13 +61,29 @@ const numbered = (lines: string[]) =>
 // the API is also fine, because that failure is loud.
 const MAX_PROMPT_CHARS = 600_000;
 
+// One line, and the answer may not out-run it.
+//
+// The first version of this prompt asked for support_lines as a list, "most
+// direct first". On PayPal it answered T1 across several lines — correctly —
+// and the receipt published was the first of them, which stated that
+// arbitration is binding and said nothing about the 30-day opt-out the answer
+// asserted. A true quote under an answer it does not support is the failure
+// this product cannot have, so the contract is now exactly one line, and the
+// answer is bounded by what that line says.
 const SYSTEM = [
   "You are given a document as tab-separated numbered lines, and a list of questions.",
   "Answer every question ONLY from this document.",
   "",
-  'If the document states the answer: verdict "answered", a one-sentence plain answer,',
-  "and support_lines set to the line numbers that state it, most direct first.",
-  'If the document does not state it: verdict "not_stated", answer "", support_lines [].',
+  "Cite exactly ONE line. That line must state the answer BY ITSELF: a reader shown",
+  "only that line must be able to see that your answer is true. Your answer may not",
+  "assert any fact, number, deadline, or condition that is not in the line you cite.",
+  "",
+  'Stated on one line: verdict "answered", one plain sentence, support_line set to it.',
+  'Otherwise: verdict "not_stated", answer "", support_line 0 — including when the',
+  "document does say it but spreads it across lines you would have to combine.",
+  "Answering across lines is the one failure that matters here. The cited line is",
+  "published as the receipt, and an answer its own receipt does not support is worse",
+  "than a refusal.",
   "",
   "Do not guess. Do not infer from general knowledge or from what documents of this",
   "type usually say. A line number you are unsure of is worse than not_stated, because",
@@ -189,12 +205,15 @@ export async function extract(
               },
               verdict: { type: "string", enum: ["answered", "not_stated"] },
               answer: { type: "string" },
-              // Integers, never strings — the index is the product. `minItems`
-              // is not allowed under strict mode, so "non-empty" is enforced in
-              // verify() below, which is where it belongs anyway.
-              support_lines: { type: "array", items: { type: "integer" } },
+              // One integer, never a list. A list meant the model could answer
+              // across lines while only the first was published as the quote,
+              // and "keep [0], discard the rest" made that loss silent. The
+              // schema now cannot express the answer that broke. 0 is the
+              // refusal value: it is out of range, so verify() already rejects
+              // it by the rule it applies to every other bad index.
+              support_line: { type: "integer" },
             },
-            required: ["question_key", "verdict", "answer", "support_lines"],
+            required: ["question_key", "verdict", "answer", "support_line"],
             additionalProperties: false,
           },
         },
@@ -252,8 +271,7 @@ export function verify(
     const answer = claim.answer;
     if (typeof answer !== "string" || answer.trim() === "") return refused;
 
-    const support = claim.support_lines;
-    const lineNo = Array.isArray(support) ? support[0] : undefined;
+    const lineNo = claim.support_line;
     if (typeof lineNo !== "number" || !Number.isInteger(lineNo)) return refused;
 
     const quote = lineAt(lines, lineNo);
