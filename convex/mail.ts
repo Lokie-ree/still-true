@@ -1,9 +1,13 @@
 import { AgentMail } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
+import { classify, extract } from "./extract";
 import { toLines } from "./lines";
+import { CHECKLISTS } from "./questions";
+import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
 // from outside is the component's verified webhook, because a document row is
@@ -208,6 +212,14 @@ export const ingest = internalAction({
     if (source === null) throw new Error("ingest scheduled with nothing to read");
 
     const lines = toLines(await scrape(source));
+
+    // The document is only in memory here, and it is never written down — the
+    // parsed markdown does not go in the database and the PDF never touches
+    // this system at all. So classification and extraction both happen now,
+    // while the lines exist, and what survives is the citation into them.
+    const kind = await classify(args.title, lines);
+    const findings = await extract(lines, CHECKLISTS[kind]);
+
     await ctx.runMutation(internal.mail.attach, {
       threadRowId: args.threadRowId,
       // The signed attachment URL is deliberately not stored: it expires, and a
@@ -215,18 +227,24 @@ export const ingest = internalAction({
       // url-backed documents are ever watched.
       url: args.url,
       title: args.title,
+      kind,
       lineCount: lines.length,
+      findings,
     });
     return null;
   },
 });
 
+// The document and its findings land in one transaction, so a document is
+// never visible with half of its answers published.
 export const attach = internalMutation({
   args: {
     threadRowId: v.id("threads"),
     url: v.union(v.string(), v.null()),
     title: v.string(),
+    kind: documentKind,
     lineCount: v.number(),
+    findings: v.array(extractedFinding),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -242,15 +260,12 @@ export const attach = internalMutation({
             .withIndex("by_url", (q) => q.eq("url", url))
             .first();
 
-    let documentId;
+    let documentId: Id<"documents">;
     if (existing === null) {
       documentId = await ctx.db.insert("documents", {
         url,
         title: args.title,
-        // ponytail: P2's extractor is already reading the whole document and
-        // can set this properly. Guessing from a filename now would be a
-        // second, worse classifier.
-        kind: "other",
+        kind: args.kind,
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: null,
@@ -258,9 +273,38 @@ export const attach = internalMutation({
     } else {
       documentId = existing._id;
       await ctx.db.patch("documents", documentId, {
+        kind: args.kind,
         lineCount: args.lineCount,
         fetchedAt: now,
       });
+
+      // ponytail: a re-forward replaces the finding set outright. P4's re-check
+      // is the path that has to DIFF — reading the old answer before it goes,
+      // to set previousAnswer and changedAt — and it will do that here. A
+      // checklist is five rows, so the bounded read covers it many times over.
+      for (const stale of await ctx.db
+        .query("findings")
+        .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+        .take(50)) {
+        await ctx.db.delete("findings", stale._id);
+      }
+    }
+
+    for (const finding of args.findings) {
+      await ctx.db.insert(
+        "findings",
+        finding.verdict === "answered"
+          ? {
+              ...finding,
+              documentId,
+              verifiedAt: now,
+              // P4 sets these when a re-check moves the answer. A first
+              // reading has nothing it used to say.
+              previousAnswer: null,
+              changedAt: null,
+            }
+          : { ...finding, documentId, verifiedAt: now },
+      );
     }
 
     await ctx.db.patch("threads", args.threadRowId, { documentId });

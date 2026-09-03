@@ -1,6 +1,41 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// A finding as the extractor produces it, before the database has anything to
+// say about it. `mail.attach` takes an array of these and the `findings` table
+// below extends them with `documentId` and the timestamps, so the extractor's
+// output is checked against the stored shape by the compiler rather than by
+// hand. See convex/extract.ts, which returns exactly this.
+export const answeredFinding = v.object({
+  questionKey: v.string(),
+  verdict: v.literal("answered"),
+  answer: v.string(),
+  quote: v.string(),
+  lineNo: v.number(),
+  contextBefore: v.string(),
+  contextAfter: v.string(),
+  linesSearched: v.number(),
+});
+
+export const notStatedFinding = v.object({
+  questionKey: v.string(),
+  verdict: v.literal("not_stated"),
+  linesSearched: v.number(),
+});
+
+export const extractedFinding = v.union(answeredFinding, notStatedFinding);
+
+// Which predeclared checklist a document gets. Shared with `mail.attach` so
+// that the classifier's return type in convex/questions.ts is checked against
+// the stored column by the compiler — a kind added to one and not the other
+// fails `tsc`, rather than failing at insert time in front of a judge.
+export const documentKind = v.union(
+  v.literal("lease"),
+  v.literal("tos"),
+  v.literal("notice"),
+  v.literal("other"),
+);
+
 export default defineSchema({
   // A document someone sent us. `url` is null for an emailed attachment: a
   // forwarded lease PDF is a fixed artifact with nothing to re-fetch, so only
@@ -13,12 +48,7 @@ export default defineSchema({
   documents: defineTable({
     url: v.union(v.string(), v.null()),
     title: v.string(),
-    kind: v.union(
-      v.literal("lease"),
-      v.literal("tos"),
-      v.literal("notice"),
-      v.literal("other"),
-    ),
+    kind: documentKind,
     lineCount: v.number(),
     fetchedAt: v.number(),
     lastCheckedAt: v.union(v.number(), v.null()),
@@ -33,29 +63,21 @@ export default defineSchema({
   //
   // `linesSearched` is on both arms because a refusal has to be countable:
   // "searched 3,505 lines and it is not there" is the claim, not "I don't know".
+  //
+  // The two arms are extended from what the extractor produces (below), so the
+  // shape verify() returns and the shape stored here cannot drift apart.
   findings: defineTable(
     v.union(
-      v.object({
+      answeredFinding.extend({
         documentId: v.id("documents"),
-        questionKey: v.string(),
-        verdict: v.literal("answered"),
-        answer: v.string(),
-        quote: v.string(),
-        lineNo: v.number(),
-        contextBefore: v.string(),
-        contextAfter: v.string(),
-        linesSearched: v.number(),
         verifiedAt: v.number(),
         // Set when a re-check moved this answer. The pair is the diff a
         // subscriber is told about.
         previousAnswer: v.union(v.string(), v.null()),
         changedAt: v.union(v.number(), v.null()),
       }),
-      v.object({
+      notStatedFinding.extend({
         documentId: v.id("documents"),
-        questionKey: v.string(),
-        verdict: v.literal("not_stated"),
-        linesSearched: v.number(),
         verifiedAt: v.number(),
       }),
     ),
