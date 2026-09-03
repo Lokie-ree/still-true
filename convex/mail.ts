@@ -2,6 +2,7 @@ import { AgentMail } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import type { ActionCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
@@ -211,35 +212,76 @@ export const ingest = internalAction({
         : args.url;
     if (source === null) throw new Error("ingest scheduled with nothing to read");
 
-    const lines = toLines(await scrape(source));
-
-    // The document is only in memory here, and it is never written down — the
-    // parsed markdown does not go in the database and the PDF never touches
-    // this system at all. So classification and extraction both happen now,
-    // while the lines exist, and what survives is the citation into them.
-    const kind = await classify(args.title, lines);
-    const findings = await extract(lines, CHECKLISTS[kind]);
-
-    await ctx.runMutation(internal.mail.attach, {
-      threadRowId: args.threadRowId,
+    return await readAndPublish(ctx, {
+      source,
       // The signed attachment URL is deliberately not stored: it expires, and a
       // forwarded PDF is a fixed artifact with nothing to re-check. Only
       // url-backed documents are ever watched.
       url: args.url,
       title: args.title,
-      kind,
-      lineCount: lines.length,
-      findings,
+      threadRowId: args.threadRowId,
     });
-    return null;
   },
+});
+
+// scrape → classify → extract → publish. The one path from something readable
+// to a published finding set. `ingest` arrives here with a thread attached;
+// `probe` arrives with none, and P4's re-check will too.
+async function readAndPublish(
+  ctx: ActionCtx,
+  args: {
+    source: string;
+    url: string | null;
+    title: string;
+    threadRowId: Id<"threads"> | null;
+  },
+): Promise<null> {
+  const lines = toLines(await scrape(args.source));
+
+  // The document is only in memory here, and it is never written down — the
+  // parsed markdown does not go in the database and the PDF never touches this
+  // system at all. So classification and extraction both happen now, while the
+  // lines exist, and what survives is the citation into them.
+  const kind = await classify(args.title, lines);
+  const findings = await extract(lines, CHECKLISTS[kind]);
+
+  await ctx.runMutation(internal.mail.attach, {
+    threadRowId: args.threadRowId,
+    url: args.url,
+    title: args.title,
+    kind,
+    lineCount: lines.length,
+    findings,
+  });
+  return null;
+}
+
+// The P2 gate, runnable by hand:
+//
+//   npx convex run mail:probe '{"url":"https://www.paypal.com/us/legalhub/useragreement-full"}'
+//
+// The same pipeline the mail path takes, minus the mail. It exists because the
+// STOP gate is the most consequential measurement in this project, and running
+// it through three forwarded emails would conflate a delivery failure with an
+// extraction failure. Internal like everything else that can publish a claim —
+// `convex run` reaches it with an admin key, the open internet does not.
+export const probe = internalAction({
+  args: { url: v.string(), title: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) =>
+    await readAndPublish(ctx, {
+      source: args.url,
+      url: args.url,
+      title: args.title ?? args.url,
+      threadRowId: null,
+    }),
 });
 
 // The document and its findings land in one transaction, so a document is
 // never visible with half of its answers published.
 export const attach = internalMutation({
   args: {
-    threadRowId: v.id("threads"),
+    threadRowId: v.union(v.id("threads"), v.null()),
     url: v.union(v.string(), v.null()),
     title: v.string(),
     kind: documentKind,
@@ -307,7 +349,11 @@ export const attach = internalMutation({
       );
     }
 
-    await ctx.db.patch("threads", args.threadRowId, { documentId });
+    // The probe publishes with no thread, and P4's re-check will too. A
+    // document is a document whether or not somebody emailed about it.
+    if (args.threadRowId !== null) {
+      await ctx.db.patch("threads", args.threadRowId, { documentId });
+    }
     return null;
   },
 });
