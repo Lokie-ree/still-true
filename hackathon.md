@@ -7,12 +7,12 @@
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
-- **Components:** @convex-dev/static-hosting
-- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries. No mutations or actions exist — every write in the new design is internal, and none are written yet.
+- **Components:** @convex-dev/static-hosting, @agentmail/convex
+- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries, an HTTP action, the scheduler, and internal mutations and actions. Every write is internal — the only thing that reaches them from outside is the component's signature-verified webhook.
 - **Auth:** none
-- **AI models:** none
+- **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-02T18:00:00Z
+- **Last updated:** 2026-09-03T17:00:00Z
 
 ## Log
 
@@ -389,3 +389,119 @@ none are written yet.
 
 Still outside this repository and still to be removed by hand: the two public GitHub gists that
 stood in for watched pages during the 08-30 spike.
+
+## 2026-09-03 (P1) — the front door, and a component instead of a hand-rolled webhook
+
+Shipped in PR #13. A forwarded document becomes a `documents` row with a real line count: a
+lease PDF forwarded from a phone parsed to **324 lines**, and a forwarded link produced a
+second row at 412.
+
+**The hand-rolled webhook was replaced by `@agentmail/convex` before it ever shipped.** The
+first version verified the Svix signature by hand in an `httpAction`. The component owns
+signature verification, `event_id` dedupe, and a workpool that dispatches the callback — all
+in its own sandboxed tables — which leaves exactly one route of ours at `/api/agentmail` and
+one line of handler. This is the standing lesson from the 09-01 research day, applied before
+the custom code had a chance to accumulate: search for the vendor's component before writing
+the integration.
+
+A second dedupe guard sits on `messageId` in our own `threads` table. The component drops a
+redelivered `event_id`; `messageId` is what actually must not happen twice, because one
+message must produce one document and — from P3 — one reply, even if the same mail arrives
+as a fresh event.
+
+**A forwarded PDF never touches this system.** AgentMail hands out a short-lived signed URL
+for an attachment, and Firecrawl is pointed at that. So the answer to *"people will forward
+private documents"* is an architectural fact rather than a paragraph in the terms: the
+database holds a line count and, later, a quote. It never holds the lease.
+
+Three findings worth the log. Real AgentMail messages carry a **scalar `from`**
+(`"Name <addr>"`), not the `from_` array the docs example shows — checked against a live
+message rather than the docs. `@agentmail/convex` 0.1.0 declares types that disagree with
+what it sends at runtime in two places, and both casts are marked `ponytail:` in the source
+with the condition for deleting them. And the Convex log view surfaces only console output
+and failures, so **a silent successful function leaves no line at all** — an empty log is not
+evidence that nothing ran, which cost a wrong call before the tables were read directly.
+
+## 2026-09-03 (P2) — the extractor ran, and the gate held
+
+**`AI models` no longer reads `none`.** It has read `none` in every entry of this log since
+2026-08-29, each time with a note that it was still true. It is not true any more.
+
+PR #14. The instrument that probe v3 concluded was the only one left — *"no further sweep has
+information value"* — now exists, and the STOP gate written into the plan on day 6 has been
+run against it. **It passed. The Jefferson Parish fallback is not needed.**
+
+**Three documents, 23 cells, every citation opened by hand.** PayPal's user agreement (1,227
+lines, 7 answered), AT&T's consumer service agreement (2,059 lines, 8 answered), and the
+Livonia Housing Authority public housing dwelling lease (421 lines, 6 answered). **21 of 21
+answered findings are carried by their own quote. Zero unsupported findings published.** The
+arbitration opt-out was located with a correct quote on both consumer agreements — PayPal
+cites the *Opt-Out Procedure* row itself at line 1077 of 1227. The classifier was right 3 of 3.
+
+**The lease corpus ran for the first time**, after all three lease fetches failed in probe v3.
+Livonia refuses `L1`: 421 lines and the lease never says when the deposit comes back. It
+defers to *"State of Michigan statute at the termination of this lease"* without naming a
+number. Verified by hand against the source PDF — seven occurrences of *deposit*, none
+carrying a deadline, and *refund* appears zero times. That is the product in one cell, on a
+real lease from a real housing authority.
+
+**The corpus grew by one list, predeclared.** A document that is neither a lease nor a terms
+page — an HOA notice, an insurance renewal, a handbook — now gets a `universal` checklist of
+five facts true of anything that puts an obligation on you. Firing the lease questions at an
+insurance renewal publishes *"searched 2,140 lines; this document does not state the deposit
+return window"* — a true sentence and a category error. The refusal is the half nobody else
+ships, and it only carries weight when the question belonged to the document. Written before
+the extractor ran once.
+
+**The bug that changed the contract, and it is the same bug this project keeps finding.** The
+first version took `support_lines` as a list, *"most direct first"*, and published
+`lines[support_lines[0]]` as the receipt. On PayPal it answered the arbitration question
+across several lines and shipped an answer asserting the 30-day opt-out under a quote that
+said only that arbitration is binding. The quote was verbatim and real. It did not support
+the sentence above it. Keeping `[0]` and discarding the rest made the loss silent — a
+**relevance failure**, the class the 09-02 entry already named as surviving by design.
+
+The contract is now **one `support_line` as a single integer**, and the answer may not assert
+anything the cited line does not say. The schema cannot express the answer that broke. `0` is
+the model's refusal value: out of range, so it refuses through the same rule as any other bad
+index. On the re-run, T3 stopped claiming *"at least 21 days"* under a line that never said it.
+
+Compound questions were then split across all three checklists — `lease 5→7`, `tos 5→8`,
+`universal 5→8`. A question asking two things at once is unanswerable under a one-line
+contract unless a document happens to print both halves on the same line, which made the
+refusal rate a function of **formatting rather than content** — the very measurement the gate
+exists to take. Split by the engine contract, not by any document's score, and before the
+remaining gate documents ran. That ordering is the whole discipline; the reason is recorded in
+`convex/questions.ts` rather than here, so it sits next to the thing it governs.
+
+**Terra, not the flagship.** Gating on a model you will not ship measures nothing about what
+you ship, so the gate ran on `gpt-5.6-terra` and `gpt-5.6-sol` is held as the tiebreaker: if a
+gate ever fails, Sol on the same documents separates *the corpus failed* from *the model was
+too weak*. The plan named Luna, which is the economy tier; it has never run. The model is an
+environment variable, never code.
+
+**Two corrections to claims this log has been making.** AT&T does **not** bury its arbitration
+clause — it runs lines 127–208 of 2,059, inside the first tenth. The 89th-percentile finding
+belongs to PayPal and Spotify only, and on a fresh scrape PayPal measures 87.8% rather than
+88.5%. AT&T's story is length; PayPal's is depth. The 09-02 entry stated the percentile claim
+correctly about "the two largest documents" in that sample, but the social-proof line built on
+it merged AT&T's word count with PayPal's burial into one sentence, and that sentence is
+falsifiable in one click. They are kept apart from here on.
+
+**What the gate does not clear, recorded because it will not improve on its own.** Roughly 4
+of 21 cells cite a true, supported, but *narrow* clause instead of the governing one — AT&T's
+cancellation answer lands on OneConnect auto-billing, its data-sharing answer on
+business-entity billing. The one-line contract trades relevance for support; that is the right
+trade for a receipt-first product and it is a permanent cost, not a bug awaiting a fix. And
+**refusals cannot be verified by the gate at all** — there is no citation to open. Every
+*answer* is proven; no *refusal* is, and the refusal is the differentiator. Livonia `L1` was
+checked by hand, and that does not scale.
+
+**`Auth` still reads `none`**, and that remains deliberate — every write is internal. But
+`documents.recent` and `documents.findingsFor` are unauthenticated public reads that return
+every document in the deployment, and people forward leases with their name on them. That is
+a decision for P6, made deliberately, not discovered in a demo.
+
+The mail path has not run since this work changed `mail.attach`'s signature; all three gate
+documents went through `mail:probe`, which runs a document by URL with no email involved.
+P3 opens by forwarding one real email.
