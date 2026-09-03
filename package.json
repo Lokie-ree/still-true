@@ -13,8 +13,10 @@
     "deploy": "npx @convex-dev/static-hosting deploy"
   },
   "dependencies": {
+    "@agentmail/convex": "^0.1.0",
     "@convex-dev/static-hosting": "^0.2.1",
     "convex": "^1.44.0",
+    "convex-helpers": "^0.1.123",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

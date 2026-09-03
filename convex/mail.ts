@@ -1,59 +1,128 @@
+import { AgentMail } from "@agentmail/convex";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
 import { toLines } from "./lines";
 
-// Inbound mail. Every function here is internal: the only thing that reaches
-// them from outside is a signature-verified webhook in `http.ts`, because a
-// document row is the subject of a claim and nothing on the open internet gets
-// to assert one.
+// Inbound mail. Every function here is internal; the only thing reaching them
+// from outside is the component's verified webhook, because a document row is
+// the subject of a claim and nothing on the open internet gets to assert one.
+//
+// The component owns Svix verification, `event_id` dedupe, the workpool that
+// dispatches this callback, and — from P3 — durable sending with retries. It
+// keeps all of that in its own sandboxed tables.
+type OnMessageReceived = NonNullable<
+  NonNullable<ConstructorParameters<typeof AgentMail>[1]>["onMessageReceived"]
+>;
+
+export const agentmail = new AgentMail(components.agentmail, {
+  // ponytail: 0.1.0 declares `thread` required on this callback and then omits
+  // it at runtime whenever AgentMail returned no thread metadata. The handler
+  // below takes it optional, which is what actually arrives; this cast is the
+  // cost of that disagreement. Delete it when the component's type matches
+  // what it sends.
+  onMessageReceived: internal.mail.received as unknown as OnMessageReceived,
+});
+
+// The component hands the message across as `unknown`, and it arrived from the
+// internet, so every field is still narrowed here before use.
+const asRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {};
+
+const readString = (value: unknown, key: string): string | null => {
+  const field = asRecord(value)[key];
+  return typeof field === "string" ? field : null;
+};
+
+const readStrings = (value: unknown, key: string): string[] => {
+  const field = asRecord(value)[key];
+  return Array.isArray(field) ? field.filter((x) => typeof x === "string") : [];
+};
 
 // Record the message, then start reading whatever it carried.
 //
-// AgentMail retries, and it can deliver the same event twice. `by_messageId`
-// is what makes the second delivery a no-op instead of a second document and a
-// second reply — this is the exit test for P1.
-export const receive = internalMutation({
-  args: {
-    messageId: v.string(),
-    threadId: v.string(),
-    fromEmail: v.string(),
-    inboxId: v.string(),
-    mode: v.union(v.literal("forward"), v.literal("cc")),
-    title: v.string(),
-    attachmentId: v.union(v.string(), v.null()),
-    url: v.union(v.string(), v.null()),
-  },
+// The component already drops a redelivered `event_id`. This second guard is on
+// `messageId`, which is what actually must not happen twice: one message, one
+// document, and in P3 one reply — even if the same mail arrives as a fresh
+// event. That is the exit test for P1.
+export const received = internalMutation({
+  // `thread` is optional against the component's own type, which declares it
+  // required: 0.1.0 omits it entirely when AgentMail returned no thread
+  // metadata, and an absent field fails a v.any() validator.
+  args: { message: v.any(), thread: v.optional(v.any()), eventId: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const message: unknown = args.message;
+    const messageId = readString(message, "message_id");
+    const threadId = readString(message, "thread_id");
+    const inboxId = readString(message, "inbox_id");
+    if (messageId === null || threadId === null || inboxId === null) {
+      console.error("unrecognized message payload", args.eventId);
+      return null;
+    }
+
     const seen = await ctx.db
       .query("threads")
-      .withIndex("by_messageId", (q) => q.eq("messageId", args.messageId))
+      .withIndex("by_messageId", (q) => q.eq("messageId", messageId))
       .unique();
     if (seen !== null) return null;
 
+    // First real attachment wins. Inline parts are signatures and logos.
+    const attachments = asRecord(message).attachments;
+    const attachment = (Array.isArray(attachments) ? attachments : [])
+      .map(asRecord)
+      .find((a) => a.inline !== true && typeof a.attachment_id === "string");
+    const attachmentId =
+      attachment === undefined ? null : String(attachment.attachment_id);
+    const filename =
+      attachment !== undefined && typeof attachment.filename === "string"
+        ? attachment.filename
+        : null;
+
+    // No attachment? The document may be a link in the body instead.
+    const url =
+      attachmentId !== null
+        ? null
+        : ((readString(message, "text") ?? "").match(
+            /https?:\/\/[^\s<>()"'\]]+/,
+          )?.[0] ?? null);
+
+    // AgentMail's inbox_id is the address itself ("still-true@agentmail.to"),
+    // so which header carries it tells forward from cc with no extra config.
+    const isOurs = (address: string) => address.includes(inboxId);
+    const mode =
+      !readStrings(message, "to").some(isOurs) &&
+      readStrings(message, "cc").some(isOurs)
+        ? "cc"
+        : "forward";
+
     const threadRowId = await ctx.db.insert("threads", {
       documentId: null,
-      fromEmail: args.fromEmail,
-      messageId: args.messageId,
-      threadId: args.threadId,
-      mode: args.mode,
+      // Real AgentMail messages carry a scalar `from` ("Name <addr>"), not
+      // the `from_` array the docs example shows. Checked against a live
+      // message rather than the docs.
+      fromEmail: readString(message, "from") ?? "",
+      messageId,
+      threadId,
+      mode,
       receivedAt: Date.now(),
       repliedAt: null,
     });
 
     // Mail with neither an attachment nor a link is still recorded — P3 replies
     // to it saying so — but there is nothing to fetch.
-    if (args.attachmentId === null && args.url === null) return null;
+    if (attachmentId === null && url === null) return null;
 
     await ctx.scheduler.runAfter(0, internal.mail.ingest, {
       threadRowId,
-      inboxId: args.inboxId,
-      messageId: args.messageId,
-      attachmentId: args.attachmentId,
-      url: args.url,
-      title: args.title,
+      inboxId,
+      messageId,
+      attachmentId,
+      url,
+      title: filename ?? readString(message, "subject") ?? "(no subject)",
     });
     return null;
   },
