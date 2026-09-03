@@ -10,6 +10,9 @@
 
 import type * as documents from "../documents.js";
 import type * as env from "../env.js";
+import type * as http from "../http.js";
+import type * as lines from "../lines.js";
+import type * as mail from "../mail.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +23,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   env: typeof env;
+  http: typeof http;
+  lines: typeof lines;
+  mail: typeof mail;
 }>;
 
 /**
@@ -50,4 +56,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   staticHosting: import("@convex-dev/static-hosting/_generated/component.js").ComponentApi<"staticHosting">;
+  agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
 };

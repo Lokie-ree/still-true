@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "convex dev --start \"npx vite\"",
     "typecheck": "tsc -b",
+    "test": "node --experimental-strip-types --test convex/*.test.ts",
     "build": "npm run typecheck && vite build",
     "lint": "npm run typecheck && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "npx @convex-dev/static-hosting deploy"
   },
   "dependencies": {
+    "@agentmail/convex": "^0.1.0",
     "@convex-dev/static-hosting": "^0.2.1",
     "convex": "^1.44.0",
+    "convex-helpers": "^0.1.123",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
