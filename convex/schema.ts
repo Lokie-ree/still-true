@@ -52,7 +52,23 @@ export default defineSchema({
     lineCount: v.number(),
     fetchedAt: v.number(),
     lastCheckedAt: v.union(v.number(), v.null()),
-  }).index("by_url", ["url"]),
+    // Whether this document belongs to the PUBLIC corpus — the board a
+    // stranger sees. Set once at insert from "did a person email this in?":
+    // `mail:probe` seeds the corpus, inbound mail never does.
+    //
+    // The plan's one-line version of this was "filter to url !== null", and
+    // the development database falsified it: a mailed LINK carries no
+    // attachment, so `title` falls back to the sender's subject and a row
+    // reading `Fwd: please read this before I sign` has a non-null url. The
+    // sender's own words, on a public board, is the exact leak the filter
+    // was for. Provenance is the thing being asked about, so store it.
+    //
+    // Optional so the rows that predate the field read as private without a
+    // backfill — the safe direction for a field that gates disclosure.
+    isPublic: v.optional(v.boolean()),
+  })
+    .index("by_url", ["url"])
+    .index("by_isPublic", ["isPublic"]),
 
   // One answer to one predeclared question about one document.
   //

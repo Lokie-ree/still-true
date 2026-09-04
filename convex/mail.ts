@@ -311,6 +311,12 @@ export const attach = internalMutation({
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: null,
+        // The probe seeds the public corpus; inbound mail never does. Set once,
+        // here, and deliberately NOT re-derived on the existing-row path below:
+        // a stranger emailing a URL that is already on the board must not be
+        // able to pull it off the board, and a public document must not become
+        // private mid-demo because somebody forwarded it.
+        isPublic: args.threadRowId === null,
       });
     } else {
       documentId = existing._id;

@@ -15,8 +15,18 @@ export const recent = query({
   args: {},
   returns: v.array(schema.doc("documents")),
   handler: async (ctx) => {
-    // ponytail: bounded take, not collect. Paginate when the list outgrows it.
-    return await ctx.db.query("documents").order("desc").take(50);
+    // The PUBLIC corpus only. This query is unauthenticated and the app has no
+    // auth foundation, so anything it returns is returned to the open
+    // internet — and a forwarded document is somebody's lease, titled with
+    // their own subject line. The index is the gate rather than a `.filter()`,
+    // so a private row is never read at all.
+    //
+    // ponytail: bounded take, not collect. Paginate when the corpus outgrows it.
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_isPublic", (q) => q.eq("isPublic", true))
+      .order("desc")
+      .take(50);
   },
 });
 
@@ -24,6 +34,13 @@ export const findingsFor = query({
   args: { documentId: v.id("documents") },
   returns: v.array(schema.doc("findings")),
   handler: async (ctx, args) => {
+    // `documentId` is client-supplied, so the same gate has to stand here. A
+    // finding carries a verbatim quote out of the document; leaving this
+    // ungated would publish the contents of a private lease to anyone holding
+    // an id, with the board merely declining to name it.
+    const document = await ctx.db.get("documents", args.documentId);
+    if (document?.isPublic !== true) return [];
+
     return await ctx.db
       .query("findings")
       .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
