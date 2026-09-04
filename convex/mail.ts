@@ -7,6 +7,7 @@ import type { MutationCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
+import { documentUrl } from "./link";
 import { toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import { failureBody, noDocumentBody, replyBody } from "./reply";
@@ -205,13 +206,12 @@ export const received = internalMutation({
         ? attachment.filename
         : null;
 
-    // No attachment? The document may be a link in the body instead.
+    // No attachment? The document may be a link in the body instead — and the
+    // sender's mail client may have rewritten that link on the way out.
     const url =
       attachmentId !== null
         ? null
-        : ((readString(message, "text") ?? "").match(
-            /https?:\/\/[^\s<>()"'\]]+/,
-          )?.[0] ?? null);
+        : documentUrl(readString(message, "text") ?? "");
 
     // AgentMail's inbox_id is the address itself ("still-true@agentmail.to"),
     // so which header carries it tells forward from cc with no extra config.
