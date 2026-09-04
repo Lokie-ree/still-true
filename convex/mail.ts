@@ -1,4 +1,4 @@
-import { AgentMail } from "@agentmail/convex";
+import { AgentMail, toSendPayload } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -16,9 +16,10 @@ import { documentKind, extractedFinding } from "./schema";
 // from outside is the component's verified webhook, because a document row is
 // the subject of a claim and nothing on the open internet gets to assert one.
 //
-// The component owns Svix verification, `event_id` dedupe, the workpool that
-// dispatches this callback, and — from P3 — durable sending with retries. It
-// keeps all of that in its own sandboxed tables.
+// The component owns Svix verification, `event_id` dedupe, and the workpool
+// that dispatches this callback, all in its own sandboxed tables. It does NOT
+// send: on Convex 1.44 its sandbox cannot see AGENTMAIL_API_KEY, so outbound
+// is `send` below. See the note there for the proof.
 type OnMessageReceived = NonNullable<
   NonNullable<ConstructorParameters<typeof AgentMail>[1]>["onMessageReceived"]
 >;
@@ -49,14 +50,13 @@ const readStrings = (value: unknown, key: string): string[] => {
   return Array.isArray(field) ? field.filter((x) => typeof x === "string") : [];
 };
 
-// One place that sends, so "we replied" and "we recorded that we replied" can
-// never disagree: the enqueue and the `repliedAt` stamp land in the same
-// transaction. The component owns the actual delivery and its retries, so what
-// commits here is the intent, and `repliedAt` is the guard against replying to
-// the same message twice.
+// One place that starts a reply, so nothing anywhere else has to know how mail
+// leaves. Scheduling is part of this transaction, so a reply cannot be queued
+// for findings that did not commit, and findings cannot commit with no reply
+// behind them — without the send itself being able to roll them back.
 //
 // A row with no `inboxId` predates that field (the P1 test rows) and is not
-// replyable; a row already stamped is left alone.
+// replyable; a row already sent is left alone.
 async function reply(
   ctx: MutationCtx,
   threadRowId: Id<"threads">,
@@ -66,15 +66,104 @@ async function reply(
   if (thread === null) return;
   if (thread.inboxId === undefined || thread.repliedAt !== null) return;
 
-  await agentmail.replyToMessage(ctx, thread.inboxId, thread.messageId, {
-    ...body,
+  await ctx.scheduler.runAfter(0, internal.mail.send, {
+    threadRowId,
+    inboxId: thread.inboxId,
+    parentMessageId: thread.messageId,
     // forward → back to the sender. cc → into the thread, in front of everyone
     // already arguing about it. P5 is where that second door gets exercised;
     // hardcoding `false` here would simply be wrong for a row already marked.
     replyAll: thread.mode === "cc",
+    ...body,
   });
-  await ctx.db.patch("threads", threadRowId, { repliedAt: Date.now() });
 }
+
+// Outbound mail, sent by us rather than by the component — the one place this
+// project does not use `@agentmail/convex` for what it is for.
+//
+// `@agentmail/convex` 0.1.0 reads `process.env.AGENTMAIL_API_KEY` inside its
+// own sandbox (component/utils.ts), and Convex 1.44 populates a component's
+// environment only from what the parent binds through
+// `app.use(child, { env })`. The component declares no env vars, so there is
+// nothing to bind and the key is invisible to it. Proven rather than reasoned:
+// at 19:31:51 on 2026-09-04, on one deployment, `attachmentUrl` below fetched a
+// PDF with `requireEnv("AGENTMAIL_API_KEY")` while the component threw
+// "AGENTMAIL_API_KEY is not set on this Convex deployment" — same key, same
+// second, one side sees it and the other does not.
+//
+// 0.1.0 is the latest published version and `convex env set` has no component
+// flag, so this is not a configuration mistake to correct. The component keeps
+// the half it does well and we could not do better: Svix verification, event
+// dedupe and the dispatch workpool. What we take back is one HTTP POST.
+//
+// ponytail: no retry. The component gave five attempts over a 30s backoff; a
+// failure here writes to `threads.error` and is visible, which is the property
+// that actually matters. Add `ctx.scheduler.runAfter` with a backoff if real
+// sends start failing transiently.
+export const send = internalAction({
+  args: {
+    threadRowId: v.id("threads"),
+    inboxId: v.string(),
+    parentMessageId: v.string(),
+    replyAll: v.boolean(),
+    text: v.string(),
+    html: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const path = [args.inboxId, "messages", args.parentMessageId]
+      .map(encodeURIComponent)
+      .join("/");
+    const res = await fetch(
+      `https://api.agentmail.to/v0/inboxes/${path}/${args.replyAll ? "reply-all" : "reply"}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${requireEnv("AGENTMAIL_API_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        // The component's own converter, which owns the camelCase → snake_case
+        // mapping and is unit-tested upstream. Borrowing it is cheaper than
+        // re-deriving the wire format and cannot drift from it.
+        body: JSON.stringify(
+          toSendPayload({ text: args.text, html: args.html }),
+        ),
+      },
+    );
+
+    const detail = res.ok ? null : `AgentMail reply ${res.status}: ${await res.text()}`;
+    await ctx.runMutation(internal.mail.recordSend, {
+      threadRowId: args.threadRowId,
+      error: detail,
+    });
+    // Rethrow so a failed send is a failed function in the logs, not a silent
+    // row nobody reads. The record above has already landed.
+    if (detail !== null) throw new Error(detail);
+    return null;
+  },
+});
+
+// `repliedAt` means SENT. It meant "enqueued" for exactly one day, and on that
+// day it recorded a reply for a message AgentMail never accepted — the row said
+// replied while the sender's inbox stayed empty. A timestamp that can be true
+// while the thing it names did not happen is worse than no timestamp.
+export const recordSend = internalMutation({
+  args: {
+    threadRowId: v.id("threads"),
+    error: v.union(v.string(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(
+      "threads",
+      args.threadRowId,
+      args.error === null
+        ? { repliedAt: Date.now() }
+        : { error: args.error },
+    );
+    return null;
+  },
+});
 
 // Record the message, then start reading whatever it carried.
 //

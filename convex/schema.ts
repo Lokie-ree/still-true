@@ -115,10 +115,10 @@ export default defineSchema({
     // forward → reply to the sender. cc → reply into the thread.
     mode: v.union(v.literal("forward"), v.literal("cc")),
     receivedAt: v.number(),
-    // Set when the reply is ENQUEUED, not when it is delivered — the component
-    // owns durable sending and tracks real status in its own tables. What this
-    // guards is replying twice, which is why it is stamped in the same
-    // transaction as the enqueue.
+    // Set when AgentMail ACCEPTED the reply, by the send action, never by the
+    // mutation that queued it. It meant "enqueued" for one day and recorded a
+    // reply for a message that was never sent; a timestamp that can be true
+    // while the thing it names did not happen is worse than no timestamp.
     repliedAt: v.union(v.number(), v.null()),
     // The inbox the mail actually arrived at, so the reply goes back out the
     // same door. Optional only because the P1 test rows predate it; a row
