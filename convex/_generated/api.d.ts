@@ -15,6 +15,7 @@ import type * as http from "../http.js";
 import type * as lines from "../lines.js";
 import type * as mail from "../mail.js";
 import type * as questions from "../questions.js";
+import type * as reply from "../reply.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   lines: typeof lines;
   mail: typeof mail;
   questions: typeof questions;
+  reply: typeof reply;
 }>;
 
 /**

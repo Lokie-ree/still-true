@@ -4,6 +4,11 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes. CC it on a thread and the same cited reply lands in the thread.
 - **Live app:** https://impressive-marten-163.convex.site
+- **Built as of 2026-09-04:** the inbox, the parser, the extractor and its grounding
+  guarantee, and the cited reply — verified end to end on the development deployment
+  (`charming-kookabura-768`) by a real forwarded lease answered in 18.8 s. **The watch and
+  the CC reply described above are NOT built** (P4, P5). Production runs P0-P2 only: it
+  ingests and extracts but has no send function, so it cannot reply, and its board is empty.
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -12,7 +17,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-03T17:00:00Z
+- **Last updated:** 2026-09-04T20:20:00Z
 
 ## Log
 
@@ -505,3 +510,212 @@ a decision for P6, made deliberately, not discovered in a demo.
 The mail path has not run since this work changed `mail.attach`'s signature; all three gate
 documents went through `mail:probe`, which runs a document by URL with no email involved.
 P3 opens by forwarding one real email.
+
+## 2026-09-04 (P3) — the reply, and a component that could not send
+
+P3 opened by forwarding one real email, as the P2 entry said it would. It ended with a
+cited reply in a Gmail inbox, and with the discovery that the first one never left the
+building.
+
+**A forwarded lease, end to end, 18.8 seconds.** The Livonia Housing Authority lease as a
+219 KB attachment from Gmail to the AgentMail address, back as a reply carrying six answers
+and one refusal. The threshold was predeclared in the plan at 45 seconds — under it the demo
+runs live, over it the demo forwards early and cuts back — so **the demo runs live**. Every
+finding matched the `mail:probe` run against the same document by URL, which is the control:
+the attachment path through AgentMail's signed URL and the direct-scrape path produce the
+same document.
+
+The refusal landed in a real inbox, which is the thing this project exists to do:
+*"How many days after move-out must the deposit be returned? Searched all 418 lines. This
+document does not state it."* And no `watch` offer appeared, correctly — an attachment has
+no URL, so there is nothing for P4 to re-fetch, and offering it would be a promise the
+system cannot keep.
+
+### The first forward looked green and sent nothing
+
+`repliedAt` was stamped, `error` was null, the document and its findings were published, and
+the sender's inbox stayed empty. **`@agentmail/convex` 0.1.0 cannot send on Convex 1.44.**
+Its `agentmailFetch` reads `process.env.AGENTMAIL_API_KEY` inside the component sandbox, and
+Convex 1.44 populates a component's environment only from what the parent binds through
+`app.use(child, { env })`. The component declares no env vars, so there is nothing to bind
+and the key is invisible to it.
+
+Proven rather than argued, on one deployment in one second:
+
+- `19:31:51` — `attachmentUrl()`, our code, `requireEnv("AGENTMAIL_API_KEY")`: fetched the
+  PDF, 418 lines parsed.
+- `19:31:51` — `agentmailFetch()`, the component, `process.env` with the same name:
+  *"AGENTMAIL_API_KEY is not set on this Convex deployment."*
+
+0.1.0 is the latest published version, `convex env set` has no component flag, and vendoring
+the component to add one line to its config would mean owning roughly 400 lines of someone
+else's code for the rest of the build. So the component keeps the half we could not do
+better ourselves — Svix verification, `event_id` dedupe, the dispatch workpool, all working
+and all untouched — and outbound became one HTTP POST of ours, reusing the component's own
+exported `toSendPayload` so the wire format cannot drift from it. **Inbound was never
+affected**, because the webhook secret is read by the client, on our side.
+
+This is the 09-01 lesson with the sign reversed. Reaching for the component was right, and
+it is still right for three of the four things it does; declining the fourth on evidence is
+the same discipline as adopting the other three.
+
+**`repliedAt` now means SENT.** It meant *enqueued* for exactly one day, and on that day it
+recorded a reply for a message AgentMail never accepted. It is written by the send action
+after the API returns, never by the mutation that queued it, and the proof is a gap: it used
+to equal the document's creation timestamp to the millisecond because both were one
+transaction, and it is now 580 ms later because that is a round trip.
+
+### Three replies, and the one that says nothing went in first
+
+`convex/reply.ts` builds text and HTML from pure functions, so the wording is checked by
+`npm test` rather than by forwarding a document and squinting at Gmail. Three outcomes get a
+reply: the published findings; a failed ingest; and mail carrying no document at all.
+
+The failure path is **M1 from the readiness audit, brought forward from P6**. Every throw in
+`readAndPublish` used to be silent to everyone — the thread row sat at `repliedAt: null`
+forever, scheduled actions do not retry, and the sender waited on a reply that was never
+coming. The sender now gets a plain apology naming nothing about the document, because we
+did not read it; the reason goes on the row, where it cannot leak a signed URL into
+somebody's inbox.
+
+**The plan's mockup contained a claim the system cannot generate.** Its refusal read *"it
+defers to Michigan statute without naming one"* — a clause written by hand for the artifact.
+A `not_stated` finding stores a question key and a line count and nothing else, so
+publishing that would be this product asserting something it did not read, which is the one
+thing it exists not to do. The generated refusal claims only what the system did: searched N
+lines, did not find it. A test guards the class rather than the sentence.
+
+### H1 closed, and not the way the plan said
+
+The plan's one-line fix for the public read surface was to filter both queries to
+`url !== null`. The development database falsified it before it was written: a row titled
+**`Fwd: please read this before I sign`** with a non-null url, because a mailed *link*
+carries no attachment and the title falls back to the sender's subject line. The filter
+would have kept the sender's own words on an unauthenticated board.
+
+So the question the board is actually asking — did a person email this in, or did we seed it
+— is stored rather than inferred. `mail:probe` sets `isPublic`, inbound mail does not, and it
+is set once at insert so a stranger forwarding a URL already on the board cannot pull it off,
+and a seeded document cannot go private mid-demo. `findingsFor` takes the same gate, because
+`documentId` is client-supplied and a finding carries a verbatim quote. Verified from outside
+the project: `documents.recent` returned five rows before and none after, and the real
+forwarded lease landed with `isPublic: false`.
+
+`Auth` still reads `none`, and that is still deliberate.
+
+### The receipt became the clause, and the first attempt failed silently
+
+The stored quote was a whole line, and reflow correctly joins a hard-wrapped PDF paragraph
+into one — so the Livonia late-fee receipt ran **588 characters with the fee buried 300 in**,
+behind a paragraph about third-party payments. Complete, and unreadable. The P2 gate could
+not see this: it asked whether a quote *supports* its answer, never whether a person could
+read it.
+
+**First attempt: ask the model for character offsets.** Clean in principle, and on a real
+gate run the whole line came back for every finding. Offsets require counting characters and
+a model sees tokens. A contract that silently never fires is worse than no contract.
+
+**Second: the model proposes the clause as text, and the document decides.** `excerpt`
+publishes the proposal only if it is found verbatim inside the cited line, and publishes the
+slice taken out of the line rather than the string the model sent — `lineAt`'s rule one level
+down. An invented clause is not in the line and cannot be found in it, so fabrication stays
+structurally impossible; a paraphrase, however true, is refused for the same reason. The
+proposal is snapped outward to unit boundaries, so a bare *"$25.00"* publishes its whole
+sentence and no arbitrary minimum length has to be invented.
+
+That run shortened everything except the two findings on the one line carrying
+`5<sup>th</sup>` and `<u>$25.00</u>` — a model copying a clause verbatim silently drops the
+converter's markup, so the search failed on exactly the line whose receipt was worst.
+Stripping moved from render time into `toLines`, before numbering, so the prompt, the
+citation, the stored quote, the receipt and P4's re-check all read one substrate. It also
+unblocked a reflow it had been suppressing, since a line ending `</u>` fails the
+ends-mid-clause test.
+
+Three more classes of converter noise followed, all found by reading real output rather than
+fixtures: markdown links (keep the text, drop the href — AT&T's cancellation answer *is*
+`att.com/howtocancel`), bare URLs (by then, an anchor with no readable text to keep — every
+Summary of Benefits quote carried two mid-clause), HTML entities (`&#x27;` for an
+apostrophe), and table pipes. The last one produced the deepest fix: a markdown row carries
+no full stops between its cells, so snapping outward by sentence alone walked back across
+every cell to the start of the row. **A cell boundary is as real a break as a full stop**,
+and `unitStarts` now counts one. The safety property is unchanged and asserted directly —
+`excerpt` only ever snaps outward from the model's proposal, so no boundary rule can cut away
+the text that carries the answer.
+
+Measured on real documents rather than fixtures:
+
+```
+Livonia L3a/L3b  588 -> 100      L4a  472 -> 121      L5  678 -> 234
+SBC     U1a/U1b  ~250 -> 147     U2  ~290 -> 70       U4  ~700 -> 101
+```
+
+The Livonia late-fee receipt now reads exactly what the plan's mockup promised — *"Any
+monthly rent payments made after the 5th day of each month will be subject to a $25.00 late
+fee."* — generated rather than hand-written. **All 21 gate citations were reopened by hand
+after the change and all 21 still hold.** AT&T's `T2b` relevance drift fixed itself along the
+way: it cited OneConnect auto-billing and now cites *"See att.com/howtocancel for details on
+how to cancel."*
+
+### The universal checklist ran for the first time, and the refusals held
+
+Every finding in the database carried an `L` or a `T` key. Both `notice` and `other` route to
+`universal`, so the catch-all for whatever a stranger forwards had **never run once**.
+Taxonomy, corpus categories and all three decision rules were fixed in `052978d`, a commit
+that precedes the first fetch, because the retracted `② GO` in `docs/probe.md` was called on
+codes invented after seeing results.
+
+Three documents that are neither leases nor terms pages — a condo rulebook (693 lines), a
+completed Summary of Benefits and Coverage (173), and a city employee handbook (606). All
+three fetched first try and all three classified `other`, so none needed the declared
+classifier exclusion.
+
+`GOOD 9 · NARROW 6 · WRONG 0 · REFUSED-OK 7 · REFUSED-FALSE 0 · N/A 2`
+
+**Rule ① did not fire.** Zero unsupported answers, so the grounding invariant holds on the
+diffuse questions too — now **36 of 36** answered findings carried by their own quote across
+six documents.
+
+**Rule ② did not fire, and this is the result worth keeping.** Seven refusals, zero false,
+each verified by searching the source PDF by hand rather than by trusting the extractor. This
+is the first time refusals were checked **as a class** — the P2 gate could not, because there
+is no citation to open, and it is the half of the product nothing else ships. The one most
+likely to be false was not: a condo rulebook that never grants its own Board the power to
+change its rules, with `revise`, `reserves the right`, `may adopt` and `changed` absent from
+all 693 lines and every `amend` pointing at the externally recorded Declaration.
+
+**Rule ③ fired: 40% narrow against a 33% threshold**, roughly twice the 19% on lease and ToS.
+Predicted in the predeclaration and for the stated reason — *"What does this require you to
+do?"* has no single sentence in a document that requires eleven things, so the model cites one
+true requirement out of many. On the condo rulebook it picked the leasing-notification clause
+out of a book covering pets, parking, noise, trash and architectural approval. Supported,
+checkable, and not what a reader most needed.
+
+`convex/questions.ts` forbids tuning a list to its own result, so this cannot be fixed by
+editing the questions, and ③ is a downgrade rather than a stop precisely so the finding gets
+published instead of optimised away. **The catch-all ships with its narrow-citation rate
+stated**, here and in the submission.
+
+### What P3 did not do
+
+**None of this is on production.** `function-spec --prod` lists six functions — the P0 read
+surface plus P1 and P2 — and no `mail:send`, so **production physically cannot reply**. The
+board is empty, the AgentMail webhook still points at development, and every measurement
+above was taken against `charming-kookabura-768`. That is the safe order and it is also the
+open item: P3's exit test names the *production* address, and it is not met until a stranger's
+forward is answered there.
+
+The web receipt page is **deliberately deferred**. Designing the interface before the features
+it displays are finished means designing it twice, so it moves to a later stage with the
+landing page it shares a codebase with.
+
+Two known defects left standing, both already in the readiness audit and neither worth fixing
+before the watch exists. Attachment documents never dedupe, because `by_url` is skipped when
+`url` is null — the same lease forwarded twice costs two Firecrawl parses and four model
+calls. And `documents.recent` orders by `_creationTime` while a re-forward patches
+`fetchedAt`, so a re-read document never resurfaces.
+
+One thing to carry into P4. Stripping the markup unblocked reflow joins, and **line counts
+moved**: Livonia 421 to 418, AT&T 2,059 to 2,007. Every line number recorded before today is
+stale. That is exactly the hazard P4 was already designed against — *a reflow shift makes
+every finding change at once* — arriving early and confirming that the re-locate has to
+search for the stored quote before it trusts a stored index.

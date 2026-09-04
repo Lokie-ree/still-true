@@ -40,6 +40,90 @@ export function lineAt(lines: string[], lineNo: number): string {
   return lineNo >= 1 && lineNo <= lines.length ? lines[lineNo - 1].trim() : "";
 }
 
+// Where a readable unit starts within a line. Offset 0 always begins one.
+//
+// A sentence is one such unit and a TABLE CELL is another. Reflow joins a whole
+// markdown row into a single line, and a row carries no full stops between its
+// cells — so snapping outward by sentence alone walks back across every cell to
+// the start of the row, and a Summary of Benefits receipt opens on two columns
+// of table header nobody asked for. A cell boundary is exactly as real a break
+// as a full stop, so `|` counts as one.
+const unitStarts = (line: string): number[] => {
+  const starts = [0];
+  const boundary = /[.!?]\s+|\s*\|\s*/g;
+  let hit: RegExpExecArray | null;
+  while ((hit = boundary.exec(line)) !== null) {
+    starts.push(hit.index + hit[0].length);
+  }
+  return starts;
+};
+
+// Whitespace is the one difference tolerated between what the model proposes
+// and what the document says: a PDF leaves double spaces everywhere and the
+// model normalises them. Nothing else is tolerated.
+const flat = (s: string) => s.replace(/\s+/g, " ").trim();
+
+// Whitespace or a table delimiter at either end of a published excerpt.
+const EDGE = /^[|\s]+|[|\s]+$/g;
+
+// The clause inside the line, located in the document and snapped outward to
+// whole sentences.
+//
+// A line is the unit of citation, and reflow correctly joins a hard-wrapped PDF
+// paragraph into one — so the receipt for the Livonia late fee ran 588
+// characters with the fee itself buried 300 in, behind a paragraph about
+// third-party payments. Complete, and unreadable, which fails the four-second
+// standard this product is built on.
+//
+// FIRST ATTEMPT, and why it is not what this does. The model was asked for
+// character offsets and the whole line came back every time on a real gate run:
+// offsets require counting characters, and a model sees tokens. Asking for a
+// thing models are bad at produced a contract that silently never fired.
+//
+// So the model proposes the clause as TEXT — which is the thing it is good at —
+// and the document decides. The proposal is published only if it is found
+// verbatim inside the cited line, and what gets published is the slice taken
+// out of the line, never the string the model sent. That is exactly the rule
+// `lineAt` applies one level up: fabrication stays structurally impossible,
+// because invented text is not in the line and cannot be found in it.
+//
+// Snapping outward to sentence boundaries is the guard against a technically
+// true fragment: proposing "$25.00" publishes the sentence containing it, so no
+// arbitrary minimum length has to be invented.
+//
+// Anything unmatched, empty or missing falls back to the whole line — where
+// this shipped before, and still correct, because the line-level guarantee does
+// not depend on any of this.
+//
+// ponytail: sentence splitting is `[.!?]` + whitespace, so "U.S. Department"
+// starts a sentence early. A receipt, not a parse — worst case it opens a few
+// words late. Add an abbreviation list only if a real citation is ever cut
+// badly enough to mislead.
+export function excerpt(line: string, proposed: unknown): string {
+  const whole = flat(line);
+  if (typeof proposed !== "string") return whole;
+
+  const needle = flat(proposed);
+  if (needle === "") return whole;
+
+  const from = whole.indexOf(needle);
+  if (from === -1) return whole;
+
+  const starts = unitStarts(whole);
+  const start = starts.filter((at) => at <= from).pop() ?? 0;
+  const end = starts.find((at) => at >= from + needle.length);
+
+  // Trim table delimiters off the EDGES of the slice as well as whitespace.
+  // `toLines` already drops the pipes that bound a whole row, but a sentence
+  // inside a multi-cell row begins right after an interior `|`, so the excerpt
+  // opens on a delimiter the reader never needed — the real SBC receipt read
+  // "| This plan will pay some or all of the costs". Interior pipes survive:
+  // they are true cell boundaries, and welding the cells would invent a
+  // sentence.
+  const sliced = whole.slice(start, end ?? whole.length).replace(EDGE, "");
+  return sliced === "" ? whole : sliced;
+}
+
 // The adjacent line is usually blank — markdown from a PDF is mostly blank
 // lines — and a receipt showing two empty strings around the quote proves
 // nothing to the person checking it. Walk to the nearest line with text.
@@ -90,6 +174,14 @@ const SYSTEM = [
   "a wrong citation is published as a quote.",
   "Never copy document text into `answer`. The quote is taken from the line you cite,",
   "not from anything you write.",
+  "",
+  "Reflow joins a hard-wrapped PDF paragraph into a single line, so the line you cite",
+  "may be far longer than the clause that answers the question. In `support_quote`, copy",
+  "the clause itself VERBATIM from that line — the sentence a reader needs, character for",
+  "character, not a paraphrase and not a summary. It is searched for inside the cited",
+  "line and only published if it is found there, then widened to whole sentences, so a",
+  "rough edge is fine and an invented word discards it. Use \"\" if the whole line is the",
+  "clause. This is the one field where you copy document text.",
 ].join("\n");
 
 async function respond(
@@ -212,8 +304,18 @@ export async function extract(
               // refusal value: it is out of range, so verify() already rejects
               // it by the rule it applies to every other bad index.
               support_line: { type: "integer" },
+              // The clause within that line, copied verbatim. Published only
+              // if `excerpt` finds it inside the line, so this field can
+              // shorten a receipt but can never invent one.
+              support_quote: { type: "string" },
             },
-            required: ["question_key", "verdict", "answer", "support_line"],
+            required: [
+              "question_key",
+              "verdict",
+              "answer",
+              "support_line",
+              "support_quote",
+            ],
             additionalProperties: false,
           },
         },
@@ -274,8 +376,13 @@ export function verify(
     const lineNo = claim.support_line;
     if (typeof lineNo !== "number" || !Number.isInteger(lineNo)) return refused;
 
-    const quote = lineAt(lines, lineNo);
-    if (quote === "") return refused;
+    if (lineAt(lines, lineNo) === "") return refused;
+
+    // The raw line, not `lineAt`'s trimmed one: the offsets are into the text
+    // the model was shown, and `numbered` shows each line untrimmed. `excerpt`
+    // trims what it returns, so the stored quote stays a substring of the
+    // trimmed line and P4's re-locate can search for it unchanged.
+    const quote = excerpt(lines[lineNo - 1], claim.support_quote);
 
     return {
       questionKey: question.key,

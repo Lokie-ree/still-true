@@ -7,7 +7,7 @@
 // sentence in front of a reader, and the assertion is that it cannot.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { verify } from "./extract.ts";
+import { excerpt, verify } from "./extract.ts";
 import type { Question } from "./questions.ts";
 
 const QUESTIONS: Question[] = [{ key: "L1", ask: "Deposit return window?" }];
@@ -126,4 +126,133 @@ void test("context at the edges of the document is empty, not undefined", () => 
   assert.ok(finding.verdict === "answered");
   assert.equal(finding.contextBefore, "");
   assert.equal(finding.contextAfter, "");
+});
+
+// ── the excerpt ─────────────────────────────────────────────────────────────
+//
+// Reflow correctly joins a hard-wrapped PDF paragraph into one line, so the
+// unit of citation grew to 588 characters on the real Livonia lease with the
+// answer buried 300 in. This is that line, verbatim, converter markup included.
+//
+// The model proposes the clause as text; the DOCUMENT decides whether it gets
+// published. These are the ways a proposal can be wrong, and the assertion is
+// that none of them can put words in front of a reader.
+const LINE_42 =
+  "Department of Human Services (DHS).  The acceptance of such third party " +
+  "payments by the Management is neither a waiver of nor modification of the " +
+  "monthly amount of rent nor the Residents obligation to pay rent due and " +
+  "payable in advance on the FIRST of each month even if Management accepts " +
+  "such third party payments subsequent to the actual due date.  Any monthly " +
+  "rent payments made after the 5<sup>th</sup> day of each month will be " +
+  "subject to a <u>$25.00</u> late fee.  A failure to pay the <u>$25.00</u> " +
+  "late fee shall constitute just cause for the termination of the Lease " +
+  "Agreement.";
+
+void test("a verbatim clause is found and published as the receipt", () => {
+  const got = excerpt(
+    LINE_42,
+    "Any monthly rent payments made after the 5<sup>th</sup> day of each month will be subject to a <u>$25.00</u> late fee.",
+  );
+  assert.match(got, /^Any monthly rent payments made after the 5/);
+  assert.match(got, /late fee\.$/);
+  assert.doesNotMatch(got, /Department of Human Services/);
+  assert.ok(got.length < LINE_42.length / 3);
+});
+
+void test("whitespace is the only difference tolerated", () => {
+  // A PDF leaves double spaces behind and the model normalises them. That must
+  // not cost a good excerpt — but nothing else is forgiven.
+  const got = excerpt(LINE_42, "actual due date. Any monthly rent payments");
+  assert.match(got, /Any monthly rent payments/);
+  assert.ok(got.length < LINE_42.length);
+});
+
+void test("an invented clause is refused and the whole line published", () => {
+  // The grounding guarantee at the excerpt level. Every word here is plausible
+  // and none of them are in the document.
+  const invented = "Tenant shall pay a $50.00 late fee after the tenth day.";
+  assert.equal(excerpt(LINE_42, invented), flatten(LINE_42));
+});
+
+void test("a paraphrase is refused, however true", () => {
+  // True of the document, absent from it. The receipt is the document's words.
+  assert.equal(
+    excerpt(LINE_42, "rent is late after the fifth and costs $25"),
+    flatten(LINE_42),
+  );
+});
+
+void test("a technically true fragment is widened to its sentence", () => {
+  // "$25.00" is really in the line. On its own it is not a receipt, so the
+  // sentence containing it is published and no minimum length is invented.
+  const got = excerpt(LINE_42, "<u>$25.00</u> late fee");
+  assert.match(got, /^Any monthly rent payments/);
+  assert.match(got, /late fee\.$/);
+});
+
+void test("whatever is published is always text out of the line", () => {
+  for (const proposed of [
+    "Any monthly rent",
+    "not in this document at all",
+    "",
+    undefined,
+    42,
+    "Agreement.",
+  ]) {
+    assert.ok(flatten(LINE_42).includes(excerpt(LINE_42, proposed)));
+  }
+});
+
+void test("a missing or unusable proposal falls back to the whole line", () => {
+  // Where this shipped before the excerpt existed, and still correct: the
+  // line-level guarantee does not depend on any of it.
+  const whole = flatten(LINE_42);
+  assert.equal(excerpt(LINE_42, undefined), whole);
+  assert.equal(excerpt(LINE_42, ""), whole);
+  assert.equal(excerpt(LINE_42, "   "), whole);
+  assert.equal(excerpt(LINE_42, 42), whole);
+  assert.equal(excerpt(LINE_42, null), whole);
+});
+
+// The published quote has its whitespace collapsed, so comparisons against the
+// fixture have to collapse it too.
+function flatten(s: string) {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+void test("an excerpt never opens or closes on a table delimiter", () => {
+  // A sentence inside a multi-cell row begins right after an interior pipe.
+  // The real SBC receipt opened "| This plan will pay some or all of the
+  // costs" — the delimiter is the parser showing through, not the document.
+  const row =
+    "Common Question | Answer | This plan will pay some or all of the costs " +
+    "but only if you have a referral. | Why this matters";
+  const got = excerpt(row, "you have a referral");
+  assert.doesNotMatch(got, /^\||\|$/);
+  assert.match(got, /^This plan will pay/);
+});
+
+void test("the excerpt always contains the whole proposed clause", () => {
+  // The safety property under every boundary rule: `excerpt` only ever snaps
+  // OUTWARD from what the model proposed, so narrowing to a sentence or a cell
+  // can never cut away the text that carries the answer.
+  const row =
+    "$500 / individual or $1,000 / family | Generally, you must pay all costs. " +
+    "Then the plan begins to pay.";
+  for (const proposed of [
+    "$500 / individual",
+    "Generally, you must pay",
+    "family | Generally, you must pay",
+    "all costs. Then the plan",
+  ]) {
+    assert.ok(
+      excerpt(row, proposed).includes(proposed),
+      `excerpt dropped part of: ${proposed}`,
+    );
+  }
+});
+
+void test("a proposal spanning two cells keeps the boundary between them", () => {
+  const row = "$500 / individual or $1,000 / family | Generally, you must pay all costs.";
+  assert.match(excerpt(row, "family | Generally"), /family \| Generally/);
 });

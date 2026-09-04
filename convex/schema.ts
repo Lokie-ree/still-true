@@ -52,7 +52,23 @@ export default defineSchema({
     lineCount: v.number(),
     fetchedAt: v.number(),
     lastCheckedAt: v.union(v.number(), v.null()),
-  }).index("by_url", ["url"]),
+    // Whether this document belongs to the PUBLIC corpus — the board a
+    // stranger sees. Set once at insert from "did a person email this in?":
+    // `mail:probe` seeds the corpus, inbound mail never does.
+    //
+    // The plan's one-line version of this was "filter to url !== null", and
+    // the development database falsified it: a mailed LINK carries no
+    // attachment, so `title` falls back to the sender's subject and a row
+    // reading `Fwd: please read this before I sign` has a non-null url. The
+    // sender's own words, on a public board, is the exact leak the filter
+    // was for. Provenance is the thing being asked about, so store it.
+    //
+    // Optional so the rows that predate the field read as private without a
+    // backfill — the safe direction for a field that gates disclosure.
+    isPublic: v.optional(v.boolean()),
+  })
+    .index("by_url", ["url"])
+    .index("by_isPublic", ["isPublic"]),
 
   // One answer to one predeclared question about one document.
   //
@@ -99,7 +115,22 @@ export default defineSchema({
     // forward → reply to the sender. cc → reply into the thread.
     mode: v.union(v.literal("forward"), v.literal("cc")),
     receivedAt: v.number(),
+    // Set when AgentMail ACCEPTED the reply, by the send action, never by the
+    // mutation that queued it. It meant "enqueued" for one day and recorded a
+    // reply for a message that was never sent; a timestamp that can be true
+    // while the thing it names did not happen is worse than no timestamp.
     repliedAt: v.union(v.number(), v.null()),
+    // The inbox the mail actually arrived at, so the reply goes back out the
+    // same door. Optional only because the P1 test rows predate it; a row
+    // without it is not replyable, which is the safe direction.
+    inboxId: v.optional(v.string()),
+    // M1: `readAndPublish` throws on a Firecrawl non-200, the 6,000-char guard
+    // or a model refusal, and scheduled actions do not retry. Without this the
+    // row sat at `repliedAt: null` forever and the failure was silent to
+    // everyone, including us. The sender gets a plain apology; the reason
+    // stays here, because it is our stack's error text and can carry a signed
+    // URL.
+    error: v.optional(v.string()),
   })
     .index("by_messageId", ["messageId"])
     .index("by_threadId", ["threadId"])

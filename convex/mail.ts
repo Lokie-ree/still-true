@@ -1,22 +1,25 @@
-import { AgentMail } from "@agentmail/convex";
+import { AgentMail, toSendPayload } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
+import { failureBody, noDocumentBody, replyBody } from "./reply";
 import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
 // from outside is the component's verified webhook, because a document row is
 // the subject of a claim and nothing on the open internet gets to assert one.
 //
-// The component owns Svix verification, `event_id` dedupe, the workpool that
-// dispatches this callback, and — from P3 — durable sending with retries. It
-// keeps all of that in its own sandboxed tables.
+// The component owns Svix verification, `event_id` dedupe, and the workpool
+// that dispatches this callback, all in its own sandboxed tables. It does NOT
+// send: on Convex 1.44 its sandbox cannot see AGENTMAIL_API_KEY, so outbound
+// is `send` below. See the note there for the proof.
 type OnMessageReceived = NonNullable<
   NonNullable<ConstructorParameters<typeof AgentMail>[1]>["onMessageReceived"]
 >;
@@ -46,6 +49,121 @@ const readStrings = (value: unknown, key: string): string[] => {
   const field = asRecord(value)[key];
   return Array.isArray(field) ? field.filter((x) => typeof x === "string") : [];
 };
+
+// One place that starts a reply, so nothing anywhere else has to know how mail
+// leaves. Scheduling is part of this transaction, so a reply cannot be queued
+// for findings that did not commit, and findings cannot commit with no reply
+// behind them — without the send itself being able to roll them back.
+//
+// A row with no `inboxId` predates that field (the P1 test rows) and is not
+// replyable; a row already sent is left alone.
+async function reply(
+  ctx: MutationCtx,
+  threadRowId: Id<"threads">,
+  body: { text: string; html: string },
+): Promise<void> {
+  const thread = await ctx.db.get("threads", threadRowId);
+  if (thread === null) return;
+  if (thread.inboxId === undefined || thread.repliedAt !== null) return;
+
+  await ctx.scheduler.runAfter(0, internal.mail.send, {
+    threadRowId,
+    inboxId: thread.inboxId,
+    parentMessageId: thread.messageId,
+    // forward → back to the sender. cc → into the thread, in front of everyone
+    // already arguing about it. P5 is where that second door gets exercised;
+    // hardcoding `false` here would simply be wrong for a row already marked.
+    replyAll: thread.mode === "cc",
+    ...body,
+  });
+}
+
+// Outbound mail, sent by us rather than by the component — the one place this
+// project does not use `@agentmail/convex` for what it is for.
+//
+// `@agentmail/convex` 0.1.0 reads `process.env.AGENTMAIL_API_KEY` inside its
+// own sandbox (component/utils.ts), and Convex 1.44 populates a component's
+// environment only from what the parent binds through
+// `app.use(child, { env })`. The component declares no env vars, so there is
+// nothing to bind and the key is invisible to it. Proven rather than reasoned:
+// at 19:31:51 on 2026-09-04, on one deployment, `attachmentUrl` below fetched a
+// PDF with `requireEnv("AGENTMAIL_API_KEY")` while the component threw
+// "AGENTMAIL_API_KEY is not set on this Convex deployment" — same key, same
+// second, one side sees it and the other does not.
+//
+// 0.1.0 is the latest published version and `convex env set` has no component
+// flag, so this is not a configuration mistake to correct. The component keeps
+// the half it does well and we could not do better: Svix verification, event
+// dedupe and the dispatch workpool. What we take back is one HTTP POST.
+//
+// ponytail: no retry. The component gave five attempts over a 30s backoff; a
+// failure here writes to `threads.error` and is visible, which is the property
+// that actually matters. Add `ctx.scheduler.runAfter` with a backoff if real
+// sends start failing transiently.
+export const send = internalAction({
+  args: {
+    threadRowId: v.id("threads"),
+    inboxId: v.string(),
+    parentMessageId: v.string(),
+    replyAll: v.boolean(),
+    text: v.string(),
+    html: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const path = [args.inboxId, "messages", args.parentMessageId]
+      .map(encodeURIComponent)
+      .join("/");
+    const res = await fetch(
+      `https://api.agentmail.to/v0/inboxes/${path}/${args.replyAll ? "reply-all" : "reply"}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${requireEnv("AGENTMAIL_API_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        // The component's own converter, which owns the camelCase → snake_case
+        // mapping and is unit-tested upstream. Borrowing it is cheaper than
+        // re-deriving the wire format and cannot drift from it.
+        body: JSON.stringify(
+          toSendPayload({ text: args.text, html: args.html }),
+        ),
+      },
+    );
+
+    const detail = res.ok ? null : `AgentMail reply ${res.status}: ${await res.text()}`;
+    await ctx.runMutation(internal.mail.recordSend, {
+      threadRowId: args.threadRowId,
+      error: detail,
+    });
+    // Rethrow so a failed send is a failed function in the logs, not a silent
+    // row nobody reads. The record above has already landed.
+    if (detail !== null) throw new Error(detail);
+    return null;
+  },
+});
+
+// `repliedAt` means SENT. It meant "enqueued" for exactly one day, and on that
+// day it recorded a reply for a message AgentMail never accepted — the row said
+// replied while the sender's inbox stayed empty. A timestamp that can be true
+// while the thing it names did not happen is worse than no timestamp.
+export const recordSend = internalMutation({
+  args: {
+    threadRowId: v.id("threads"),
+    error: v.union(v.string(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(
+      "threads",
+      args.threadRowId,
+      args.error === null
+        ? { repliedAt: Date.now() }
+        : { error: args.error },
+    );
+    return null;
+  },
+});
 
 // Record the message, then start reading whatever it carried.
 //
@@ -115,11 +233,17 @@ export const received = internalMutation({
       mode,
       receivedAt: Date.now(),
       repliedAt: null,
+      // The door the mail came in is the door the reply goes back out.
+      inboxId,
     });
 
-    // Mail with neither an attachment nor a link is still recorded — P3 replies
-    // to it saying so — but there is nothing to fetch.
-    if (attachmentId === null && url === null) return null;
+    // Mail with neither an attachment nor a link is still recorded, and now
+    // answered: a stranger who writes to this address and hears nothing back
+    // learns only that it is broken.
+    if (attachmentId === null && url === null) {
+      await reply(ctx, threadRowId, noDocumentBody());
+      return null;
+    }
 
     await ctx.scheduler.runAfter(0, internal.mail.ingest, {
       threadRowId,
@@ -212,15 +336,45 @@ export const ingest = internalAction({
         : args.url;
     if (source === null) throw new Error("ingest scheduled with nothing to read");
 
-    return await readAndPublish(ctx, {
-      source,
-      // The signed attachment URL is deliberately not stored: it expires, and a
-      // forwarded PDF is a fixed artifact with nothing to re-check. Only
-      // url-backed documents are ever watched.
-      url: args.url,
-      title: args.title,
-      threadRowId: args.threadRowId,
-    });
+    // M1. Every throw below this line used to be silent to everyone: the thread
+    // row sat at `repliedAt: null` forever, scheduled actions do not retry, and
+    // the sender was left waiting on a reply that was never coming. Tell them,
+    // record why, and then rethrow so the failure still shows in the logs.
+    try {
+      return await readAndPublish(ctx, {
+        source,
+        // The signed attachment URL is deliberately not stored: it expires, and
+        // a forwarded PDF is a fixed artifact with nothing to re-check. Only
+        // url-backed documents are ever watched.
+        url: args.url,
+        title: args.title,
+        threadRowId: args.threadRowId,
+      });
+    } catch (thrown) {
+      await ctx.runMutation(internal.mail.failed, {
+        threadRowId: args.threadRowId,
+        title: args.title,
+        error: thrown instanceof Error ? thrown.message : String(thrown),
+      });
+      throw thrown;
+    }
+  },
+});
+
+// The dead letter. The sender gets a plain apology naming nothing about the
+// document, because we did not read it; the reason goes on the row, where it is
+// ours to read and cannot leak a signed URL into somebody's inbox.
+export const failed = internalMutation({
+  args: {
+    threadRowId: v.id("threads"),
+    title: v.string(),
+    error: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await reply(ctx, args.threadRowId, failureBody(args.title));
+    await ctx.db.patch("threads", args.threadRowId, { error: args.error });
+    return null;
   },
 });
 
@@ -311,6 +465,12 @@ export const attach = internalMutation({
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: null,
+        // The probe seeds the public corpus; inbound mail never does. Set once,
+        // here, and deliberately NOT re-derived on the existing-row path below:
+        // a stranger emailing a URL that is already on the board must not be
+        // able to pull it off the board, and a public document must not become
+        // private mid-demo because somebody forwarded it.
+        isPublic: args.threadRowId === null,
       });
     } else {
       documentId = existing._id;
@@ -353,6 +513,24 @@ export const attach = internalMutation({
     // document is a document whether or not somebody emailed about it.
     if (args.threadRowId !== null) {
       await ctx.db.patch("threads", args.threadRowId, { documentId });
+
+      // The reply is enqueued in the same transaction that publishes the
+      // findings, so the sender can never be told an answer that did not
+      // commit, and a commit can never happen with no reply queued behind it.
+      await reply(
+        ctx,
+        args.threadRowId,
+        replyBody({
+          title: args.title,
+          kind: args.kind,
+          lineCount: args.lineCount,
+          findings: args.findings,
+          // A forwarded attachment has no URL, so there is nothing to
+          // re-fetch. Offering to watch it would be a promise P4 cannot keep.
+          watchable: url !== null,
+          checkedAt: now,
+        }),
+      );
     }
     return null;
   },
