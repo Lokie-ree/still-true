@@ -99,6 +99,84 @@ and it is strictly better than a category error carrying a receipt.
 already catches the failure that matters, which is refusing what the document
 says. A rate rule here would punish the honest case.
 
-## Result
+## Result — run 2026-09-04
 
-_Not yet run._
+All three candidates fetched on the first try and **all three classified
+`other`**, so all reached `universal` and no classifier exclusion was needed.
+
+| # | document | lines |
+|---|---|---|
+| 1 | Independence Place West Condominium Handbook of Rules and Regulations | 693 |
+| 2 | Summary of Benefits and Coverage (CMS completed sample) | 173 |
+| 3 | City of Las Vegas Employee Handbook | 606 |
+
+### Coding
+
+| | U1a | U1b | U2 | U3a | U3b | U4 | U5a | U5b |
+|---|---|---|---|---|---|---|---|---|
+| **Condo** | NARROW | NARROW | NARROW | N/A | N/A | GOOD | REF-OK | REF-OK |
+| **SBC** | GOOD | GOOD | GOOD | REF-OK | REF-OK | GOOD | REF-OK | REF-OK |
+| **Handbook** | NARROW | REF-OK | NARROW | GOOD | GOOD | NARROW | GOOD | GOOD |
+
+`GOOD 9 · NARROW 6 · WRONG 0 · REFUSED-OK 7 · REFUSED-FALSE 0 · N/A 2`
+
+24 cells, 2 excluded as `N/A`, 22 counted: **15 answered, 7 refused.**
+
+### Rules
+
+- **① `WRONG` ≥ 1 → STOP.** `WRONG = 0`. **Does not fire.** The grounding
+  invariant holds on the diffuse questions too, now 36/36 answered findings
+  across six documents.
+- **② `REFUSED-FALSE` > 20% of refusals → STOP.** `0 / 7 = 0%`. **Does not
+  fire.**
+- **③ `NARROW` > 33% of answered → DOWNGRADE.** `6 / 15 = 40%`. **FIRES.**
+
+**Verdict: PASS with DOWNGRADE.** `universal` ships as the catch-all, and the
+narrow-citation rate ships stated rather than hidden.
+
+### The refusals held, and that is the result worth keeping
+
+Seven refusals, **zero false**, each checked by searching the source PDF rather
+than by trusting the extractor. The one most expected to fail did not: a condo
+rulebook that never grants the Board a power to change its own rules. Its three
+occurrences of *amend* all refer to the externally recorded Declaration and
+Bylaws, and `revise`, `reserves the right`, `may adopt` and `changed` appear
+zero times. The SBC likewise never says how coverage ends or whether terms can
+change — `terminat`, `cancel`, `amend` and `change` are absent from all 173
+lines.
+
+This is the first time refusals were verified as a class. The P2 gate could not
+do it — "there is no citation to open" — and it is the half of the product
+nothing else ships.
+
+### Why rule ③ fired, and why it was predictable
+
+`NARROW` ran **40% against 19% (4 of 21) on lease and ToS** — roughly twice the
+rate. The predeclaration said this was the likely failure and named the reason:
+*"What does this require you to do?"* has no single sentence in a document that
+requires eleven things. So the model picks one true requirement out of many, and
+on the condo rulebook it picked the leasing-notification clause out of a
+693-line book covering pets, parking, noise, trash and architectural approval.
+Supported, checkable, and not what a reader most needed.
+
+The handbook's `U1a` shows the other shape: *"It is essential to understand and
+adhere to all City policies and procedures"* is the most general sentence in the
+document, perfectly supported, and teaches nobody anything.
+
+**This cannot be fixed by editing the questions** — `convex/questions.ts`
+forbids tuning a list to its own result, and rule ③ is a downgrade rather than a
+stop precisely so the finding is published instead of optimised away.
+
+### Two legibility findings, outside the taxonomy
+
+Neither affects correctness, both affect whether a receipt can be read.
+
+1. **Markdown link URLs land inside quotes.** Every SBC citation carries bare
+   `https://www.healthcare.gov/sbc-glossary/#deductible` strings mid-sentence,
+   because Firecrawl renders the glossary links as text plus URL. Same class as
+   the `<sup>`/`<u>` markup already stripped in `convex/lines.ts`, and not yet
+   handled there.
+2. **A quote can end on a colon.** The condo `U1a` receipt reads *"Prior to
+   leasing your unit, the following information must be submitted to the
+   management company:"* — promising a list the one-line contract cannot show.
+   Structural to citing exactly one line, not a bug in the excerpt.
