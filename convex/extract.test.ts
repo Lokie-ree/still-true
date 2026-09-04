@@ -219,3 +219,40 @@ void test("a missing or unusable proposal falls back to the whole line", () => {
 function flatten(s: string) {
   return s.replace(/\s+/g, " ").trim();
 }
+
+void test("an excerpt never opens or closes on a table delimiter", () => {
+  // A sentence inside a multi-cell row begins right after an interior pipe.
+  // The real SBC receipt opened "| This plan will pay some or all of the
+  // costs" — the delimiter is the parser showing through, not the document.
+  const row =
+    "Common Question | Answer | This plan will pay some or all of the costs " +
+    "but only if you have a referral. | Why this matters";
+  const got = excerpt(row, "you have a referral");
+  assert.doesNotMatch(got, /^\||\|$/);
+  assert.match(got, /^This plan will pay/);
+});
+
+void test("the excerpt always contains the whole proposed clause", () => {
+  // The safety property under every boundary rule: `excerpt` only ever snaps
+  // OUTWARD from what the model proposed, so narrowing to a sentence or a cell
+  // can never cut away the text that carries the answer.
+  const row =
+    "$500 / individual or $1,000 / family | Generally, you must pay all costs. " +
+    "Then the plan begins to pay.";
+  for (const proposed of [
+    "$500 / individual",
+    "Generally, you must pay",
+    "family | Generally, you must pay",
+    "all costs. Then the plan",
+  ]) {
+    assert.ok(
+      excerpt(row, proposed).includes(proposed),
+      `excerpt dropped part of: ${proposed}`,
+    );
+  }
+});
+
+void test("a proposal spanning two cells keeps the boundary between them", () => {
+  const row = "$500 / individual or $1,000 / family | Generally, you must pay all costs.";
+  assert.match(excerpt(row, "family | Generally"), /family \| Generally/);
+});

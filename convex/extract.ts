@@ -40,10 +40,17 @@ export function lineAt(lines: string[], lineNo: number): string {
   return lineNo >= 1 && lineNo <= lines.length ? lines[lineNo - 1].trim() : "";
 }
 
-// Sentence starts within a line. Offset 0 always begins one.
-const sentenceStarts = (line: string): number[] => {
+// Where a readable unit starts within a line. Offset 0 always begins one.
+//
+// A sentence is one such unit and a TABLE CELL is another. Reflow joins a whole
+// markdown row into a single line, and a row carries no full stops between its
+// cells — so snapping outward by sentence alone walks back across every cell to
+// the start of the row, and a Summary of Benefits receipt opens on two columns
+// of table header nobody asked for. A cell boundary is exactly as real a break
+// as a full stop, so `|` counts as one.
+const unitStarts = (line: string): number[] => {
   const starts = [0];
-  const boundary = /[.!?]\s+/g;
+  const boundary = /[.!?]\s+|\s*\|\s*/g;
   let hit: RegExpExecArray | null;
   while ((hit = boundary.exec(line)) !== null) {
     starts.push(hit.index + hit[0].length);
@@ -55,6 +62,9 @@ const sentenceStarts = (line: string): number[] => {
 // and what the document says: a PDF leaves double spaces everywhere and the
 // model normalises them. Nothing else is tolerated.
 const flat = (s: string) => s.replace(/\s+/g, " ").trim();
+
+// Whitespace or a table delimiter at either end of a published excerpt.
+const EDGE = /^[|\s]+|[|\s]+$/g;
 
 // The clause inside the line, located in the document and snapped outward to
 // whole sentences.
@@ -99,11 +109,18 @@ export function excerpt(line: string, proposed: unknown): string {
   const from = whole.indexOf(needle);
   if (from === -1) return whole;
 
-  const starts = sentenceStarts(whole);
+  const starts = unitStarts(whole);
   const start = starts.filter((at) => at <= from).pop() ?? 0;
   const end = starts.find((at) => at >= from + needle.length);
 
-  const sliced = whole.slice(start, end ?? whole.length).trim();
+  // Trim table delimiters off the EDGES of the slice as well as whitespace.
+  // `toLines` already drops the pipes that bound a whole row, but a sentence
+  // inside a multi-cell row begins right after an interior `|`, so the excerpt
+  // opens on a delimiter the reader never needed — the real SBC receipt read
+  // "| This plan will pay some or all of the costs". Interior pipes survive:
+  // they are true cell boundaries, and welding the cells would invent a
+  // sentence.
+  const sliced = whole.slice(start, end ?? whole.length).replace(EDGE, "");
   return sliced === "" ? whole : sliced;
 }
 
