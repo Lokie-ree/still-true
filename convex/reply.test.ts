@@ -112,3 +112,42 @@ void test("a failure reply says nothing about the document's contents", () => {
   // and "Firecrawl 502" helps nobody.
   assert.doesNotMatch(text, /Firecrawl|OpenAI|AgentMail|http/i);
 });
+
+void test("renders the document's words, not the converter's typesetting", () => {
+  // Firecrawl's PDF parser emits these for superscript and underline. The
+  // reader is owed their lease, not our pipeline.
+  const { text } = replyBody({
+    ...base,
+    findings: [
+      {
+        ...answered,
+        quote:
+          "payments made after the 5<sup>th</sup> day will be subject to a <u>$25.00</u> late fee",
+      },
+    ],
+  });
+  assert.match(text, /the 5th day/);
+  assert.match(text, /a \$25\.00 late fee/);
+  assert.doesNotMatch(text, /<sup>|<\/u>/);
+});
+
+void test("two answers citing one line print that line once", () => {
+  // The compound-question split was right for the engine contract, but L3a and
+  // L3b both land on line 42 and printing its 600-character quote twice in a
+  // row reads as a bug.
+  const { text } = replyBody({
+    ...base,
+    findings: [
+      { ...answered, questionKey: "L3a", answer: "The late fee is $25.00." },
+      {
+        ...answered,
+        questionKey: "L3b",
+        answer: "It applies after the fifth day.",
+      },
+    ],
+  });
+  assert.match(text, /The late fee is \$25\.00\./);
+  assert.match(text, /It applies after the fifth day\./);
+  assert.equal(text.split("Entry may be made only").length - 1, 1);
+  assert.equal(text.split("line 268").length - 1, 1);
+});

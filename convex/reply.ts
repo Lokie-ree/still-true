@@ -57,6 +57,48 @@ const refusalLine = (linesSearched: number) =>
 const questionFor = (kind: DocumentKind, key: string) =>
   CHECKLISTS[kind].find((q) => q.key === key)?.ask ?? key;
 
+// The quote IS the document, and this does not change a word of it — it strips
+// the converter's typesetting. Firecrawl's PDF parser emits `5<sup>th</sup>`
+// and `<u>$25.00</u>` for what the page renders as superscript and underline,
+// and a receipt reading `the 5<sup>th</sup> day` shows the reader our pipeline
+// instead of their lease.
+//
+// RENDER time only. The stored quote stays byte-for-byte what `lineAt` returned,
+// because P4 detects change by comparing against it — normalising before
+// storage would make the watch fire on markup that never reached the reader.
+const readable = (quote: string) =>
+  quote
+    .replace(/<[^>]+>/g, "")
+    .replace(/_{3,}/g, "___")
+    .replace(/\*\*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Splitting the compound questions was right for the engine contract, but it
+// left two findings citing one line with one 600-character quote printed twice
+// in a row, which reads as a bug. Two answers, one receipt: group by the line
+// they cite, preserving order of first appearance.
+type Cited = { answers: string[]; quote: string; lineNo: number };
+
+function groupByLine(
+  answered: Extract<ExtractedFinding, { verdict: "answered" }>[],
+): Cited[] {
+  const byLine = new Map<number, Cited>();
+  for (const f of answered) {
+    const seen = byLine.get(f.lineNo);
+    if (seen === undefined) {
+      byLine.set(f.lineNo, {
+        answers: [f.answer],
+        quote: readable(f.quote),
+        lineNo: f.lineNo,
+      });
+    } else if (!seen.answers.includes(f.answer)) {
+      seen.answers.push(f.answer);
+    }
+  }
+  return [...byLine.values()];
+}
+
 const FOOTER =
   "Every quote above is a numbered line of your document. I did not write any " +
   "of them — I returned one line number per question and the sentences were " +
@@ -71,7 +113,9 @@ const DISCLAIMER =
   "This quotes and counts. It does not interpret or advise, and it is not legal advice.";
 
 export function replyBody(input: ReplyInput): { text: string; html: string } {
-  const answered = input.findings.filter((f) => f.verdict === "answered");
+  const cited = groupByLine(
+    input.findings.filter((f) => f.verdict === "answered"),
+  );
   const missing = input.findings.filter((f) => f.verdict === "not_stated");
   const read = shortDate(input.checkedAt);
 
@@ -80,10 +124,15 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
   // ── plain text ────────────────────────────────────────────────────────────
   const t: string[] = [opening, ""];
 
-  if (answered.length > 0) {
+  if (cited.length > 0) {
     t.push("WHAT IT REQUIRES OF YOU", "");
-    for (const f of answered) {
-      t.push(f.answer, `  "${f.quote}"`, `  line ${f.lineNo} · read ${read}`, "");
+    for (const c of cited) {
+      t.push(
+        ...c.answers,
+        `  "${c.quote}"`,
+        `  line ${c.lineNo} · read ${read}`,
+        "",
+      );
     }
   }
 
@@ -99,7 +148,7 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
     }
   }
 
-  if (answered.length === 0 && missing.length === 0) {
+  if (cited.length === 0 && missing.length === 0) {
     t.push(
       "I could read it, but none of my questions for this kind of document " +
         "were answered in it — and none were clearly absent either. That is a " +
@@ -123,14 +172,16 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
   const label = (text: string, color: string) =>
     `<p style="font:600 11px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:${color};margin:22px 0 10px">${text}</p>`;
 
-  if (answered.length > 0) {
+  if (cited.length > 0) {
     h.push(label("What it requires of you", "#1b6b57"));
-    for (const f of answered) {
+    for (const c of cited) {
       h.push(
         `<div style="margin:0 0 16px;padding-left:14px;border-left:2px solid #dce1db">`,
-        `<b style="display:block;margin-bottom:4px">${escape(f.answer)}</b>`,
-        `<i style="color:#67726e">“${escape(f.quote)}”</i>`,
-        `<span style="display:block;margin-top:5px;font:11px ui-monospace,Menlo,monospace;color:#8b948f">line ${f.lineNo} · read ${read}</span>`,
+        ...c.answers.map(
+          (a) => `<b style="display:block;margin-bottom:4px">${escape(a)}</b>`,
+        ),
+        `<i style="color:#67726e">“${escape(c.quote)}”</i>`,
+        `<span style="display:block;margin-top:5px;font:11px ui-monospace,Menlo,monospace;color:#8b948f">line ${c.lineNo} · read ${read}</span>`,
         `</div>`,
       );
     }
@@ -149,7 +200,7 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
     }
   }
 
-  if (answered.length === 0 && missing.length === 0) {
+  if (cited.length === 0 && missing.length === 0) {
     h.push(
       `<p style="margin:0 0 16px">I could read it, but none of my questions for this kind of document were answered in it — and none were clearly absent either. That is a result I would rather report than dress up.</p>`,
     );
