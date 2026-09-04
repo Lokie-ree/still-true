@@ -3,11 +3,13 @@ import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
+import { failureBody, noDocumentBody, replyBody } from "./reply";
 import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
@@ -46,6 +48,33 @@ const readStrings = (value: unknown, key: string): string[] => {
   const field = asRecord(value)[key];
   return Array.isArray(field) ? field.filter((x) => typeof x === "string") : [];
 };
+
+// One place that sends, so "we replied" and "we recorded that we replied" can
+// never disagree: the enqueue and the `repliedAt` stamp land in the same
+// transaction. The component owns the actual delivery and its retries, so what
+// commits here is the intent, and `repliedAt` is the guard against replying to
+// the same message twice.
+//
+// A row with no `inboxId` predates that field (the P1 test rows) and is not
+// replyable; a row already stamped is left alone.
+async function reply(
+  ctx: MutationCtx,
+  threadRowId: Id<"threads">,
+  body: { text: string; html: string },
+): Promise<void> {
+  const thread = await ctx.db.get("threads", threadRowId);
+  if (thread === null) return;
+  if (thread.inboxId === undefined || thread.repliedAt !== null) return;
+
+  await agentmail.replyToMessage(ctx, thread.inboxId, thread.messageId, {
+    ...body,
+    // forward → back to the sender. cc → into the thread, in front of everyone
+    // already arguing about it. P5 is where that second door gets exercised;
+    // hardcoding `false` here would simply be wrong for a row already marked.
+    replyAll: thread.mode === "cc",
+  });
+  await ctx.db.patch("threads", threadRowId, { repliedAt: Date.now() });
+}
 
 // Record the message, then start reading whatever it carried.
 //
@@ -115,11 +144,17 @@ export const received = internalMutation({
       mode,
       receivedAt: Date.now(),
       repliedAt: null,
+      // The door the mail came in is the door the reply goes back out.
+      inboxId,
     });
 
-    // Mail with neither an attachment nor a link is still recorded — P3 replies
-    // to it saying so — but there is nothing to fetch.
-    if (attachmentId === null && url === null) return null;
+    // Mail with neither an attachment nor a link is still recorded, and now
+    // answered: a stranger who writes to this address and hears nothing back
+    // learns only that it is broken.
+    if (attachmentId === null && url === null) {
+      await reply(ctx, threadRowId, noDocumentBody());
+      return null;
+    }
 
     await ctx.scheduler.runAfter(0, internal.mail.ingest, {
       threadRowId,
@@ -212,15 +247,45 @@ export const ingest = internalAction({
         : args.url;
     if (source === null) throw new Error("ingest scheduled with nothing to read");
 
-    return await readAndPublish(ctx, {
-      source,
-      // The signed attachment URL is deliberately not stored: it expires, and a
-      // forwarded PDF is a fixed artifact with nothing to re-check. Only
-      // url-backed documents are ever watched.
-      url: args.url,
-      title: args.title,
-      threadRowId: args.threadRowId,
-    });
+    // M1. Every throw below this line used to be silent to everyone: the thread
+    // row sat at `repliedAt: null` forever, scheduled actions do not retry, and
+    // the sender was left waiting on a reply that was never coming. Tell them,
+    // record why, and then rethrow so the failure still shows in the logs.
+    try {
+      return await readAndPublish(ctx, {
+        source,
+        // The signed attachment URL is deliberately not stored: it expires, and
+        // a forwarded PDF is a fixed artifact with nothing to re-check. Only
+        // url-backed documents are ever watched.
+        url: args.url,
+        title: args.title,
+        threadRowId: args.threadRowId,
+      });
+    } catch (thrown) {
+      await ctx.runMutation(internal.mail.failed, {
+        threadRowId: args.threadRowId,
+        title: args.title,
+        error: thrown instanceof Error ? thrown.message : String(thrown),
+      });
+      throw thrown;
+    }
+  },
+});
+
+// The dead letter. The sender gets a plain apology naming nothing about the
+// document, because we did not read it; the reason goes on the row, where it is
+// ours to read and cannot leak a signed URL into somebody's inbox.
+export const failed = internalMutation({
+  args: {
+    threadRowId: v.id("threads"),
+    title: v.string(),
+    error: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await reply(ctx, args.threadRowId, failureBody(args.title));
+    await ctx.db.patch("threads", args.threadRowId, { error: args.error });
+    return null;
   },
 });
 
@@ -359,6 +424,24 @@ export const attach = internalMutation({
     // document is a document whether or not somebody emailed about it.
     if (args.threadRowId !== null) {
       await ctx.db.patch("threads", args.threadRowId, { documentId });
+
+      // The reply is enqueued in the same transaction that publishes the
+      // findings, so the sender can never be told an answer that did not
+      // commit, and a commit can never happen with no reply queued behind it.
+      await reply(
+        ctx,
+        args.threadRowId,
+        replyBody({
+          title: args.title,
+          kind: args.kind,
+          lineCount: args.lineCount,
+          findings: args.findings,
+          // A forwarded attachment has no URL, so there is nothing to
+          // re-fetch. Offering to watch it would be a promise P4 cannot keep.
+          watchable: url !== null,
+          checkedAt: now,
+        }),
+      );
     }
     return null;
   },

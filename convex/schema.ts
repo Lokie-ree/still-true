@@ -115,7 +115,22 @@ export default defineSchema({
     // forward → reply to the sender. cc → reply into the thread.
     mode: v.union(v.literal("forward"), v.literal("cc")),
     receivedAt: v.number(),
+    // Set when the reply is ENQUEUED, not when it is delivered — the component
+    // owns durable sending and tracks real status in its own tables. What this
+    // guards is replying twice, which is why it is stamped in the same
+    // transaction as the enqueue.
     repliedAt: v.union(v.number(), v.null()),
+    // The inbox the mail actually arrived at, so the reply goes back out the
+    // same door. Optional only because the P1 test rows predate it; a row
+    // without it is not replyable, which is the safe direction.
+    inboxId: v.optional(v.string()),
+    // M1: `readAndPublish` throws on a Firecrawl non-200, the 6,000-char guard
+    // or a model refusal, and scheduled actions do not retry. Without this the
+    // row sat at `repliedAt: null` forever and the failure was silent to
+    // everyone, including us. The sender gets a plain apology; the reason
+    // stays here, because it is our stack's error text and can carry a signed
+    // URL.
+    error: v.optional(v.string()),
   })
     .index("by_messageId", ["messageId"])
     .index("by_threadId", ["threadId"])
