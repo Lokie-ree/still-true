@@ -5,10 +5,10 @@
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes. CC it on a thread and the same cited reply lands in the thread.
 - **Live app:** https://impressive-marten-163.convex.site
 - **Built as of 2026-09-04:** the inbox, the parser, the extractor and its grounding
-  guarantee, and the cited reply — verified end to end on the development deployment
-  (`charming-kookabura-768`) by a real forwarded lease answered in 18.8 s. **The watch and
-  the CC reply described above are NOT built** (P4, P5). Production runs P0-P2 only: it
-  ingests and extracts but has no send function, so it cannot reply, and its board is empty.
+  guarantee, and the cited reply — **live on production**, which answered a forwarded link
+  in 15 s with six quoted findings and one refusal. The public board carries six documents,
+  34 answered findings and 13 refusals. **The watch and the CC reply described above are NOT
+  built** (P4, P5), and the reply already offers the watch on any document with a URL.
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -17,7 +17,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-04T20:20:00Z
+- **Last updated:** 2026-09-04T23:00:00Z
 
 ## Log
 
@@ -719,3 +719,92 @@ moved**: Livonia 421 to 418, AT&T 2,059 to 2,007. Every line number recorded bef
 stale. That is exactly the hazard P4 was already designed against — *a reflow shift makes
 every finding change at once* — arriving early and confirming that the re-locate has to
 search for the stored quote before it trusts a stored index.
+
+## 2026-09-04 (production) — the deploy, and what a stranger's mail client does to a link
+
+Production runs P0-P3. `still-true@agentmail.to` is answered by
+`impressive-marten-163`, and the first forward it took failed.
+
+**The deploy itself was uneventful**, which is the least interesting part of the day.
+PR #17 merged to `main`, `npx convex deploy` added one index and no schema surprises,
+and the static bundle went up. Verified from outside the project rather than from the
+CLI's success message: the public surface is still exactly two queries, `documents.recent`
+and `documents.findingsFor`, and the ten functions behind them are internal. `mail:send`
+now exists on production, which is the difference between a deployment that ingests and
+one that can reply.
+
+**The webhook could not be repointed, only replaced.** One AgentMail inbox, one webhook,
+and `PATCH /v0/webhooks/{id}` returns 200 while changing nothing — the URL is not an
+updatable field, which the docs confirm by omission and the webhook list confirmed by
+still reading `charming-kookabura-768` afterwards. That is the 09-02 lesson again: the
+success of the call you made is not evidence about the state you meant to change. So the
+dev-pointed webhook was deleted and a `still-true-prod` one created against production,
+with its new signing secret set on prod.
+
+Development got its own front door in the same pass — `still-true-dev@agentmail.to`, its
+own webhook at `charming-kookabura-768`, its own secret. Not tidiness: two webhooks on one
+inbox deliver every forward twice, and two deployments that can both reply would send a
+stranger two answers to one question. P5 needs a real inbound path to exercise the CC door,
+and it now has one that cannot collide with the demo address.
+
+**The board was seeded with the six gate documents** through `mail:probe --prod`, which
+sets `isPublic`. Six documents, 34 answered findings, 13 refusals, and every answered
+finding carried by its own quote — the grounding invariant re-checked on a second
+deployment against fresh scrapes.
+
+Two cells moved. Development answered 36 of the same 47; production answered 34, with AT&T
+answering 7 where development answered 8 and one universal document answering one fewer.
+Fresh scrapes and a model that is not deterministic. **Nothing moved in the dangerous
+direction** — no cell went from a refusal to an unsupported answer, and no answer arrived
+without a quote. PayPal also re-measured at 1,225 lines against development's 1,227, which
+is the same reflow drift P4 already has to survive.
+
+### The first inbound mail failed in four seconds
+
+A forwarded link, sent from Gmail, came back as the apology rather than the answers. The
+log named the reason without ambiguity:
+
+```
+A(mail:ingest) Uncaught Error: Firecrawl returned 498 chars for
+https://www.google.com/url?q=https://www.spotify.com/us/legal/end-user-agreement/&source=gmail&ust=… — too short
+```
+
+**Gmail rewrites every link in a sent body to its own redirect wrapper.** What arrived in
+the text part was Google's address, not the document's. Firecrawl scraped the redirect page,
+got 498 characters, and the short-document guard written after probe v3 run 1 refused it —
+correctly, on the wrong URL. The guard did its job; the address was wrong one step earlier.
+
+The failure path behaved exactly as P3 built it, and this is the first time it ran for a
+real stranger's message rather than a test: an apology naming nothing about a document we
+never read, the reason on the row where it cannot leak, and a reply in the sender's inbox
+four seconds after they sent it. M1 from the readiness audit is why that mail was not
+silence.
+
+The fix is `convex/link.ts` (PR #18): read the link out of the body, then unwrap it on the
+hosts known to wrap and no others. A page may legitimately carry `?url=`, and
+`google.com/search?q=` is not a wrapped document, so the inner value has to look like an
+address before it is trusted. Outlook's safelinks is the same mechanism under a different
+parameter and costs one map entry. Six tests, the first of which is the message that
+actually failed.
+
+### And then production answered
+
+Same document, same mail client, after the deploy. **15 seconds**, 414 lines, six answers
+each carrying its own quote and line number, and one refusal — *"Is your data shared with
+third parties? Searched all 414 lines. This document does not state it."* Spotify's opt-out
+came back at line 323 with the sentence that carries it. **P3's exit test named the
+production address, and it is now met.**
+
+The provenance gate held where it matters: the forwarded document did not appear on the
+public board. `documents.recent` returned the same six seeded documents before and after.
+
+### What is live and still not true
+
+- **The reply offers a watch that does not exist.** Any document with a URL gets *"Reply
+  `watch` and I'll tell you if any of this changes"*, and P4 is unbuilt, so a reply saying
+  `watch` today gets the no-document apology. Deliberate when it was written and now
+  pointed at real senders; it is either P4's deadline or a one-line suppression.
+- `documents.recent` and `documents.findingsFor` are still unauthenticated public reads.
+  The provenance gate keeps forwarded documents out of them; `Auth` still reads `none`.
+- The two defects P3 left standing are now standing on production: attachment documents
+  never dedupe, and a re-read document never resurfaces on the board.
