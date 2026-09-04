@@ -113,23 +113,10 @@ void test("a failure reply says nothing about the document's contents", () => {
   assert.doesNotMatch(text, /Firecrawl|OpenAI|AgentMail|http/i);
 });
 
-void test("renders the document's words, not the converter's typesetting", () => {
-  // Firecrawl's PDF parser emits these for superscript and underline. The
-  // reader is owed their lease, not our pipeline.
-  const { text } = replyBody({
-    ...base,
-    findings: [
-      {
-        ...answered,
-        quote:
-          "payments made after the 5<sup>th</sup> day will be subject to a <u>$25.00</u> late fee",
-      },
-    ],
-  });
-  assert.match(text, /the 5th day/);
-  assert.match(text, /a \$25\.00 late fee/);
-  assert.doesNotMatch(text, /<sup>|<\/u>/);
-});
+// Stripping the converter's markup used to live here. It moved into
+// convex/lines.ts, before numbering, so the prompt, the stored quote, the
+// receipt and P4's re-check all read the same text — see lines.test.ts. The
+// reply renders the quote it is given and changes nothing about it.
 
 void test("two answers citing one line print that line once", () => {
   // The compound-question split was right for the engine contract, but L3a and

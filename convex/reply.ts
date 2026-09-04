@@ -57,23 +57,6 @@ const refusalLine = (linesSearched: number) =>
 const questionFor = (kind: DocumentKind, key: string) =>
   CHECKLISTS[kind].find((q) => q.key === key)?.ask ?? key;
 
-// The quote IS the document, and this does not change a word of it — it strips
-// the converter's typesetting. Firecrawl's PDF parser emits `5<sup>th</sup>`
-// and `<u>$25.00</u>` for what the page renders as superscript and underline,
-// and a receipt reading `the 5<sup>th</sup> day` shows the reader our pipeline
-// instead of their lease.
-//
-// RENDER time only. The stored quote stays byte-for-byte what `lineAt` returned,
-// because P4 detects change by comparing against it — normalising before
-// storage would make the watch fire on markup that never reached the reader.
-const readable = (quote: string) =>
-  quote
-    .replace(/<[^>]+>/g, "")
-    .replace(/_{3,}/g, "___")
-    .replace(/\*\*/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
 // Splitting the compound questions was right for the engine contract, but it
 // left two findings citing one line with one 600-character quote printed twice
 // in a row, which reads as a bug. Two answers, one receipt: group by the line
@@ -89,7 +72,7 @@ function groupByLine(
     if (seen === undefined) {
       byLine.set(f.lineNo, {
         answers: [f.answer],
-        quote: readable(f.quote),
+        quote: f.quote,
         lineNo: f.lineNo,
       });
     } else if (!seen.answers.includes(f.answer)) {
