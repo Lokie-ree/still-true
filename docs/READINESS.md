@@ -1,9 +1,11 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-05** (second pass). Score **67/100**:
-`100 − 15(H2) − 5×3(M2,M3,M4) − 1×3(L3,L4,L5)`.
-First pass 2026-09-03 scored 58; the delta is
-`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`.
+Last audit **2026-09-05** (second pass). Score **82/100**:
+`100 − 5×3(M2,M3,M4) − 1×3(L3,L4,L5)`.
+First pass 2026-09-03 scored 58; second pass scored 67. The deltas are
+`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5` then `+15 H2 closed`.
+
+**No high flags remain open.**
 
 **These are known and parked.** Randall has seen all of them and chose to
 carry them into P5 rather than fix them first. Do not re-run the audit to
@@ -11,23 +13,6 @@ rediscover them, and do not fix one unasked — read the fix order at the
 bottom and ask.
 
 ## Open
-
-### H2 — unbounded, recurring spend on a publicly-listed inbox (high)
-
-`convex/mail.ts` `received` → `ingest`, plus `convex/crons.ts`.
-
-Every inbound message carrying an attachment or a body URL buys one Firecrawl
-scrape (200 PDF pages, 120s) and two OpenAI calls on up to 600k chars. There is
-no rate limit and no per-sender cap, and the address is a `mailto:` on the
-public board. P4 made it worse: a url-backed document mailed in is re-scraped
-**every day forever**. 500 mailed URLs is 500 scrapes + 1,000 model calls
-today, then 500 scrapes/day thereafter.
-
-Svix proves the webhook came *from* AgentMail. It bounds nobody who *mails*
-AgentMail.
-
-Fix: `@convex-dev/rate-limiter` keyed on `fromEmail`, plus a cap on watched
-documents per sender.
 
 ### M3 — a failed `watch.recheck` is silent to everyone (medium)
 
@@ -96,6 +81,17 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **H2 (unbounded, recurring spend on a publicly-listed inbox)** closed
+  2026-09-05. Two gates in `mail.received`, because they stop different things:
+  a `@convex-dev/rate-limiter` token bucket keyed on `fromEmail` (10/hour,
+  burst 5) bounds the burst, and a cap of 25 distinct documents per address
+  bounds the standing daily cost — the half a refilling limiter cannot reach,
+  since a sender adding one URL a week accumulates an unbounded daily bill at a
+  perfectly polite pace. Both run after the thread row exists and before the
+  scheduler, so a refused message is recorded and answered and costs no vendor
+  call. **Verified:** `tsc -b` clean, 66/66 tests. The refusal path has not yet
+  been exercised end to end against a live inbox — that is what `npm run gate`
+  is for, not a reason to re-flag this.
 - **H1 (public read surface leaked forwarded private documents)** closed in P3
   and verified on production: all five board rows carry `isPublic: true`, and
   `findingsFor` gates the client-supplied id. The proposed `url !== null` fix
@@ -121,6 +117,11 @@ Documented decisions with named upgrade paths:
   (`http.ts`, `mail.ts`), both carrying `ponytail:` comments.
 - `watch.watchable`'s `take(200)` and `mail.send`'s no-retry, both with a
   `ponytail:` note naming the upgrade.
+- The document cap's `take(200)` over one sender's threads in `mail.received`.
+  An address past 200 threads could undercount its own distinct documents; the
+  limiter above it caps arrivals at ten an hour, so it cannot get there quickly,
+  and the upgrade named in the comment is a count kept on the sender rather than
+  derived.
 - The `occRetried` warning on `agentmail/callbackPool` (2 calls,
   `occ_retry_count: 0`) — inside the component's sandboxed tables, not our
   code, not actionable.
@@ -133,8 +134,8 @@ is absence of evidence, not evidence of absence.
 
 ## Fix order
 
-**H2 → M3 → M4 → (M2, L3, L4, L5).**
+**M3 → M4 → (M2, L3, L4, L5).**
 
-H2 first because it is the only one that costs money while nobody is watching.
-M3 second because until it lands, the next audit has silence instead of
-evidence.
+H2 was first because it was the only one that cost money while nobody was
+watching. It is closed. M3 is now first because until it lands, the next audit
+has silence instead of evidence.

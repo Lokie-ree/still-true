@@ -1126,7 +1126,40 @@ are not re-flagged, and the deliberate simplifications marked so they are not
 
 ### Still not true
 
-The inbox has no rate limit and the daily cron re-scrapes every url-backed
-document forever, so the one-shot spend attack from 09-03 is now a recurring
-one. Nobody can leave the watch. A re-check that fails tells no one. All three
-are written down and none are fixed.
+Nobody can leave the watch. A re-check that fails tells no one. Both are
+written down and neither is fixed.
+
+*(The third sentence here read "the inbox has no rate limit and the daily cron
+re-scrapes every url-backed document forever." That stopped being true later the
+same day — see below.)*
+
+## 2026-09-05, later — H2 closed: the inbox now has a bound
+
+**Two gates, not one, and the reason is the reason P4 made this urgent.** A
+token bucket keyed on `fromEmail` was the obvious fix and it is only half of
+one. A limiter bounds a *rate*; the charge P4 introduced is a *standing* one,
+because a url-backed document is re-scraped every day for as long as it exists.
+A sender adding one URL a week never trips a limiter and still walks the daily
+bill up without limit. So the burst gate (10/hour, burst 5) is joined by a cap
+of 25 distinct documents per address, counted off `threads.by_fromEmail`.
+
+**The refusal is answered, not dropped.** Both gates run after the thread row
+is inserted and before the scheduler: the message is recorded, the sender is
+told, and no vendor call happens. The reply is its own body rather than the
+existing `failureBody`, and that distinction is the point — `failureBody` says
+*I could not read your document*, which here would be false. We could have and
+chose not to. Telling somebody a decision was a malfunction is the same species
+of claim this project exists not to make.
+
+**`@convex-dev/rate-limiter` rather than a counter column**, checked against the
+installed package's own types rather than remembered: `limit()` is transactional
+with the mutation that gates on it, so a burst of simultaneous webhooks cannot
+each read the same stale count and all pass. A hand-rolled counter gets that
+wrong exactly when it matters.
+
+**What is verified and what is not.** `tsc -b` clean, 66/66 tests, and the two
+new tests pin the thing worth pinning: that the cap refusal and the rate refusal
+stay distinguishable from each other and from a failure, and that a retry delay
+never rounds down to "now" and walks the sender back into the limit. The live
+refusal has not been exercised against a real inbox. Saying so here is cheaper
+than discovering it in an audit.
