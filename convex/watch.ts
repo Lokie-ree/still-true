@@ -7,8 +7,8 @@
 // re-reads a document and compares the answers. That cannot work here: on
 // 2026-09-04 the same six documents read on two deployments hours apart
 // disagreed on 2 of 47 cells with nothing about the documents changing. So the
-// question "did it change?" is answered by Firecrawl comparing two texts, and
-// the model is only asked "what does it say now?" once that answer is yes.
+// question "did it change?" is answered by hashing the text, and the model is
+// only asked "what does it say now?" once that answer is yes.
 //
 // Everything below is scheduling around that. The reading itself is
 // `mail.readAndPublish` — the same path a forwarded email takes, deliberately,

@@ -43,8 +43,9 @@ export default defineSchema({
   //
   // The parsed markdown is deliberately NOT stored. Handbooks and consumer
   // agreements run 50-370 KB and would press against the 1 MB document limit;
-  // Firecrawl holds previous page state for changeTracking, and the evidence a
-  // reader actually needs lives on the finding as a quote.
+  // `contentHash` below is 64 characters and answers the only question the
+  // watch asks of the old text, and the evidence a reader actually needs lives
+  // on the finding as a quote.
   documents: defineTable({
     url: v.union(v.string(), v.null()),
     title: v.string(),
@@ -66,6 +67,21 @@ export default defineSchema({
     // Optional so the rows that predate the field read as private without a
     // backfill — the safe direction for a field that gates disclosure.
     isPublic: v.optional(v.boolean()),
+    // SHA-256 of the lines as they last read. This is the watch's answer to
+    // "did it change?", and it is ours rather than the scraper's on purpose.
+    //
+    // Firecrawl's `changeTracking.changeStatus` was the first design and a live
+    // run killed it: the signal compares a scrape against the previous scrape
+    // of the same URL by the same team, so reading it SPENDS it. A sweep on
+    // 2026-09-05 scraped this project's own fixture after two clauses were
+    // edited, failed after the fetch, and every read afterwards said `same` —
+    // the new text against the new text. The retry meant to make the watch
+    // reliable is what destroyed the evidence that anything had moved.
+    //
+    // Optional so rows written before the watch read as "no previous reading",
+    // which is treated as unchanged: the safe direction for a field that
+    // decides whether a stranger gets an unsolicited email.
+    contentHash: v.optional(v.string()),
   })
     .index("by_url", ["url"])
     .index("by_isPublic", ["isPublic"]),
@@ -90,8 +106,8 @@ export default defineSchema({
         // Set when a re-check moved this answer. The pair is the diff a
         // subscriber is told about.
         //
-        // Set ONLY when Firecrawl reported the source text itself changed —
-        // never from a diff of two model runs. The 09-04 production deploy
+        // Set ONLY when the document's stored hash differs from what it
+        // reads as now — never from a diff of two model runs. The 09-04 deploy
         // measured two runs disagreeing on 2 of 47 cells with the documents
         // standing still, so an answer-diff would report a lease "changed"
         // because the model reworded a sentence on a Tuesday. That is the one

@@ -4,12 +4,16 @@ import { components, internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
-import { internalAction, internalMutation } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl } from "./link";
-import { toLines } from "./lines";
+import { fingerprint, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import { changeBody, failureBody, noDocumentBody, replyBody } from "./reply";
 import { documentKind, extractedFinding } from "./schema";
@@ -320,10 +324,7 @@ async function attachmentUrl(
 // computed by Firecrawl from the two texts, so it is deterministic — unlike
 // asking the model twice and diffing the answers, which the 09-04 deploy
 // measured drifting on 2 of 47 cells with the documents standing still.
-type ChangeStatus = "new" | "same" | "changed" | "removed" | null;
-async function scrape(
-  url: string,
-): Promise<{ markdown: string; changeStatus: ChangeStatus }> {
+async function scrape(url: string): Promise<string> {
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
     headers: {
@@ -332,13 +333,12 @@ async function scrape(
     },
     body: JSON.stringify({
       url,
-      // changeTracking on EVERY read, not just the watch's. It costs nothing,
-      // it is what seeds the baseline the next re-check compares against, and
-      // it closes the 08-30 readiness finding for free: Firecrawl serves a
-      // 2-day cache by default, and "requests with changeTracking bypass the
-      // index cache — the maxAge parameter is ignored." A person forwarding a
-      // document today is asking what it says today.
-      formats: ["markdown", { type: "changeTracking", modes: ["git-diff"] }],
+      formats: ["markdown"],
+      // The 08-30 readiness finding, closed. Firecrawl serves a cached scrape
+      // up to two days old by default, so without this a watch could re-read a
+      // page every morning and be handed Monday's copy all week — and a person
+      // forwarding a document today would be told what it said on Saturday.
+      maxAge: 0,
       // Defaults to true, which strips "boilerplate" — in a consumer agreement
       // the boilerplate IS the document. Never turn this on here.
       onlyMainContent: false,
@@ -350,23 +350,10 @@ async function scrape(
     throw new Error(`Firecrawl ${res.status}: ${await res.text()}`);
   }
   const body: unknown = await res.json();
-  const data = asRecord(asRecord(body).data);
-  const markdown = data.markdown;
+  const markdown = asRecord(asRecord(body).data).markdown;
   if (typeof markdown !== "string") {
     throw new Error("Firecrawl returned no markdown");
   }
-  // Absent on a plan or endpoint that did not return it. Null means "no
-  // opinion", and every caller treats no opinion as "read it properly" rather
-  // than as "unchanged" — the failure a watch must never have is the silent
-  // one that reports nothing moved because it could not tell.
-  const status = readString(data.changeTracking, "changeStatus");
-  const changeStatus: ChangeStatus =
-    status === "new" ||
-    status === "same" ||
-    status === "changed" ||
-    status === "removed"
-      ? status
-      : null;
   // Probe v3 run 1 coded two JS-rendered pages as findings when Firecrawl had
   // actually returned ~370 chars of nothing. Fail loudly here instead.
   if (markdown.length < 6_000) {
@@ -374,7 +361,7 @@ async function scrape(
       `Firecrawl returned ${markdown.length} chars for ${url} — too short to be the document`,
     );
   }
-  return { markdown, changeStatus };
+  return markdown;
 }
 
 export const ingest = internalAction({
@@ -445,6 +432,17 @@ export const failed = internalMutation({
 // "Checked 6 hours ago, unchanged" is the watch's normal day, and saying it out
 // loud is the difference between a system that is watching and one that merely
 // promised to.
+// What this document read as, last time it was read properly. Null when the row
+// predates the watch, which every caller treats as "read it again".
+export const hashOf = internalQuery({
+  args: { documentId: v.id("documents") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const document = await ctx.db.get("documents", args.documentId);
+    return document?.contentHash ?? null;
+  },
+});
+
 export const checked = internalMutation({
   args: { documentId: v.id("documents") },
   returns: v.null(),
@@ -472,25 +470,28 @@ export async function readAndPublish(
     recheckOf: Id<"documents"> | null;
   },
 ): Promise<null> {
-  const { markdown, changeStatus } = await scrape(args.source);
+  const lines = toLines(await scrape(args.source));
+  const contentHash = await fingerprint(lines);
 
-  // The gate that makes the watch honest AND affordable. Firecrawl compared
-  // this fetch against our own previous scrape of the same URL and says the
-  // text is identical, so there is nothing a re-extraction could truthfully
-  // report. Stop before the model runs: no tokens, no findings rewritten, and
-  // above all no change email sent because the model happened to word an
-  // answer differently on a Tuesday.
+  // The gate that makes the watch honest AND affordable. The document reads
+  // exactly as it read last time, so there is nothing a re-extraction could
+  // truthfully report. Stop before the model runs: no tokens, no findings
+  // rewritten, and above all no change email sent because the model happened to
+  // word an answer differently on a Tuesday.
   //
-  // `null` is NOT treated as unchanged — see ChangeStatus. On a first read
-  // there is no document to re-check, so this cannot fire on the mail path.
-  if (args.recheckOf !== null && changeStatus === "same") {
-    await ctx.runMutation(internal.mail.checked, {
+  // A first reading has no stored hash to match, so this cannot fire on the
+  // mail path however this document was read before.
+  if (args.recheckOf !== null) {
+    const known = await ctx.runQuery(internal.mail.hashOf, {
       documentId: args.recheckOf,
     });
-    return null;
+    if (known !== null && known === contentHash) {
+      await ctx.runMutation(internal.mail.checked, {
+        documentId: args.recheckOf,
+      });
+      return null;
+    }
   }
-
-  const lines = toLines(markdown);
 
   // The document is only in memory here, and it is never written down — the
   // parsed markdown does not go in the database and the PDF never touches this
@@ -506,8 +507,12 @@ export async function readAndPublish(
     kind,
     lineCount: lines.length,
     findings,
-    sourceChanged: changeStatus === "changed",
-    text: changeStatus === "changed" ? lines : [],
+    contentHash,
+    // The text, passed and never stored. `diff` searches it for the clause a
+    // finding used to quote and refuses to report a change while that clause is
+    // still there. Sent always: `attach` is the only place that knows whether
+    // this document has a previous reading to differ from.
+    text: lines,
   });
   return null;
 }
@@ -544,15 +549,13 @@ export const attach = internalMutation({
     kind: documentKind,
     lineCount: v.number(),
     findings: v.array(extractedFinding),
-    // Firecrawl's verdict on the SOURCE TEXT, not ours on the answers. True
-    // only when it reported `changed` against our own previous scrape of this
-    // URL. Nothing below marks a finding changed, or mails anybody, unless this
-    // is true — see convex/change.ts for the measurement behind that rule.
-    sourceChanged: v.boolean(),
+    // SHA-256 of the lines. The watch's whole "did it change?" answer, computed
+    // by us rather than read off a vendor's session state — see the note on
+    // `fingerprint` in convex/lines.ts for the live run that forced that.
+    contentHash: v.string(),
     // The document as it reads now. Passed, never stored: `diff` searches it
     // for the clause a finding used to quote, and refuses to report a change
-    // while that clause is still in the document. Sent only on the path that
-    // can produce a change, so a first reading carries nothing.
+    // while that clause is still in the document.
     text: v.array(v.string()),
   },
   returns: v.null(),
@@ -585,6 +588,7 @@ export const attach = internalMutation({
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: null,
+        contentHash: args.contentHash,
         // The probe seeds the public corpus; inbound mail never does. Set once,
         // here, and deliberately NOT re-derived on the existing-row path below:
         // a stranger emailing a URL that is already on the board must not be
@@ -599,6 +603,7 @@ export const attach = internalMutation({
         lineCount: args.lineCount,
         fetchedAt: now,
         lastCheckedAt: now,
+        contentHash: args.contentHash,
       });
 
       // Read the old answers BEFORE they go. A checklist is five rows, so the
@@ -612,9 +617,17 @@ export const attach = internalMutation({
       // unchanged page this stays empty, so two people forwarding the same
       // terms page a week apart never mail each other a change that did not
       // happen.
-      changes = args.sourceChanged
-        ? diff(before, args.findings, args.text)
-        : [];
+      // The comparison happens HERE, inside the transaction that replaces the
+      // findings, against the hash stored beside them. A retry recomputes the
+      // same hash and reaches the same verdict; nothing about it is spent by
+      // being read. A row with no stored hash predates the watch and is treated
+      // as unchanged — the safe direction for a field that decides who gets
+      // mailed.
+      changes =
+        existing.contentHash !== undefined &&
+        existing.contentHash !== args.contentHash
+          ? diff(before, args.findings, args.text)
+          : [];
 
       // What each question used to say, carried across the delete so the row
       // that replaces it can still show its own history.

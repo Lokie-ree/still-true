@@ -10,9 +10,9 @@
 // not deterministic. So a watch that diffs ANSWERS emails people that their
 // lease changed when it did not, which is worse than no watch at all.
 //
-// Therefore: `diff()` is never consulted unless Firecrawl has already reported
-// `changeStatus: "changed"` on the source text. This function decides WHAT to
-// say about a change; it never decides THAT one happened.
+// Therefore: `diff()` is never consulted unless the document's stored hash
+// already differs from what it reads as now. This function decides WHAT to say
+// about a change; it never decides THAT one happened.
 
 import type { ExtractedFinding } from "./extract.ts";
 
@@ -52,8 +52,8 @@ export type Change =
 
 // The second gate, and the reason this function needs the document text.
 //
-// Firecrawl's changeStatus proves the PAGE moved. It does not prove that any
-// particular finding moved, and on 2026-09-05 the difference showed up in one
+// The hash proves the PAGE moved. It does not prove that any particular
+// finding moved, and on 2026-09-05 the difference showed up in one
 // run: the fixture was re-read after an edit that touched only a disclosure
 // paragraph, and question U2 went from "a late charge of Fifty and 00/100
 // Dollars ($50.00)" at line 24 to not_stated — with that sentence still sitting
