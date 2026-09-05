@@ -1,4 +1,5 @@
 import { AgentMail, toSendPayload } from "@agentmail/convex";
+import { HOUR, RateLimiter } from "@convex-dev/rate-limiter";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
@@ -15,7 +16,13 @@ import { classify, extract } from "./extract";
 import { documentUrl } from "./link";
 import { fingerprint, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
-import { changeBody, failureBody, noDocumentBody, replyBody } from "./reply";
+import {
+  changeBody,
+  failureBody,
+  limitBody,
+  noDocumentBody,
+  replyBody,
+} from "./reply";
 import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
@@ -207,6 +214,34 @@ export const recordSend = internalMutation({
 // `messageId`, which is what actually must not happen twice: one message, one
 // document, and in P3 one reply — even if the same mail arrives as a fresh
 // event. That is the exit test for P1.
+// H2, the readiness audit's only high flag: unbounded, recurring spend on a
+// publicly-listed inbox. A message carrying a document buys one Firecrawl
+// scrape (200 PDF pages, 120s) and two OpenAI calls on up to 600k chars, and
+// the address is a `mailto:` on the board. Nothing bounded that but manners.
+//
+// Two gates, because they stop different things and neither substitutes for the
+// other. The limiter bounds the BURST — what one address can spend this
+// afternoon. The cap bounds the STANDING cost, which is the part P4 created: a
+// url-backed document is re-scraped every day for as long as it exists, so a
+// refilling limiter alone would let one sender accumulate an unbounded daily
+// bill at a perfectly polite pace. 500 URLs mailed a week apart is still 500
+// scrapes and 1,000 model calls per day, forever.
+//
+// Svix proves the webhook came *from* AgentMail. It bounds nobody who *mails*
+// AgentMail. This is that bound.
+const limiter = new RateLimiter(components.rateLimiter, {
+  // Ten an hour sustained, five back to back. A person forwarding their lease
+  // and their landlord's addendum together is the case this must not break; a
+  // script pointed at the board is the case it must.
+  ingest: { kind: "token bucket", rate: 10, period: HOUR, capacity: 5 },
+});
+
+// Distinct documents one address may have. Twenty-five is well past any real
+// forwarding session and far short of a bill worth noticing: a sender at the
+// cap costs at most 25 scrapes a day, and the unchanged ones stop before the
+// model runs.
+const DOCUMENT_CAP = 25;
+
 export const received = internalMutation({
   // `thread` is optional against the component's own type, which declares it
   // required: 0.1.0 omits it entirely when AgentMail returned no thread
@@ -257,12 +292,15 @@ export const received = internalMutation({
         ? "cc"
         : "forward";
 
+    // Real AgentMail messages carry a scalar `from` ("Name <addr>"), not the
+    // `from_` array the docs example shows. Checked against a live message
+    // rather than the docs. Hoisted because it is also the key both spend
+    // gates below are keyed on.
+    const fromEmail = readString(message, "from") ?? "";
+
     const threadRowId = await ctx.db.insert("threads", {
       documentId: null,
-      // Real AgentMail messages carry a scalar `from` ("Name <addr>"), not
-      // the `from_` array the docs example shows. Checked against a live
-      // message rather than the docs.
-      fromEmail: readString(message, "from") ?? "",
+      fromEmail,
       messageId,
       threadId,
       mode,
@@ -277,6 +315,47 @@ export const received = internalMutation({
     // learns only that it is broken.
     if (attachmentId === null && url === null) {
       await reply(ctx, threadRowId, noDocumentBody());
+      return null;
+    }
+
+    // H2. Both gates run after the thread row exists, so a refusal is recorded
+    // and answered like any other message rather than vanishing, and before the
+    // scheduler, so a refused message costs one mutation and no vendor call at
+    // all. That order is the whole point: the cheap thing happens, the expensive
+    // thing does not.
+    const burst = await limiter.limit(ctx, "ingest", { key: fromEmail });
+
+    // ponytail: bounded at 200 threads, so an address past that could undercount
+    // its own distinct documents and slip more in. It cannot get there quickly —
+    // the limiter above caps arrivals at ten an hour — and the fix when it
+    // matters is a `documentId` count kept on the sender rather than derived.
+    const documents = new Set(
+      (
+        await ctx.db
+          .query("threads")
+          .withIndex("by_fromEmail", (q) => q.eq("fromEmail", fromEmail))
+          .take(200)
+      ).flatMap((t) => (t.documentId === null ? [] : [t.documentId])),
+    );
+
+    if (!burst.ok || documents.size >= DOCUMENT_CAP) {
+      // Told, not dropped. A stranger who hits a limit and hears nothing learns
+      // the same thing as a stranger the system is broken for, and this one is
+      // a decision we made rather than a failure — so it says so, and says when
+      // to come back.
+      await reply(
+        ctx,
+        threadRowId,
+        limitBody(burst.ok ? { kind: "cap", cap: DOCUMENT_CAP } : {
+          kind: "burst",
+          retryAfterMs: burst.retryAfter,
+        }),
+      );
+      await ctx.db.patch("threads", threadRowId, {
+        error: burst.ok
+          ? `document cap reached: ${documents.size} of ${DOCUMENT_CAP}`
+          : `rate limited: retry after ${burst.retryAfter}ms`,
+      });
       return null;
     }
 

@@ -1,5 +1,6 @@
 import { defineApp } from "convex/server";
 import agentmail from "@agentmail/convex/convex.config";
+import rateLimiter from "@convex-dev/rate-limiter/convex.config";
 import staticHosting from "@convex-dev/static-hosting/convex.config";
 import workpool from "@convex-dev/workpool/convex.config";
 
@@ -21,5 +22,13 @@ app.use(agentmail);
 // idempotent, because `mail.attach` replaces a document's finding set outright,
 // so running it twice publishes what running it once would have.
 app.use(workpool, { name: "watchPool" });
+// H2. The inbox address is a `mailto:` on a public board, and every message
+// carrying a document buys a Firecrawl scrape and two model calls — then, if it
+// carried a URL, buys them again every day forever. The component rather than a
+// counter column because a limit is only worth having if it is exact under
+// concurrency: this one is transactional with the mutation that reads it, so a
+// burst of simultaneous messages cannot each see the same stale count and all
+// pass. See the note above `limiter` in convex/mail.ts.
+app.use(rateLimiter);
 
 export default app;
