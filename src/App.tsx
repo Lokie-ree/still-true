@@ -25,6 +25,22 @@ function Findings({ documentId }: { documentId: Id<"documents"> }) {
             {f.quote}
             <span className="ml-2 text-xs text-slate-400">line {f.lineNo}</span>
           </blockquote>
+
+          {/* What it used to say. Shown only when the watch stamped this row,
+              which happens only when Firecrawl reported the source text moved —
+              never from two model runs disagreeing. The old quote is struck
+              through rather than described, for the same reason the new one is
+              quoted: a change notice without both receipts is just an
+              assertion that something happened. */}
+          {f.changedAt !== null && f.previousQuote !== undefined && (
+            <blockquote className="mt-1 border-l-2 border-amber-300 pl-3 text-sm text-slate-400">
+              <s>{f.previousQuote}</s>
+              <span className="ml-2 text-xs">
+                was line {f.previousLineNo} · changed{" "}
+                {new Date(f.changedAt).toLocaleDateString()}
+              </span>
+            </blockquote>
+          )}
         </div>
       ))}
 
@@ -78,6 +94,16 @@ export default function App() {
               )}{" "}
               · {d.lineCount.toLocaleString()} lines · read{" "}
               {new Date(d.fetchedAt).toLocaleDateString()}
+              {/* The watch's normal day, said out loud. "Checked and unchanged"
+                  is what happens on almost every document on almost every run,
+                  and a system that only speaks when something moves is
+                  indistinguishable from one that stopped running. */}
+              {d.lastCheckedAt !== null && (
+                <>
+                  {" · re-checked "}
+                  {new Date(d.lastCheckedAt).toLocaleDateString()}
+                </>
+              )}
             </p>
             <Findings documentId={d._id} />
           </li>

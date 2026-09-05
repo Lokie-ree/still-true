@@ -4,20 +4,24 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes. CC it on a thread and the same cited reply lands in the thread.
 - **Live app:** https://impressive-marten-163.convex.site
-- **Built as of 2026-09-04:** the inbox, the parser, the extractor and its grounding
+- **Built as of 2026-09-05:** the inbox, the parser, the extractor and its grounding
   guarantee, and the cited reply — **live on production**, which answered a forwarded link
   in 15 s with six quoted findings and one refusal. The public board carries six documents,
-  34 answered findings and 13 refusals. **The watch and the CC reply described above are NOT
-  built** (P4, P5), and the reply already offers the watch on any document with a URL.
+  34 answered findings and 13 refusals. **The watch is built and proven on development**:
+  a sweep over four documents caught both clauses that were edited on a test fixture, each
+  quoted before and after with its line, and stamped nothing on the other 22 answered
+  findings — and **mailed the change to a real inbox**, unprompted, into the thread that
+  had asked about the document, 2 minutes 17 seconds after the clauses moved. It is **not**
+  on production. **The CC reply (P5) is not built.**
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
-- **Components:** @convex-dev/static-hosting, @agentmail/convex
-- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries, an HTTP action, the scheduler, and internal mutations and actions. Every write is internal — the only thing that reaches them from outside is the component's signature-verified webhook.
+- **Components:** @convex-dev/static-hosting, @agentmail/convex, @convex-dev/workpool
+- **Convex features:** schema with a discriminated-union table, indexes, public queries carrying explicit return validators, realtime queries, an HTTP action, the scheduler, cron jobs, and internal mutations, queries and actions. Every write is internal — the only thing that reaches them from outside is the component's signature-verified webhook.
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-04T23:00:00Z
+- **Last updated:** 2026-09-05T16:45:00Z
 
 ## Log
 
@@ -808,3 +812,204 @@ public board. `documents.recent` returned the same six seeded documents before a
   The provenance gate keeps forwarded documents out of them; `Auth` still reads `none`.
 - The two defects P3 left standing are now standing on production: attachment documents
   never dedupe, and a re-read document never resurfaces on the board.
+
+## 2026-09-05 — P4, the watch, and two ways to be wrong about a change
+
+The sentence in the project description — *"for documents that live at a URL it keeps
+watching, and tells you when the specific thing you asked about changes"* — is backed by
+code as of today. Getting there meant being wrong twice, both times in a way only a live
+run could show.
+
+**First, the offer was withdrawn.** Production spent a day telling every sender of a
+url-backed document to reply `watch`, and answering that reply with the no-document
+apology. One line, `watchable: false`, PR #20. It is back now, and reworded: the watch
+takes no opt-in. *"I'll re-read this page daily and email you if any of the clauses above
+stops saying what it says today. You don't need to do anything."* A person who forwards a
+lease is asking what it requires of them; that it stopped requiring it is the same
+question answered later, and making them reply a magic word to hear the answer is a
+second thing to get wrong for no gain. The `threads` table is the subscription list,
+which is what its schema comment has said since P1.
+
+### The design decision, made from the 09-04 measurement
+
+The obvious watch re-reads a document and diffs the answers. This project already had the
+evidence that it cannot work: on 09-04 the same six documents read on two deployments
+hours apart answered 36 of 47 cells on development and 34 on production, with nothing
+about the documents changing. A watch that diffs answers mails people that their lease
+moved because the model reworded a sentence.
+
+So the question *did it change?* is never asked of the model. The model is only ever asked
+*what does it say now?*, and only once something else has already said yes.
+
+### Wrong the first time: the vendor's signal is consumable
+
+The first design asked Firecrawl. `formats: ["markdown", {type: "changeTracking"}]`
+returns `changeStatus: same | changed | new | removed`, computed from two texts rather
+than two opinions, and the docs promised a free bonus: *"requests with changeTracking
+bypass the index cache. The maxAge parameter is ignored."* That closed the 08-30 readiness
+finding about `scrape()` serving two-day-old cached copies, at no cost.
+
+It survived about ten minutes of real use. Two clauses on the fixture were edited — a
+$50.00 late charge to $90.00, a sixty-day termination notice to ninety — the sweep ran,
+and nothing was stamped. Calling Firecrawl by hand settled it:
+
+```
+markdown chars: 9846
+has $90.00 : true
+has $50.00 : false
+changeStatus: "same"
+previousScrapeAt: "2026-09-05T16:00:48.513Z"
+```
+
+The markdown was current. The verdict was `same`. And `previousScrapeAt` pointed at **our
+own re-check ninety seconds earlier**.
+
+`changeStatus` compares a scrape against the previous scrape of the same URL by the same
+team, so **reading it spends it**. The sweep fetched, Firecrawl advanced its baseline to
+the new text, something after the fetch failed, and from that moment every read compared
+the new text against the new text. The change was gone permanently — and the workpool
+retry, added specifically to make the watch reliable, is what destroyed the evidence.
+Attempt two scrapes again and is told nothing moved.
+
+A change signal that a retry annihilates cannot be the foundation of a watch.
+
+So `documents.contentHash`: SHA-256 of the lines, on our row, compared inside the same
+transaction that replaces the findings. A retry recomputes the same value and reaches the
+same verdict. `changeTracking` is gone from the scrape and `maxAge: 0` closes the cache
+finding on its own, which is what that flag should have been doing since 08-30.
+
+### Wrong the second time: the page moving is not the clause moving
+
+Even a correct "the document changed" does not say **which** finding changed, and the
+fixture demonstrated the gap before the code was finished. Re-read after an edit that
+touched only a disclosure paragraph, question U2 went from quoting *"a late charge of
+Fifty and 00/100 Dollars ($50.00)"* at line 24 to `not_stated` — with that sentence still
+sitting in the document, untouched. On a page that had genuinely changed elsewhere, that
+drift would have mailed somebody that their late-fee clause was deleted while they could
+open the page and read it.
+
+So a second gate, deterministic and free: **a clause is reported as changed only once the
+clause it used to quote is no longer in the document.** A string search over the text just
+read. It kills both directions of the same failure — the model dropping a clause it found
+last time, and the model citing a different true clause instead.
+
+The `appeared` verdict was deleted rather than kept and quietly wrong. There is no old
+quote to search for, so the gate cannot run on it, and "the document now answers a
+question it did not answer before" is as likely to be this run finding what the last run
+missed as a genuinely new term. Telling somebody a clause was added to their lease when it
+was there all along is the same lie as telling them one was removed. Restoring it needs
+the previous text, which this system deliberately does not store, or the added lines out
+of a git-diff — the comment in `change.ts` says so.
+
+### What ran, and what it reported
+
+`watch:sweep` on development, against a fixture whose deposit-return window had moved from
+thirty days to sixty and whose entry notice had moved from twenty-four hours to four:
+
+```
+Northfield residential lease (watch fixture)   94 lines | answered 7 | changed 2
+City of Las Vegas Employee Handbook           606 lines | answered 8 | changed 0
+Summary of Benefits and Coverage              173 lines | answered 4 | changed 0
+Independence Place West Condominium Handbook  693 lines | answered 3 | changed 0
+
+4 documents · 22 answered · 2 stamped changed · 0 answered without a quote
+```
+
+Both changes carried both receipts — the clause as it read, the clause as it reads, each
+with its line. **Zero false positives.** The three documents seeded before `contentHash`
+existed had no stored hash, so they were re-read in full and correctly reported nothing:
+the "no previous reading counts as unchanged" direction working as the migration path it
+was written to be. An unchanged page takes the early exit in twelve seconds with no model
+call at all — `lastCheckedAt` advances, `fetchedAt` does not.
+
+### The components, checked before the cron was written
+
+- **`@convex-dev/workpool` 0.4.11 — adopted.** A sweep fans one cron tick into a Firecrawl
+  scrape and two model calls per document, and `ctx.scheduler` gives a thrown action no
+  retry at all. M1 exists for that reason, but M1's apology only covers documents somebody
+  emailed about; a re-check has no thread and no sender, so **its failures were invisible
+  by construction**. The re-check meets the component's own bar for retry: `attach`
+  replaces a document's finding set outright, so running it twice publishes what running
+  it once would. `maxParallelism: 2` is about Firecrawl and OpenAI, not about Convex.
+- **`@convex-dev/crons` — rejected.** It exists for schedules registered at *runtime*.
+  This is one line that never changes; built-in `cronJobs()` is the answer and the
+  component would have been complexity bought for the look of it.
+- **`@convex-dev/action-retrier` — rejected**, strictly subsumed by workpool.
+- **`@convex-dev/workflow` — rejected for now.** It earns its journaling on many-step
+  chains; this is one action, and workpool covers the retry need at less conceptual
+  weight.
+- **`@convex-dev/rate-limiter` 0.3.2 — a real gap, not yet closed.**
+  `still-true@agentmail.to` is a public address with **no limit on anything**. Anyone can
+  forward five hundred documents and drain the Firecrawl and OpenAI budget. Its own PR.
+- **`aggregate`, `migrations`, `action-cache`, `resend`, `sharded-counter` — no job
+  here.** `previousQuote` and `contentHash` are optional so nothing needs backfilling, the
+  board is six rows so counting is free, and mail goes out through AgentMail by design.
+
+Two things rode along with `npm install`: convex 1.44.0 to 1.45.0, inside the declared
+`^1.44.0` range, and an eslint rule about top-of-hour crons, taken — the sweep runs at
+11:17 UTC.
+
+### Two mistakes of mine, recorded rather than smoothed over
+
+**A production deploy nobody asked for.** `npx @convex-dev/static-hosting deploy
+--skip-convex` was run expecting the development deployment. That subcommand always
+targets production; `upload` is the one that defaults to dev and takes `--prod`. Prod's
+backend was untouched — still ten functions, no `watch` — but its static bundle became the
+branch build and `/watch-test/lease.html` went live there. Verified immediately after: the
+board still returns its six documents, every `lastCheckedAt` null, so the new UI renders
+nothing it does not have. No harm, and no consent asked for either. The rule was to
+identify the target before running the command, and the CLI's default was not checked.
+
+**The classifier is not stable on this fixture.** It read the document as `other` twice
+and as `lease` twice, across four readings of near-identical text. The change detection
+was unaffected — `diff` skips a question the previous reading never asked, which is
+exactly the case a reclassification produces — but a document that answers L1 and L2 one
+day and U1a and U2 the next is a real instability, and it is not measured anywhere.
+
+### The exit test, met
+
+A message was sent to `still-true-dev@agentmail.to` carrying the fixture link. Gmail
+rewrote it to its redirect wrapper again — the second live confirmation of `link.ts` — and
+the cited reply came back in **18 seconds**: six answers each under its own quote, one
+refusal, and the new promise, *"I'll re-read this page daily and email you if any of the
+clauses above stops saying what it says today. You don't need to do anything."*
+
+Then two clauses moved: the deposit-return window from sixty days to one hundred and
+twenty, and the late charge from $90.00 to $250.00. `watch:sweep`, and **2 minutes 17
+seconds later a change notice arrived in the same thread, unprompted**:
+
+```
+Northfield residential lease (watch fixture) changed. 2 things I had quoted
+for you no longer read the same way.
+
+How many days after move-out must the deposit be returned?
+
+  WAS: "Within sixty (60) days after the termination of this Lease…"
+  line 33 · The landlord must return the deposit within 60 days…
+  NOW: "Within one hundred twenty (120) days after the termination…"
+  line 33 · The deposit must be returned within 120 days…
+
+What is the late fee amount?
+
+  WAS: "shall pay a late charge of Ninety and 00/100 Dollars ($90.00)…"
+  line 21 · The late fee is $90.
+  NOW: "shall pay a late charge of Two Hundred Fifty and 00/100 Dollars ($250.00)…"
+  line 21 · The late fee is $250.00.
+
+I compared the text of the page against the copy I read last time. This is
+not a judgment that something got worse — it is that these words are not the
+words that were there before.
+```
+
+`notify()` ran, and the guard it exists for held: the notice landed in the thread that had
+already been answered, which is exactly the row `reply()` refuses to touch.
+
+**It shipped one bug, in the first change notice this system ever sent** — *"2 things I had
+quoted for you no longer **reads** the same way."* The subject is plural and the verb was
+not. Fixed, with a test that pins both forms. A pure function tested against the vocabulary
+it must not use, and the thing that got through was subject-verb agreement.
+
+### Still not true
+- Production runs P0–P3 and none of this. The `watch` over-promise is fixed on `main` and
+  **not yet deployed**, so production is still offering it today.
+- The rate limit is still absent, and the public reads are still unauthenticated.

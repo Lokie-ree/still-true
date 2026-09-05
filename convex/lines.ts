@@ -109,3 +109,25 @@ export function toLines(markdown: string): string[] {
     .filter((line) => !isTocEntry(line))
     .map(trimTablePipes);
 }
+
+// The document's identity, for the watch.
+//
+// Firecrawl's own `changeTracking.changeStatus` was the first answer here and
+// it is the wrong one, for a reason only a live run exposed: the signal is
+// CONSUMABLE. It compares a scrape against the previous scrape of the same URL
+// by the same team, so the moment we fetch, the baseline moves to what we just
+// fetched. On 2026-09-05 a sweep scraped this project's watch fixture after two
+// clauses were edited, failed somewhere after the fetch, and the next read came
+// back `same` — comparing the new text against the new text. The change was
+// gone permanently, and the retry that was supposed to make the watch reliable
+// is what destroyed the evidence.
+//
+// A hash of the lines has none of that. It lives on our row, a retry recomputes
+// the same value, and it cannot be spent by reading it.
+export async function fingerprint(lines: readonly string[]): Promise<string> {
+  const bytes = new TextEncoder().encode(lines.join("\n"));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
