@@ -11,8 +11,9 @@
   a sweep over four documents caught both clauses that were edited on a test fixture, each
   quoted before and after with its line, and stamped nothing on the other 22 answered
   findings — and **mailed the change to a real inbox**, unprompted, into the thread that
-  had asked about the document, 2 minutes 17 seconds after the clauses moved. It is **not**
-  on production. **The CC reply (P5) is not built.**
+  had asked about the document, 2 minutes 17 seconds after the clauses moved. **It is live
+  on production**, where the first sweep re-read all six board documents and stamped
+  nothing. **The CC reply (P5) is not built.**
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -21,7 +22,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-05T16:45:00Z
+- **Last updated:** 2026-09-05T17:05:00Z
 
 ## Log
 
