@@ -238,16 +238,18 @@ const HOW =
 
 export function changeBody(input: ChangeInput): { text: string; html: string } {
   const read = shortDate(input.checkedAt);
-  const headline = plural(input.changes.length, "thing");
+  // "2 things ... no longer READS the same way" shipped once, in the first
+  // change notice this system ever sent. The subject is plural; so is the verb.
+  const n = input.changes.length;
+  const headline = `${plural(n, "thing")} I had quoted for you no longer ${
+    n === 1 ? "reads" : "read"
+  } the same way.`;
 
-  const t: string[] = [
-    `${input.title} changed. ${headline} I had quoted for you no longer reads the same way.`,
-    "",
-  ];
+  const t: string[] = [`${input.title} changed. ${headline}`, ""];
 
   const h: string[] = [
     `<div style="font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#171b1a;max-width:640px">`,
-    `<p style="margin:0 0 18px"><b>${escape(input.title)}</b> changed. ${escape(headline)} I had quoted for you no longer reads the same way.</p>`,
+    `<p style="margin:0 0 18px"><b>${escape(input.title)}</b> changed. ${escape(headline)}</p>`,
   ];
 
   for (const c of input.changes) {

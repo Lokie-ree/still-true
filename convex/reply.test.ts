@@ -175,6 +175,22 @@ void test("a change notice carries both quotes and both line numbers", () => {
   }
 });
 
+void test("the headline verb agrees with the number of changes", () => {
+  // "2 things I had quoted for you no longer reads the same way" is what the
+  // first change notice this system ever sent actually said.
+  const one = changeBody({ title: "t", kind: "lease", lineCount: 418, changes: [moved], checkedAt: CHECKED });
+  assert.match(one.text, /1 thing I had quoted for you no longer reads the same way/);
+
+  const two = changeBody({
+    title: "t",
+    kind: "lease",
+    lineCount: 418,
+    changes: [moved, { ...moved, questionKey: "L2" }],
+    checkedAt: CHECKED,
+  });
+  assert.match(two.text, /2 things I had quoted for you no longer read the same way/);
+});
+
 void test("a change notice never grades the change", () => {
   // "Significant", "important", "you should review this" are all judgments this
   // system has no basis for. It compared two texts; that is the whole claim.

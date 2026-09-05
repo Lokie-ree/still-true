@@ -10,8 +10,9 @@
   34 answered findings and 13 refusals. **The watch is built and proven on development**:
   a sweep over four documents caught both clauses that were edited on a test fixture, each
   quoted before and after with its line, and stamped nothing on the other 22 answered
-  findings. It has **not** yet mailed a change to a real inbox, and it is **not** on
-  production. **The CC reply (P5) is not built.**
+  findings — and **mailed the change to a real inbox**, unprompted, into the thread that
+  had asked about the document, 2 minutes 17 seconds after the clauses moved. It is **not**
+  on production. **The CC reply (P5) is not built.**
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -20,7 +21,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-05T16:35:00Z
+- **Last updated:** 2026-09-05T16:45:00Z
 
 ## Log
 
@@ -965,12 +966,50 @@ was unaffected — `diff` skips a question the previous reading never asked, whi
 exactly the case a reclassification produces — but a document that answers L1 and L2 one
 day and U1a and U2 the next is a real instability, and it is not measured anywhere.
 
-### Still not true
+### The exit test, met
 
-- **No change email has been sent to a real inbox.** The sweep publishes to the board, and
-  `changeBody` is unit-tested against the grading vocabulary, but no thread existed on the
-  fixture, so `notify()` has never run end to end. That is the last piece of P4's exit
-  test.
+A message was sent to `still-true-dev@agentmail.to` carrying the fixture link. Gmail
+rewrote it to its redirect wrapper again — the second live confirmation of `link.ts` — and
+the cited reply came back in **18 seconds**: six answers each under its own quote, one
+refusal, and the new promise, *"I'll re-read this page daily and email you if any of the
+clauses above stops saying what it says today. You don't need to do anything."*
+
+Then two clauses moved: the deposit-return window from sixty days to one hundred and
+twenty, and the late charge from $90.00 to $250.00. `watch:sweep`, and **2 minutes 17
+seconds later a change notice arrived in the same thread, unprompted**:
+
+```
+Northfield residential lease (watch fixture) changed. 2 things I had quoted
+for you no longer read the same way.
+
+How many days after move-out must the deposit be returned?
+
+  WAS: "Within sixty (60) days after the termination of this Lease…"
+  line 33 · The landlord must return the deposit within 60 days…
+  NOW: "Within one hundred twenty (120) days after the termination…"
+  line 33 · The deposit must be returned within 120 days…
+
+What is the late fee amount?
+
+  WAS: "shall pay a late charge of Ninety and 00/100 Dollars ($90.00)…"
+  line 21 · The late fee is $90.
+  NOW: "shall pay a late charge of Two Hundred Fifty and 00/100 Dollars ($250.00)…"
+  line 21 · The late fee is $250.00.
+
+I compared the text of the page against the copy I read last time. This is
+not a judgment that something got worse — it is that these words are not the
+words that were there before.
+```
+
+`notify()` ran, and the guard it exists for held: the notice landed in the thread that had
+already been answered, which is exactly the row `reply()` refuses to touch.
+
+**It shipped one bug, in the first change notice this system ever sent** — *"2 things I had
+quoted for you no longer **reads** the same way."* The subject is plural and the verb was
+not. Fixed, with a test that pins both forms. A pure function tested against the vocabulary
+it must not use, and the thing that got through was subject-verb agreement.
+
+### Still not true
 - Production runs P0–P3 and none of this. The `watch` over-promise is fixed on `main` and
   **not yet deployed**, so production is still offering it today.
 - The rate limit is still absent, and the public reads are still unauthenticated.
