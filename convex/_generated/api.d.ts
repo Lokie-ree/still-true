@@ -8,14 +8,18 @@
  * @module
  */
 
+import type * as change from "../change.js";
+import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
 import type * as env from "../env.js";
 import type * as extract from "../extract.js";
 import type * as http from "../http.js";
 import type * as lines from "../lines.js";
+import type * as link from "../link.js";
 import type * as mail from "../mail.js";
 import type * as questions from "../questions.js";
 import type * as reply from "../reply.js";
+import type * as watch from "../watch.js";
 
 import type {
   ApiFromModules,
@@ -24,14 +28,18 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  change: typeof change;
+  crons: typeof crons;
   documents: typeof documents;
   env: typeof env;
   extract: typeof extract;
   http: typeof http;
   lines: typeof lines;
+  link: typeof link;
   mail: typeof mail;
   questions: typeof questions;
   reply: typeof reply;
+  watch: typeof watch;
 }>;
 
 /**
@@ -63,4 +71,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   staticHosting: import("@convex-dev/static-hosting/_generated/component.js").ComponentApi<"staticHosting">;
   agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
+  watchPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"watchPool">;
 };
