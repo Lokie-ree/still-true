@@ -23,6 +23,20 @@ is already decided.
 [`README.md`](README.md) has what is built and what is not.
 [`hackathon.md`](hackathon.md) is the dated build log, including reversals.
 
+## Before you say it works
+
+Run **`npm run gate`**. It is `npm run lint && npm test` followed by five
+read-only checks against production: the public surface is queries only, the
+site serves the app, the board leaks nothing private, every published answer
+carries a quote and a line number, and the watch has swept inside 48 hours.
+Read-only and free — no mutation, no scrape, no model call — so there is no
+reason not to have run it.
+
+A claim about production that the gate could have checked and you did not run is
+not a claim, and this project has retracted two of them. If a check is not in
+the gate, say "unverified" rather than implying otherwise, and name which
+deployment (dev or prod) any command you ran was pointed at.
+
 ## Keeping this documentation current
 
 These files are the project's own account of itself. **A PR that changes what

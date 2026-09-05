@@ -1163,3 +1163,32 @@ stay distinguishable from each other and from a failure, and that a retry delay
 never rounds down to "now" and walks the sender back into the limit. The live
 refusal has not been exercised against a real inbox. Saying so here is cheaper
 than discovering it in an audit.
+
+## 2026-09-05, later still — `npm run gate`
+
+**The exit criteria were prose, and prose is what got retracted twice.** P0 was
+reported deployed when it was not; a webhook was reported silent while its logs
+sat sixteen minutes old. Neither was carelessness — both were a judgement call
+standing in for a measurement. So five claims this repository makes about itself
+are now a script that exits non-zero: prod exposes only read-only queries, the
+site serves the app document, the board returns nothing private, every published
+answer carries a non-empty quote and a real line number, and the watch has swept
+inside 48 hours.
+
+**Read-only and free**, so it can run on a loop: no mutation, no scrape, no model
+call, no admin key — the two public queries answer over the HTTP API exactly as
+they would to a stranger, which is the point. The sweep threshold is 48h rather
+than 24h and the reason is written down beside it: the cron fires daily, so a
+run landing 23 hours after the last sweep would fail a 24-hour threshold with
+nothing wrong. Two cycles missed is a signal; one boundary crossing is a clock.
+
+**A gate that has never failed is not evidence.** It was run against production
+with the thresholds deliberately violated, and returned exit 1 naming both
+broken checks — so the green run above means something. First real run: 5/5.
+
+**And it immediately earned itself.** The README said the board carries 34
+answered findings and 13 refusals. Production says 35 and 12: a refusal became an
+answer when a re-read found the clause, which is the watch doing exactly its job,
+and the README had gone quietly stale about it. Nobody would have noticed by
+reading. That is the entire argument for the script, made by the script, eleven
+minutes after it existed.
