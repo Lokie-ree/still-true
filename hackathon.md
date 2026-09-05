@@ -22,7 +22,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-05T17:05:00Z
+- **Last updated:** 2026-09-05T18:10:00Z
 
 ## Log
 
@@ -1014,3 +1014,64 @@ it must not use, and the thing that got through was subject-verb agreement.
 - Production runs P0–P3 and none of this. The `watch` over-promise is fixed on `main` and
   **not yet deployed**, so production is still offering it today.
 - The rate limit is still absent, and the public reads are still unauthenticated.
+
+
+## 2026-09-05 (later) — the page a judge would click
+
+The landing page had been live for a day and nobody had opened it. Opening it
+found four things, three of which were bugs rather than taste.
+
+**It never said where to send the mail.** A landing page for an email-first
+product with no address anywhere on it. That is not polish; it is a missing
+function, and it dead-ended the call to action of every post this project has
+drafted.
+
+**It printed database keys.** A reader was shown `U5b` and told nothing at all.
+The reply has always printed the question — `questionFor` lived in `reply.ts`
+— so the fix was to move that function to `questions.ts`, where the wording
+already lives, and read it from both places.
+
+**It printed the same quote twice.** `U5a` and `U5b` both cite line 30 of the
+Las Vegas handbook, so that sentence rendered back to back. This is exactly the
+defect P3 fixed for the email with `groupByLine` — *"printing its 600-character
+quote twice in a row reads as a bug"* — and the board never got the fix. Two
+questions, two answers, one receipt now.
+
+**The refusal rendered as a key list, below the fold.** `L1, T2A not stated` is
+a stack trace, not a differentiator. Each card now leads with what the document
+never says, in the question's own words and in the same sentence the reply
+sends. The board is deliberately ordered the opposite way from the email: a
+person who forwarded a lease wants the answers first, and a stranger who
+arrived at the board has not asked anything yet.
+
+Deployed to production. The board now reads **6 public documents · 5,124 lines
+read**, and the frame that makes the case for the whole project is a completed
+Summary of Benefits and Coverage — a real health plan, 173 lines:
+
+```
+WHAT IT NEVER SAYS
+
+How do you end it?
+  Searched all 173 lines. This document does not state it.
+What notice must you give to end it?
+  Searched all 173 lines. This document does not state it.
+Can the other party change these terms?
+  Searched all 173 lines. This document does not state it.
+What notice do you get before a change takes effect?
+  Searched all 173 lines. This document does not state it.
+```
+
+Four questions a person would actually ask of their own health coverage, and
+the document answers none of them. That is the product in one screenshot, and
+it existed on the board for a day rendered as `U3a, U3b, U5a, U5b not stated`.
+
+**The lesson, again, and this time about our own artifact.** Every claim on
+this page is checked against the deployment rather than the branch. Nobody had
+applied that rule to the page itself — it was deployed, verified as HTTP 200
+with the right `<title>`, and never once looked at. *A claim about what a
+visitor sees is a claim about a rendering, and only looking at it settles that.*
+
+One thing found and not fixed: `agentmail/callbackPool:complete` took 8 OCC
+write conflicts on the component's own `runStatus` table during the day's mail
+activity. All retried, none failed permanently, and it is inside the
+component's workpool rather than our code. Recorded, not chased.
