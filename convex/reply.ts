@@ -10,7 +10,7 @@
 
 import type { Change } from "./change.ts";
 import type { ExtractedFinding } from "./extract.ts";
-import { CHECKLISTS, type DocumentKind } from "./questions.ts";
+import { questionFor, type DocumentKind } from "./questions.ts";
 
 // "read Sep 4". UTC, because the alternative is a receipt whose date depends
 // on which machine rendered it.
@@ -54,9 +54,6 @@ export type ReplyInput = {
 // Publishing it would be the product asserting something it did not read.
 const refusalLine = (linesSearched: number) =>
   `Searched all ${plural(linesSearched, "line")}. This document does not state it.`;
-
-const questionFor = (kind: DocumentKind, key: string) =>
-  CHECKLISTS[kind].find((q) => q.key === key)?.ask ?? key;
 
 // Splitting the compound questions was right for the engine contract, but it
 // left two findings citing one line with one 600-character quote printed twice

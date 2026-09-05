@@ -87,3 +87,14 @@ export const CHECKLISTS = {
   notice: UNIVERSAL,
   other: UNIVERSAL,
 } satisfies Record<DocumentKind, Question[]>;
+
+// The question a stored key was asking, for anything that shows a finding to a
+// person. A finding stores `questionKey` and not the question text, because the
+// key is what the extractor contracts on and the wording lives here — but a
+// reader shown `U5b` has been told nothing at all. The board printed those keys
+// raw until 2026-09-05.
+//
+// Falls back to the key rather than throwing: a finding published under a key
+// that has since left a checklist is stale, not a crash.
+export const questionFor = (kind: DocumentKind, key: string): string =>
+  CHECKLISTS[kind].find((q) => q.key === key)?.ask ?? key;
