@@ -213,25 +213,10 @@ void test("a clause that disappeared reports the refusal, not an empty quote", (
   assert.match(text, /Searched all 418 lines\. This document does not state it\./);
 });
 
-void test("a clause that appeared has no WAS half to show", () => {
-  const { text } = changeBody({
-    title: "terms",
-    kind: "tos",
-    lineCount: 1225,
-    changes: [
-      {
-        kind: "appeared",
-        questionKey: "T4",
-        answer: "Data is shared with partners.",
-        quote: "we share your data with third parties",
-        lineNo: 323,
-      },
-    ],
-    checkedAt: Date.UTC(2026, 8, 14),
-  });
-  assert.doesNotMatch(text, /WAS:/);
-  assert.match(text, /we share your data with third parties/);
-});
+// The "a clause appeared" case used to be tested here. It no longer exists:
+// `diff` refuses to report a clause as new, because with no old quote to search
+// for it cannot tell a genuinely added term from this run finding what the last
+// run missed. See convex/change.ts.
 
 void test("the notice says how it knows, because that is the only reason to believe it", () => {
   const { text } = changeBody({

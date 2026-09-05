@@ -48,15 +48,29 @@ export type Change =
       previousAnswer: string;
       previousQuote: string;
       previousLineNo: number;
-    }
-  // It was silent and now speaks. A clause that was not there before.
-  | {
-      kind: "appeared";
-      questionKey: string;
-      answer: string;
-      quote: string;
-      lineNo: number;
     };
+
+// The second gate, and the reason this function needs the document text.
+//
+// Firecrawl's changeStatus proves the PAGE moved. It does not prove that any
+// particular finding moved, and on 2026-09-05 the difference showed up in one
+// run: the fixture was re-read after an edit that touched only a disclosure
+// paragraph, and question U2 went from "a late charge of Fifty and 00/100
+// Dollars ($50.00)" at line 24 to not_stated — with that sentence still sitting
+// in the document, untouched. On a page that had genuinely changed elsewhere,
+// that drift would have mailed somebody that their late-fee clause had been
+// deleted.
+//
+// So: a clause is only reported as changed if the clause it used to quote is no
+// longer IN the document. That is a string search over the text we just read —
+// deterministic, no model, no second opinion. If the old sentence is still
+// there, the document still says it, whatever this run's extraction decided.
+const flatten = (s: string) => s.replace(/\s+/g, " ").trim();
+
+// Whitespace only. The quote was sliced out of these very lines, so anything
+// fancier would be guessing at a mismatch that cannot happen.
+const stillSays = (lines: readonly string[], quote: string) =>
+  flatten(lines.join(" ")).includes(flatten(quote));
 
 // The QUOTE is the identity of an answer, not the prose around it.
 //
@@ -72,47 +86,66 @@ export type Change =
 export function diff(
   before: readonly PriorFinding[],
   after: readonly ExtractedFinding[],
+  // The document as it reads now. The caller has it in memory; it is
+  // deliberately never stored.
+  now: readonly string[],
 ): Change[] {
   const prior = new Map(before.map((f) => [f.questionKey, f]));
   const changes: Change[] = [];
 
-  for (const now of after) {
-    const was = prior.get(now.questionKey);
+  for (const found of after) {
+    const was = prior.get(found.questionKey);
     // A question that was never asked before is not a change — it is a first
     // answer. This happens when the classifier moves a document to a different
     // checklist, and reporting it as "the document changed" would be false.
     if (was === undefined) continue;
 
-    if (now.verdict === "answered" && was.verdict === "answered") {
-      if (now.quote === was.quote) continue;
+    // Same receipt, same clause. The answer's prose may have been reworded by
+    // this run; the document has not moved.
+    if (
+      found.verdict === "answered" &&
+      was.verdict === "answered" &&
+      found.quote === was.quote
+    ) {
+      continue;
+    }
+
+    // Nothing below this line is reported while the old clause is still in the
+    // document. Every branch that follows depends on it having gone.
+    if (was.verdict === "answered" && stillSays(now, was.quote)) continue;
+
+    if (found.verdict === "answered" && was.verdict === "answered") {
       changes.push({
         kind: "moved",
-        questionKey: now.questionKey,
+        questionKey: found.questionKey,
         previousAnswer: was.answer,
         previousQuote: was.quote,
         previousLineNo: was.lineNo,
-        answer: now.answer,
-        quote: now.quote,
-        lineNo: now.lineNo,
+        answer: found.answer,
+        quote: found.quote,
+        lineNo: found.lineNo,
       });
-    } else if (now.verdict === "not_stated" && was.verdict === "answered") {
+    } else if (found.verdict === "not_stated" && was.verdict === "answered") {
       changes.push({
         kind: "gone",
-        questionKey: now.questionKey,
+        questionKey: found.questionKey,
         previousAnswer: was.answer,
         previousQuote: was.quote,
         previousLineNo: was.lineNo,
       });
-    } else if (now.verdict === "answered" && was.verdict === "not_stated") {
-      changes.push({
-        kind: "appeared",
-        questionKey: now.questionKey,
-        answer: now.answer,
-        quote: now.quote,
-        lineNo: now.lineNo,
-      });
     }
-    // not_stated → not_stated is silence twice. Nothing to report.
+    // was not_stated, now answered — a clause that appeared — is deliberately
+    // NOT reported. There is no old quote to search for, so the check above
+    // cannot run on it, and it is exactly as likely to be this run's extraction
+    // finding what the last run missed as it is to be a new clause. Telling
+    // somebody a term was added to their lease when it was there all along is
+    // the same lie as telling them one was removed.
+    //
+    // Restoring it needs the previous TEXT, which this system deliberately does
+    // not store — or the added lines out of Firecrawl's git-diff, which the
+    // scrape already requests and nothing yet reads. That is where to start.
+    //
+    // not_stated → not_stated is silence twice. Nothing to report either.
   }
 
   return changes;

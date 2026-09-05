@@ -258,17 +258,18 @@ export function changeBody(input: ChangeInput): { text: string; html: string } {
       `<b style="display:block;margin-bottom:8px">${escape(ask)}</b>`,
     );
 
-    if (c.kind !== "appeared") {
-      t.push(
-        `  WAS: "${c.previousQuote}"`,
-        `  line ${c.previousLineNo} · ${c.previousAnswer}`,
-      );
-      h.push(
-        `<p style="margin:0 0 2px;font:600 11px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#8b948f">Was</p>`,
-        `<i style="color:#67726e;text-decoration:line-through">“${escape(c.previousQuote)}”</i>`,
-        `<span style="display:block;margin:3px 0 12px;font:11px ui-monospace,Menlo,monospace;color:#8b948f">line ${c.previousLineNo} · ${escape(c.previousAnswer)}</span>`,
-      );
-    }
+    // Every change has a WAS half. A clause that merely APPEARED is not
+    // reported at all — see convex/change.ts for why — so there is no branch
+    // here for one without a previous receipt.
+    t.push(
+      `  WAS: "${c.previousQuote}"`,
+      `  line ${c.previousLineNo} · ${c.previousAnswer}`,
+    );
+    h.push(
+      `<p style="margin:0 0 2px;font:600 11px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#8b948f">Was</p>`,
+      `<i style="color:#67726e;text-decoration:line-through">“${escape(c.previousQuote)}”</i>`,
+      `<span style="display:block;margin:3px 0 12px;font:11px ui-monospace,Menlo,monospace;color:#8b948f">line ${c.previousLineNo} · ${escape(c.previousAnswer)}</span>`,
+    );
 
     if (c.kind === "gone") {
       // The refusal, arriving as news. It is the same claim the first reading

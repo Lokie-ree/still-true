@@ -321,7 +321,6 @@ async function attachmentUrl(
 // asking the model twice and diffing the answers, which the 09-04 deploy
 // measured drifting on 2 of 47 cells with the documents standing still.
 type ChangeStatus = "new" | "same" | "changed" | "removed" | null;
-
 async function scrape(
   url: string,
 ): Promise<{ markdown: string; changeStatus: ChangeStatus }> {
@@ -508,6 +507,7 @@ export async function readAndPublish(
     lineCount: lines.length,
     findings,
     sourceChanged: changeStatus === "changed",
+    text: changeStatus === "changed" ? lines : [],
   });
   return null;
 }
@@ -549,6 +549,11 @@ export const attach = internalMutation({
     // URL. Nothing below marks a finding changed, or mails anybody, unless this
     // is true — see convex/change.ts for the measurement behind that rule.
     sourceChanged: v.boolean(),
+    // The document as it reads now. Passed, never stored: `diff` searches it
+    // for the clause a finding used to quote, and refuses to report a change
+    // while that clause is still in the document. Sent only on the path that
+    // can produce a change, so a first reading carries nothing.
+    text: v.array(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -607,7 +612,9 @@ export const attach = internalMutation({
       // unchanged page this stays empty, so two people forwarding the same
       // terms page a week apart never mail each other a change that did not
       // happen.
-      changes = args.sourceChanged ? diff(before, args.findings) : [];
+      changes = args.sourceChanged
+        ? diff(before, args.findings, args.text)
+        : [];
 
       // What each question used to say, carried across the delete so the row
       // that replaces it can still show its own history.
