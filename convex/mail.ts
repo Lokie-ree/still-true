@@ -1,16 +1,17 @@
 import { AgentMail, toSendPayload } from "@agentmail/convex";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { internalAction, internalMutation } from "./_generated/server";
+import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl } from "./link";
 import { toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
-import { failureBody, noDocumentBody, replyBody } from "./reply";
+import { changeBody, failureBody, noDocumentBody, replyBody } from "./reply";
 import { documentKind, extractedFinding } from "./schema";
 
 // Inbound mail. Every function here is internal; the only thing reaching them
@@ -74,6 +75,36 @@ async function reply(
     // forward → back to the sender. cc → into the thread, in front of everyone
     // already arguing about it. P5 is where that second door gets exercised;
     // hardcoding `false` here would simply be wrong for a row already marked.
+    replyAll: thread.mode === "cc",
+    ...body,
+  });
+}
+
+// The watch's door out, and the one place `repliedAt` is deliberately not
+// consulted. That flag means "this message has been answered", which is exactly
+// right for the reply and exactly wrong here: a change notice is a SECOND thing
+// to say about a message that was already answered weeks ago, and the guard
+// that stops a double reply would swallow every one of them.
+//
+// What stops a duplicate instead is upstream: a change is only ever computed
+// when Firecrawl reports the source text moved, and the next check compares
+// against the text we just read. Nothing here needs a second opinion about it.
+async function notify(
+  ctx: MutationCtx,
+  threadRowId: Id<"threads">,
+  body: { text: string; html: string },
+): Promise<void> {
+  const thread = await ctx.db.get("threads", threadRowId);
+  if (thread === null || thread.inboxId === undefined) return;
+  // Never mail a thread whose own first reply never made it out. They were told
+  // nothing about this document; a change notice would be the first they hear
+  // of it, and it would reference an answer they never received.
+  if (thread.repliedAt === null) return;
+
+  await ctx.scheduler.runAfter(0, internal.mail.send, {
+    threadRowId,
+    inboxId: thread.inboxId,
+    parentMessageId: thread.messageId,
     replyAll: thread.mode === "cc",
     ...body,
   });
@@ -476,6 +507,7 @@ export async function readAndPublish(
     kind,
     lineCount: lines.length,
     findings,
+    sourceChanged: changeStatus === "changed",
   });
   return null;
 }
@@ -512,11 +544,23 @@ export const attach = internalMutation({
     kind: documentKind,
     lineCount: v.number(),
     findings: v.array(extractedFinding),
+    // Firecrawl's verdict on the SOURCE TEXT, not ours on the answers. True
+    // only when it reported `changed` against our own previous scrape of this
+    // URL. Nothing below marks a finding changed, or mails anybody, unless this
+    // is true — see convex/change.ts for the measurement behind that rule.
+    sourceChanged: v.boolean(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now();
     const url = args.url;
+    let changes: Change[] = [];
+    // The stored row, not the extractor's shape: it carries the change stamp
+    // that has to survive a reading which did not move anything.
+    const priorByKey = new Map<
+      string,
+      Doc<"findings"> & { verdict: "answered" }
+    >();
     // Two people forwarding the same terms page are asking about one document.
     // They share the row, and therefore the watch.
     const existing =
@@ -549,35 +593,92 @@ export const attach = internalMutation({
         kind: args.kind,
         lineCount: args.lineCount,
         fetchedAt: now,
+        lastCheckedAt: now,
       });
 
-      // ponytail: a re-forward replaces the finding set outright. P4's re-check
-      // is the path that has to DIFF — reading the old answer before it goes,
-      // to set previousAnswer and changedAt — and it will do that here. A
-      // checklist is five rows, so the bounded read covers it many times over.
-      for (const stale of await ctx.db
+      // Read the old answers BEFORE they go. A checklist is five rows, so the
+      // bounded read covers it many times over.
+      const before = await ctx.db
         .query("findings")
         .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
-        .take(50)) {
+        .take(50);
+
+      // Only when Firecrawl says the text moved. On a re-forward of an
+      // unchanged page this stays empty, so two people forwarding the same
+      // terms page a week apart never mail each other a change that did not
+      // happen.
+      changes = args.sourceChanged ? diff(before, args.findings) : [];
+
+      // What each question used to say, carried across the delete so the row
+      // that replaces it can still show its own history.
+      for (const stale of before) {
+        if (stale.verdict === "answered") priorByKey.set(stale.questionKey, stale);
         await ctx.db.delete("findings", stale._id);
       }
     }
 
+    const moved = new Set(
+      changes.filter((c) => c.kind === "moved").map((c) => c.questionKey),
+    );
+
     for (const finding of args.findings) {
-      await ctx.db.insert(
-        "findings",
-        finding.verdict === "answered"
-          ? {
-              ...finding,
-              documentId,
-              verifiedAt: now,
-              // P4 sets these when a re-check moves the answer. A first
-              // reading has nothing it used to say.
-              previousAnswer: null,
-              changedAt: null,
-            }
-          : { ...finding, documentId, verifiedAt: now },
-      );
+      if (finding.verdict !== "answered") {
+        await ctx.db.insert("findings", {
+          ...finding,
+          documentId,
+          verifiedAt: now,
+        });
+        continue;
+      }
+
+      // A change stamp survives later readings that did not move it, so the
+      // board goes on saying "changed Sep 14" until the day it changes again.
+      // Wiping it on every clean re-check would erase the only durable record
+      // that anything ever happened.
+      const prior = priorByKey.get(finding.questionKey);
+      const stamp = moved.has(finding.questionKey)
+        ? {
+            previousAnswer: prior?.answer ?? null,
+            previousQuote: prior?.quote,
+            previousLineNo: prior?.lineNo,
+            changedAt: now,
+          }
+        : {
+            previousAnswer: prior?.previousAnswer ?? null,
+            previousQuote: prior?.previousQuote,
+            previousLineNo: prior?.previousLineNo,
+            changedAt: prior?.changedAt ?? null,
+          };
+
+      await ctx.db.insert("findings", {
+        ...finding,
+        documentId,
+        verifiedAt: now,
+        ...stamp,
+      });
+    }
+
+    // Everyone who ever asked about this document hears that it moved. The
+    // threads table IS the subscription list — a person who forwarded a lease
+    // asked to know what it requires of them, and that it stopped requiring it
+    // is the same question answered later.
+    if (changes.length > 0) {
+      for (const thread of await ctx.db
+        .query("threads")
+        .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+        .take(100)) {
+        await notify(
+          ctx,
+          thread._id,
+          changeBody({
+            title: args.title,
+            kind: args.kind,
+            lineCount: args.lineCount,
+            changes,
+            checkedAt: now,
+          }),
+        );
+      }
     }
 
     // The probe publishes with no thread, and P4's re-check will too. A

@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { ExtractedFinding } from "./extract.ts";
-import { failureBody, replyBody } from "./reply.ts";
+import { changeBody, failureBody, replyBody } from "./reply.ts";
 
 const CHECKED = Date.parse("2026-09-04T12:00:00Z");
 
@@ -137,4 +137,105 @@ void test("two answers citing one line print that line once", () => {
   assert.match(text, /It applies after the fifth day\./);
   assert.equal(text.split("Entry may be made only").length - 1, 1);
   assert.equal(text.split("line 268").length - 1, 1);
+});
+
+// ── the watch's email ────────────────────────────────────────────────────────
+// It arrives unasked, weeks later, about a document the reader half remembers.
+// So the tests here are about what it must NOT do as much as what it says.
+
+const moved = {
+  kind: "moved" as const,
+  questionKey: "L1",
+  previousAnswer: "You must give 30 days' notice.",
+  previousQuote: "TENANT shall give thirty (30) days written notice",
+  previousLineNo: 100,
+  answer: "You must give 60 days' notice.",
+  quote: "TENANT shall give sixty (60) days written notice",
+  lineNo: 104,
+};
+
+void test("a change notice carries both quotes and both line numbers", () => {
+  const { text, html } = changeBody({
+    title: "Livonia Housing Authority lease",
+    kind: "lease",
+    lineCount: 418,
+    changes: [moved],
+    checkedAt: Date.UTC(2026, 8, 14),
+  });
+  for (const out of [text, html]) {
+    assert.match(out, /thirty \(30\) days written notice/);
+    assert.match(out, /sixty \(60\) days written notice/);
+    assert.match(out, /line 100/);
+    assert.match(out, /line 104/);
+  }
+});
+
+void test("a change notice never grades the change", () => {
+  // "Significant", "important", "you should review this" are all judgments this
+  // system has no basis for. It compared two texts; that is the whole claim.
+  const { text, html } = changeBody({
+    title: "terms",
+    kind: "tos",
+    lineCount: 1225,
+    changes: [moved],
+    checkedAt: Date.UTC(2026, 8, 14),
+  });
+  for (const out of [text, html]) {
+    // "worse" is deliberately absent from this list: the notice uses it once,
+    // to say it is NOT making that judgment, and the following test pins that
+    // sentence in place.
+    assert.doesNotMatch(out, /significant|important|serious|urgent|review this|you should/i);
+  }
+});
+
+void test("a clause that disappeared reports the refusal, not an empty quote", () => {
+  const { text } = changeBody({
+    title: "lease",
+    kind: "lease",
+    lineCount: 418,
+    changes: [
+      {
+        kind: "gone",
+        questionKey: "L1",
+        previousAnswer: "Deposit returned in 30 days.",
+        previousQuote: "shall be returned within 30 days",
+        previousLineNo: 88,
+      },
+    ],
+    checkedAt: Date.UTC(2026, 8, 14),
+  });
+  assert.match(text, /shall be returned within 30 days/);
+  assert.match(text, /Searched all 418 lines\. This document does not state it\./);
+});
+
+void test("a clause that appeared has no WAS half to show", () => {
+  const { text } = changeBody({
+    title: "terms",
+    kind: "tos",
+    lineCount: 1225,
+    changes: [
+      {
+        kind: "appeared",
+        questionKey: "T4",
+        answer: "Data is shared with partners.",
+        quote: "we share your data with third parties",
+        lineNo: 323,
+      },
+    ],
+    checkedAt: Date.UTC(2026, 8, 14),
+  });
+  assert.doesNotMatch(text, /WAS:/);
+  assert.match(text, /we share your data with third parties/);
+});
+
+void test("the notice says how it knows, because that is the only reason to believe it", () => {
+  const { text } = changeBody({
+    title: "terms",
+    kind: "tos",
+    lineCount: 1225,
+    changes: [moved],
+    checkedAt: Date.UTC(2026, 8, 14),
+  });
+  assert.match(text, /compared the text of the page against the copy I read last time/);
+  assert.match(text, /not a judgment that something got worse/);
 });
