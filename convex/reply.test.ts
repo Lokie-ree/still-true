@@ -66,17 +66,22 @@ void test("a refusal never asserts anything the finding does not store", () => {
 
 void test("watch is offered only on a document that can actually be watched", () => {
   const watched = replyBody({ ...base, findings: [answered] });
-  assert.match(watched.text, /Reply `watch`/);
+  assert.match(watched.text, /re-read this page daily and email you/);
 
-  // A forwarded attachment has no URL. Offering to watch it would be a promise
-  // the system cannot keep, and P4 will never re-fetch it.
+  // A forwarded attachment has no URL. The signed link expired minutes after it
+  // arrived, so `watch:sweep` has no address to go back to and the promise
+  // would be unkeepable. Assert on the promise itself, not on the word: the
+  // sentence no longer contains "watch" anywhere, so matching that word alone
+  // would pass even if the whole promise were wrongly included.
   const attachment = replyBody({
     ...base,
     watchable: false,
     findings: [answered],
   });
-  assert.doesNotMatch(attachment.text, /watch/i);
-  assert.doesNotMatch(attachment.html, /watch/i);
+  for (const rendered of [attachment.text, attachment.html]) {
+    assert.doesNotMatch(rendered, /re-read|daily|email you if/i);
+    assert.doesNotMatch(rendered, /watch/i);
+  }
 });
 
 void test("both halves render together, refusal included", () => {

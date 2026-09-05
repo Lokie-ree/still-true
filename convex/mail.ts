@@ -698,14 +698,13 @@ export const attach = internalMutation({
           lineCount: args.lineCount,
           findings: args.findings,
           // A forwarded attachment has no URL, so there is nothing to
-          // re-fetch. Offering to watch it would be a promise P4 cannot keep.
+          // re-fetch and nothing to watch. Everything else is watched, with no
+          // action from the sender — `convex/crons.ts` re-reads it daily.
           //
-          // P4 is not built, so that is true of EVERY document right now, not
-          // just the attachments: production has been offering `watch` on any
-          // url-backed document and answering the reply with the no-document
-          // apology. Restore `url !== null` in the commit that ships the
-          // re-check, and not one deploy earlier.
-          watchable: false,
+          // This was hardcoded false for one day, between production going
+          // live and the watch existing, because the sentence it controls was
+          // a promise nothing could keep. It is true again now.
+          watchable: url !== null,
           checkedAt: now,
         }),
       );

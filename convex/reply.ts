@@ -89,7 +89,14 @@ const FOOTER =
   "pulled out by index, so I cannot show you a sentence that is not in your " +
   "document.";
 
-const WATCH = "Reply `watch` and I'll tell you if any of this changes.";
+// No opt-in, deliberately. A person who forwards a lease is asking what it
+// requires of them; that it stopped requiring it is the same question answered
+// later, and making them reply a magic word to hear the answer would be a
+// second thing to get wrong for no gain. The threads table IS the subscription
+// list — see the schema note on it — so there is nothing to enrol in.
+const WATCH =
+  "I'll re-read this page daily and email you if any of the clauses above " +
+  "stops saying what it says today. You don't need to do anything.";
 
 // Not legal advice, and not a summary. Stated in the artifact a person actually
 // reads rather than only in the README.
@@ -195,7 +202,7 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
   );
   if (input.watchable) {
     h.push(
-      `<p style="margin:10px 0 0;font-size:13px;color:#67726e">Reply <code>watch</code> and I'll tell you if any of this changes.</p>`,
+      `<p style="margin:10px 0 0;font-size:13px;color:#67726e">${WATCH}</p>`,
     );
   }
   h.push(
