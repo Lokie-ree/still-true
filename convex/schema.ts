@@ -89,8 +89,22 @@ export default defineSchema({
         verifiedAt: v.number(),
         // Set when a re-check moved this answer. The pair is the diff a
         // subscriber is told about.
+        //
+        // Set ONLY when Firecrawl reported the source text itself changed —
+        // never from a diff of two model runs. The 09-04 production deploy
+        // measured two runs disagreeing on 2 of 47 cells with the documents
+        // standing still, so an answer-diff would report a lease "changed"
+        // because the model reworded a sentence on a Tuesday. That is the one
+        // lie this system exists not to tell.
         previousAnswer: v.union(v.string(), v.null()),
         changedAt: v.union(v.number(), v.null()),
+        // The old QUOTE, not just the old prose. An answer is a claim; the
+        // quote is the receipt for it, and a change notice with no receipt for
+        // what it used to say is exactly the unfalsifiable summary this
+        // project refuses to produce. Optional so rows written before the
+        // watch existed read as "no previous receipt" without a backfill.
+        previousQuote: v.optional(v.string()),
+        previousLineNo: v.optional(v.number()),
       }),
       notStatedFinding.extend({
         documentId: v.id("documents"),

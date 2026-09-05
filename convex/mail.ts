@@ -283,7 +283,17 @@ async function attachmentUrl(
   return downloadUrl;
 }
 
-async function scrape(url: string): Promise<string> {
+// What Firecrawl says about this URL since the last time OUR team scraped it.
+// `new` on a first read, `same` when the page is byte-identical to our previous
+// scrape, `changed` when it is not. This is the watch's whole gate: it is
+// computed by Firecrawl from the two texts, so it is deterministic — unlike
+// asking the model twice and diffing the answers, which the 09-04 deploy
+// measured drifting on 2 of 47 cells with the documents standing still.
+type ChangeStatus = "new" | "same" | "changed" | "removed" | null;
+
+async function scrape(
+  url: string,
+): Promise<{ markdown: string; changeStatus: ChangeStatus }> {
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
     headers: {
@@ -292,7 +302,13 @@ async function scrape(url: string): Promise<string> {
     },
     body: JSON.stringify({
       url,
-      formats: ["markdown"],
+      // changeTracking on EVERY read, not just the watch's. It costs nothing,
+      // it is what seeds the baseline the next re-check compares against, and
+      // it closes the 08-30 readiness finding for free: Firecrawl serves a
+      // 2-day cache by default, and "requests with changeTracking bypass the
+      // index cache — the maxAge parameter is ignored." A person forwarding a
+      // document today is asking what it says today.
+      formats: ["markdown", { type: "changeTracking", modes: ["git-diff"] }],
       // Defaults to true, which strips "boilerplate" — in a consumer agreement
       // the boilerplate IS the document. Never turn this on here.
       onlyMainContent: false,
@@ -304,10 +320,23 @@ async function scrape(url: string): Promise<string> {
     throw new Error(`Firecrawl ${res.status}: ${await res.text()}`);
   }
   const body: unknown = await res.json();
-  const markdown = (body as { data?: { markdown?: unknown } }).data?.markdown;
+  const data = asRecord(asRecord(body).data);
+  const markdown = data.markdown;
   if (typeof markdown !== "string") {
     throw new Error("Firecrawl returned no markdown");
   }
+  // Absent on a plan or endpoint that did not return it. Null means "no
+  // opinion", and every caller treats no opinion as "read it properly" rather
+  // than as "unchanged" — the failure a watch must never have is the silent
+  // one that reports nothing moved because it could not tell.
+  const status = readString(data.changeTracking, "changeStatus");
+  const changeStatus: ChangeStatus =
+    status === "new" ||
+    status === "same" ||
+    status === "changed" ||
+    status === "removed"
+      ? status
+      : null;
   // Probe v3 run 1 coded two JS-rendered pages as findings when Firecrawl had
   // actually returned ~370 chars of nothing. Fail loudly here instead.
   if (markdown.length < 6_000) {
@@ -315,7 +344,7 @@ async function scrape(url: string): Promise<string> {
       `Firecrawl returned ${markdown.length} chars for ${url} — too short to be the document`,
     );
   }
-  return markdown;
+  return { markdown, changeStatus };
 }
 
 export const ingest = internalAction({
@@ -349,6 +378,7 @@ export const ingest = internalAction({
         url: args.url,
         title: args.title,
         threadRowId: args.threadRowId,
+        recheckOf: null,
       });
     } catch (thrown) {
       await ctx.runMutation(internal.mail.failed, {
@@ -378,19 +408,59 @@ export const failed = internalMutation({
   },
 });
 
+// A re-check that found the page identical. Nothing about the document or its
+// findings changed, so the only thing to write is that we looked — which is a
+// claim the board is entitled to make and a person is entitled to check.
+//
+// "Checked 6 hours ago, unchanged" is the watch's normal day, and saying it out
+// loud is the difference between a system that is watching and one that merely
+// promised to.
+export const checked = internalMutation({
+  args: { documentId: v.id("documents") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch("documents", args.documentId, {
+      lastCheckedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
 // scrape → classify → extract → publish. The one path from something readable
 // to a published finding set. `ingest` arrives here with a thread attached;
-// `probe` arrives with none, and P4's re-check will too.
-async function readAndPublish(
+// `probe` arrives with none, and so does the watch's re-check.
+export async function readAndPublish(
   ctx: ActionCtx,
   args: {
     source: string;
     url: string | null;
     title: string;
     threadRowId: Id<"threads"> | null;
+    // Set only by the watch. Its presence says "this document already exists
+    // and I am re-reading it", which buys the early exit below: an unchanged
+    // page costs one scrape and no model call at all.
+    recheckOf: Id<"documents"> | null;
   },
 ): Promise<null> {
-  const lines = toLines(await scrape(args.source));
+  const { markdown, changeStatus } = await scrape(args.source);
+
+  // The gate that makes the watch honest AND affordable. Firecrawl compared
+  // this fetch against our own previous scrape of the same URL and says the
+  // text is identical, so there is nothing a re-extraction could truthfully
+  // report. Stop before the model runs: no tokens, no findings rewritten, and
+  // above all no change email sent because the model happened to word an
+  // answer differently on a Tuesday.
+  //
+  // `null` is NOT treated as unchanged — see ChangeStatus. On a first read
+  // there is no document to re-check, so this cannot fire on the mail path.
+  if (args.recheckOf !== null && changeStatus === "same") {
+    await ctx.runMutation(internal.mail.checked, {
+      documentId: args.recheckOf,
+    });
+    return null;
+  }
+
+  const lines = toLines(markdown);
 
   // The document is only in memory here, and it is never written down — the
   // parsed markdown does not go in the database and the PDF never touches this
@@ -428,6 +498,7 @@ export const probe = internalAction({
       url: args.url,
       title: args.title ?? args.url,
       threadRowId: null,
+      recheckOf: null,
     }),
 });
 
