@@ -24,6 +24,15 @@ const shortDate = (at: number) =>
 const plural = (n: number, one: string) =>
   `${n.toLocaleString("en-US")} ${one}${n === 1 ? "" : "s"}`;
 
+// Rounded up, and never to "0 minutes" — a retry time that has already passed
+// invites the sender straight back into the limit they were just told about.
+const humanDelay = (ms: number) => {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  return minutes < 60
+    ? plural(minutes, "minute")
+    : plural(Math.ceil(minutes / 60), "hour");
+};
+
 const escape = (s: string) =>
   s.replace(/[&<>"]/g, (c) =>
     c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;",
@@ -324,6 +333,47 @@ export function failureBody(title: string): { text: string; html: string } {
       said
         .split("\n\n")
         .map((p) => `<p style="margin:0 0 14px">${escape(p)}</p>`)
+        .join("") +
+      `</div>`,
+  };
+}
+
+// Mail that hit one of the two spend gates in `mail.received` — H2 in
+// docs/READINESS.md. Distinct from `failureBody` on purpose, and the distinction
+// is the honest one: that body says I could not read your document, and here I
+// could have and chose not to. Telling someone a decision was a malfunction is
+// the same species of lie as telling them a document says something it does not.
+//
+// Both numbers are stated rather than hidden behind "too many requests". A
+// person who forwarded a document and got nothing is owed the reason and the
+// point at which it stops applying, and a script is not made more dangerous by
+// being told the cap.
+export function limitBody(
+  limit: { kind: "cap"; cap: number } | { kind: "burst"; retryAfterMs: number },
+): { text: string; html: string } {
+  const said =
+    limit.kind === "cap"
+      ? `I am already watching ${plural(limit.cap, "document")} for your address, ` +
+        `which is as many as I keep for one sender.\n\n` +
+        `That is a cost limit rather than anything about your documents: every ` +
+        `one I take on is re-read every day for as long as it exists, so each ` +
+        `is a charge that recurs. I did not read this message's document and I ` +
+        `have not published anything about it.\n\n` +
+        `The answers I already sent you still stand, and I am still watching ` +
+        `those documents.`
+      : `That is more documents in a short window than I read for one address.\n\n` +
+        `Reading one means fetching the whole document and two model passes ` +
+        `over it, so the rate is bounded per sender rather than left open. I ` +
+        `did not read this one and I have not published anything about it.\n\n` +
+        `Forward it again in about ${humanDelay(limit.retryAfterMs)} and I will ` +
+        `pick it up then.`;
+  return {
+    text: said,
+    html:
+      `<div style="font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#171b1a;max-width:640px">` +
+      said
+        .split("\n\n")
+        .map((p) => `<p style="margin:0 0 14px">${p}</p>`)
         .join("") +
       `</div>`,
   };

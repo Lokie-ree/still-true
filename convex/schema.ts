@@ -164,5 +164,10 @@ export default defineSchema({
   })
     .index("by_messageId", ["messageId"])
     .index("by_threadId", ["threadId"])
-    .index("by_documentId", ["documentId"]),
+    .index("by_documentId", ["documentId"])
+    // H2's standing cap reads this: how many distinct documents does this
+    // address already have? Documents are deduped by url and re-read daily, so
+    // that count is the sender's recurring cost, and it is the number the cap
+    // is actually about.
+    .index("by_fromEmail", ["fromEmail"]),
 });

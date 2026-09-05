@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { ExtractedFinding } from "./extract.ts";
-import { changeBody, failureBody, replyBody } from "./reply.ts";
+import { changeBody, failureBody, limitBody, replyBody } from "./reply.ts";
 
 const CHECKED = Date.parse("2026-09-04T12:00:00Z");
 
@@ -116,6 +116,34 @@ void test("a failure reply says nothing about the document's contents", () => {
   // Our stack's error text never reaches the sender: it can carry a signed URL
   // and "Firecrawl 502" helps nobody.
   assert.doesNotMatch(text, /Firecrawl|OpenAI|AgentMail|http/i);
+});
+
+// H2's two gates. The thing worth testing is not the wording but that the two
+// refusals stay distinguishable from each other and from a failure: a sender who
+// hit the cap must not be told to try again, and a sender who hit the rate must
+// not be told the system broke.
+void test("a limit reply names the limit rather than claiming a failure", () => {
+  const cap = limitBody({ kind: "cap", cap: 25 });
+  assert.match(cap.text, /25 documents/);
+  assert.doesNotMatch(cap.text, /could not read|failure/i);
+  // "Try again" is the rate-limit sentence. At the cap there is nothing to
+  // come back to, and telling them otherwise sends them into it again.
+  assert.doesNotMatch(cap.text, /again/i);
+
+  const burst = limitBody({ kind: "burst", retryAfterMs: 90_000 });
+  assert.match(burst.text, /again in about 2 minutes/);
+  assert.doesNotMatch(burst.text, /could not read|failure/i);
+});
+
+// A retry time is a promise about a clock, so the rounding is the test: an
+// already-expired delay walks the sender straight back into the limit.
+void test("a retry delay never rounds down to now", () => {
+  assert.match(limitBody({ kind: "burst", retryAfterMs: 1 }).text, /1 minute\b/);
+  assert.match(limitBody({ kind: "burst", retryAfterMs: 0 }).text, /1 minute\b/);
+  assert.match(
+    limitBody({ kind: "burst", retryAfterMs: 3 * 3_600_000 }).text,
+    /3 hours/,
+  );
 });
 
 // Stripping the converter's markup used to live here. It moved into
