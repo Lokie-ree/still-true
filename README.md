@@ -60,7 +60,11 @@ used: the signal is consumable, so reading it spends it. See
   all six board documents and correctly stamped nothing.
 - **P5 — the CC reply:** not built.
 
-The public board carries six documents, 34 answered findings and 13 refusals.
+The public board carries six documents, 35 answered findings and 12 refusals,
+as of the `npm run gate` run on 2026-09-05. One refusal became an answer when a
+re-read found the clause; that is the watch working, and the count above is the
+kind of sentence that goes stale silently, so the gate now reads it from
+production rather than trusting this line.
 
 - Build log and every decision, including the ones that were reversed: [`hackathon.md`](hackathon.md)
 - **Known open issues, scored, with a fix order: [`docs/READINESS.md`](docs/READINESS.md)**
@@ -73,7 +77,8 @@ The public board carries six documents, 34 answered findings and 13 refusals.
 npm install
 npm run dev        # convex dev + vite
 npm run lint       # typecheck + eslint
-npm test           # 64 tests, all pure: extraction, lines, change detection, reply wording
+npm test           # 66 tests, all pure: extraction, lines, change detection, reply wording
+npm run gate       # lint + test, then five read-only checks against production
 npm run deploy     # build, push functions, upload static files
 ```
 
