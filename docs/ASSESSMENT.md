@@ -1,3 +1,10 @@
+> **Superseded — historical record.** This is an external assessment written
+> on 2026-09-02, *before* the build, of a since-abandoned product direction
+> (school-district instructions for parents). It is kept because the build log
+> cites which of its recommendations were taken and which were declined. For
+> what the project actually is and does, see [`../README.md`](../README.md);
+> for its current open issues, see [`READINESS.md`](READINESS.md).
+
 # still-true: Pre-Build Assessment
 
 **Assessment date:** September 2, 2026  

@@ -1075,3 +1075,58 @@ One thing found and not fixed: `agentmail/callbackPool:complete` took 8 OCC
 write conflicts on the component's own `runStatus` table during the day's mail
 activity. All retried, none failed permanently, and it is inside the
 component's workpool rather than our code. Recorded, not chased.
+
+## 2026-09-05 (audit) — the second readiness pass, and flags carried into P5
+
+The first launch-readiness pass, on 09-03, scored **58/100** and every finding
+was deliberately parked. This one re-ran it against the code and both
+deployments and scored **67/100**:
+
+```
+ 58  prior
++15  H1 closed  (isPublic provenance gate)
+ +5  M1 closed  (ingest catches → apology + threads.error)
+ −5  M3 new     watch re-check failure is silent
+ −5  M4 new     no unsubscribe (previously noted, now scored)
+ −1  L5 new     attach notifies at most 100 threads
+───
+ 67
+```
+
+**Two findings the deployments settled that reading the code could not.**
+Development holds two identical Livonia attachment rows — 418 lines each,
+sixteen minutes apart — which is M2 (attachments never dedupe, because `attach`
+skips the `by_url` lookup when `url === null`) confirmed rather than argued.
+And production's `contentHash` for all five shared board documents is byte-
+identical to development's, which is the first direct evidence that the
+fingerprint the whole watch rests on is deterministic across deployments.
+
+**H1 is closed on production, checked rather than assumed.** All five board
+rows carry `isPublic: true`, `findingsFor` gates the client-supplied id, and the
+production `functionSpec` still matches source: fifteen functions, two public,
+both read-only queries. The habit from the day before — *a claim about what a
+visitor sees is a claim about a rendering* — applied here as reading the actual
+prod query rather than trusting the branch.
+
+**The new one that matters is M3, and it is M1 again.** A `watch.recheck` that
+throws retries three times in the workpool and then writes nothing anywhere:
+there is no thread, so there is no `threads.error`, and nothing lands on the
+document. The only signal left is a `lastCheckedAt` that quietly stops
+advancing, while the reply goes on promising a daily re-read. The code comment
+argues a failed function in the logs is enough. It is not, and this pass proved
+why: production log reads are refused by the read-only selector and development
+retained zero entries, so "no failures observed" is absence of evidence. The
+same shape that was fixed for the sender in P3 is open again for the watcher.
+
+**Everything is parked, on purpose.** P5 is the CC reply, not the punch list.
+The flags now live in [`docs/READINESS.md`](docs/READINESS.md) with severities,
+loci, a fix order (H2 → M3 → M4 → the rest), the closed findings marked so they
+are not re-flagged, and the deliberate simplifications marked so they are not
+"fixed" unasked. `README.md`, `CLAUDE.md` and `AGENTS.md` point at it.
+
+### Still not true
+
+The inbox has no rate limit and the daily cron re-scrapes every url-backed
+document forever, so the one-shot spend attack from 09-03 is now a recurring
+one. Nobody can leave the watch. A re-check that fails tells no one. All three
+are written down and none are fixed.
