@@ -39,8 +39,19 @@ Enrolment is automatic and by design; removal does not exist. One forwarded
 link subscribes a stranger to mail from this address indefinitely, with no
 opt-out token and no reply keyword.
 
+**P5 raises this flag rather than adding to it.** A `cc` thread is replied to in
+front of everyone on it — `mail.ts:89` and `mail.ts:119` both pass
+`replyAll: thread.mode === "cc"` — and every thread against a document is mailed
+when a clause moves (`mail.ts:764`). So one CC enrols a whole thread, none of
+whom wrote to this address, in mail with no way out. The `WATCH` sentence at
+`reply.ts:103` ends "You do not need to do anything," which is true today and
+stops being defensible the moment there is something they could do.
+
 Fix: a `STOP`-style keyword handled in `mail.received`, or a signed
-unsubscribe link in the footer.
+unsubscribe link in the footer. The keyword has to be recognised ahead of the
+ingest path rather than inside it: `received` only returns early for mail
+carrying no document, so a bare "STOP" would otherwise be answered with
+`noDocumentBody`.
 
 ### M2 — attachment documents never dedupe (medium)
 
@@ -132,10 +143,27 @@ Log evidence is thin and has been since 09-03. Prod log reads are refused by
 the read-only MCP selector; dev retained zero entries. "No failures observed"
 is absence of evidence, not evidence of absence.
 
+**One thing the rows said that the logs could not (2026-09-06).** The board carries
+`lastCheckedAt`, `fetchedAt` and `verifiedAt`, and all three are readable without
+credentials. On the 09-06 sweep they show six documents stamped inside two
+minutes at the cron's scheduled 11:17 UTC, three of them re-extracted and three
+stopped before the model — which is the early exit, the schedule and both change
+gates, observed from outside with no log access at all. Where a claim can be
+asked of the data instead of the logs, ask the data.
+
 ## Fix order
 
-**M3 → M4 → (M2, L3, L4, L5).**
+**M4 → M3 → (M2, L3, L4, L5).**
 
 H2 was first because it was the only one that cost money while nobody was
-watching. It is closed. M3 is now first because until it lands, the next audit
-has silence instead of evidence.
+watching. It is closed.
+
+**Reordered 2026-09-06: M4 moved ahead of M3.** M3 was first because until it
+lands the next audit has silence instead of evidence, and that is still true —
+it just is not the thing P5 makes worse. The CC reply turns M4 from a flag about
+one stranger into a flag about everyone on a forwarded thread, all of whom get
+replied to and none of whom wrote here. The inbox address is now on a public
+submission page and a LinkedIn post, so the people with no way out are the
+people being asked to judge it, and it is the one open flag that contradicts
+what this project argues rather than how reliably it runs. M4 ships before P5.
+M3 ships after, and before the next audit.

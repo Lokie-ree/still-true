@@ -4,7 +4,7 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes.
 - **Live app:** https://impressive-marten-163.convex.site
-- **Built as of 2026-09-05:** the inbox, the parser, the extractor and its grounding
+- **Built as of 2026-09-06:** the inbox, the parser, the extractor and its grounding
   guarantee, and the cited reply — **live on production**, which answered a forwarded link
   in 15 s with six quoted findings and one refusal. The public board carries six documents;
   the findings count is one `npm run gate` reads from production rather than from this
@@ -14,7 +14,9 @@
   findings — and **mailed the change to a real inbox**, unprompted, into the thread that
   had asked about the document, 2 minutes 17 seconds after the clauses moved. **It is live
   on production**, where the first sweep re-read all six board documents and stamped
-  nothing. **The CC reply (P5) is not built.**
+  nothing, and on 2026-09-06 the cron fired unattended. **The CC reply (P5) is not
+  built** — the CC/forward routing exists; reading the document out of the thread
+  history does not.
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -1255,3 +1257,44 @@ from production, for the same reason the README already does.
 because that file is predeclared and was committed before the sweep ran. It
 records what the product was intended to be on 2026-09-02, and rewriting a
 predeclaration to match the outcome is the failure it was written to prevent.
+
+## 2026-09-06 — the cron fired on its own, and the board moved without telling anyone
+
+**The schedule works, and the evidence is rows rather than logs.** All six
+documents carry a `lastCheckedAt` between 11:17:09 and 11:19:16 UTC — the cron's
+scheduled minute, with nobody running `watch:sweep`. Prod log reads are still
+refused by the read-only selector, so this is the first time the schedule has
+been proven from outside: three timestamps on a public query, no credentials.
+
+**Three documents had moved and nobody was emailed, which is the design.**
+`verifiedAt` says the Summary of Benefits, the Independence Place handbook and
+the PayPal user agreement were re-extracted; the Las Vegas handbook, the Livonia
+lease and the AT&T agreement stopped before the model with an unchanged hash.
+So three pages moved their text overnight and **not one clause any finding had
+quoted was gone** — the second gate held, and the first unattended sweep sent
+zero change notices. A watch that mails nothing on a day when three of six
+documents changed is the whole argument for hashing the text instead of diffing
+two model runs.
+
+**The counts moved anyway: 35 answered / 12 refusals became 37 / 10.** Two
+refusals became answers on the re-extracted documents. Whether those clauses
+were added or the model simply found them this time is not determinable from
+here — 2 of 47 cells is exactly the disagreement two deployments produced over
+these same documents on 09-04 — and the system claims neither. A clause that
+merely appears is never reported as a change, because there is no previous quote
+to put beside it. This is the second time in two days the board's own numbers
+outran the sentence in the README, and the second time the gate is what caught
+it.
+
+**P5 turned out to be mostly routed already.** `mail.received` tells a CC from a
+forward by which header carries the inbox address (`mail.ts:289`), `threads.mode`
+stores it, and both `reply` and `notify` pass `replyAll` to AgentMail's
+`reply-all` endpoint. What is missing is the case that makes CC worth having:
+on a real thread the document is attached to an earlier message, and `received`
+only reads the message that CC'd us — the `thread` argument it already accepts
+is ignored. No test covers the path.
+
+**So the fix order changed: M4 before M3.** Replying to a CC replies to everyone
+on the thread, and the threads table is the subscription list, so P5 multiplies
+an inbox that has no way out. M3 still lands before the next audit; it is just
+not the flag P5 makes worse.
