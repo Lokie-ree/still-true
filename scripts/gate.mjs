@@ -147,10 +147,10 @@ check("every published answer carries its quote", async () => {
 // signal is invisible in the logs and perfectly visible here.
 //
 // What this CANNOT tell you is whether the cron fired or somebody ran
-// `watch:sweep` by hand — both stamp the same field. As of today every stamp on
-// production came from a manual run; the schedule's first real firing is
-// 11:17 UTC on 2026-09-06. So a green check here means "the sweep ran",
-// not "the schedule works", until that has happened once unattended.
+// `watch:sweep` by hand — both stamp the same field, so a green check still only
+// means "the sweep ran". It has now happened once unattended: on 2026-09-06 the
+// six stamps landed between 11:17:09 and 11:19:16 UTC, the schedule's minute,
+// with nobody running it.
 check("the watch has swept recently", async () => {
   const documents = await callQuery("documents:recent");
   const checked = documents
