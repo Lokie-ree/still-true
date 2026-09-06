@@ -7,8 +7,7 @@ or a link — to an email address. You get back what that document requires of y
 and by when, with **every claim quoted from the source and the line it came
 from**. Where the document is silent, it says so and tells you how many lines it
 searched. For documents that live at a URL it keeps watching, and tells you when
-the specific thing you asked about changes. CC it on a thread instead and the
-same cited reply lands in the thread.
+the specific thing you asked about changes.
 
 Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
