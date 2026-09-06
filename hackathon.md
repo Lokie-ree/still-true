@@ -1164,6 +1164,35 @@ never rounds down to "now" and walks the sender back into the limit. The live
 refusal has not been exercised against a real inbox. Saying so here is cheaper
 than discovering it in an audit.
 
+## 2026-09-05, night — it went public, and the first post advertised GitHub
+
+**The vibeapps submission is filed:** <https://vibeapps.dev/s/still-true>. Then
+the LinkedIn post went out, and the long version was too long — the short
+variant is what actually ran. Both are true; only one gets read.
+
+**The post's card showed a repository avatar.** On a post whose entire argument
+is a screenshot of the board. The reflex was to blame the post, and the post was
+innocent: `grep -ci "og:|twitter:" index.html` returned **0**. With nothing here
+to scrape, LinkedIn built its card from the one link in the message that did
+carry metadata, which was GitHub. A page with no Open Graph tags does not get a
+plain card — it *loses* the card to whatever else you linked.
+
+That is the same shape as the rest of this log's mistakes: the visible symptom
+was in the artifact, the cause was a missing declaration one layer down, and
+nothing anywhere reported an error. LinkedIn also rewrites every bare URL to
+`lnkd.in`, so two unlabelled links render as two identical opaque shortlinks —
+unavoidable, but a label in front of each fixes what the reader sees.
+
+**The image is a screenshot taken tonight, not a crop from the folder.** Same
+habit as everywhere else here: the artifact is a current reading rather than a
+remembered one. The card now shows the name, the pitch, the forward-to address
+and *6 public documents · 5,124 lines read*.
+
+**Verified live rather than assumed:** ten og/twitter tags served from
+production, `og.jpg` returns `HTTP 200 image/jpeg 60,438 bytes`, and the
+document the scraper fetches went from 519 to 2,591 bytes. `npm run gate` 5/5
+after the deploy.
+
 ## 2026-09-05, later still — `npm run gate`
 
 **The exit criteria were prose, and prose is what got retracted twice.** P0 was
