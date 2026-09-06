@@ -2,12 +2,13 @@
 
 - **Project:** still-true
 - **Event:** Convex All Gas Hackathon
-- **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes. CC it on a thread and the same cited reply lands in the thread.
+- **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes.
 - **Live app:** https://impressive-marten-163.convex.site
 - **Built as of 2026-09-05:** the inbox, the parser, the extractor and its grounding
   guarantee, and the cited reply — **live on production**, which answered a forwarded link
-  in 15 s with six quoted findings and one refusal. The public board carries six documents,
-  34 answered findings and 13 refusals. **The watch is built and proven on development**:
+  in 15 s with six quoted findings and one refusal. The public board carries six documents;
+  the findings count is one `npm run gate` reads from production rather than from this
+  line. **The watch is built and proven on development**:
   a sweep over four documents caught both clauses that were edited on a test fixture, each
   quoted before and after with its line, and stamped nothing on the other 22 answered
   findings — and **mailed the change to a real inbox**, unprompted, into the thread that
@@ -22,7 +23,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-05T18:10:00Z
+- **Last updated:** 2026-09-06
 
 ## Log
 
@@ -1221,3 +1222,36 @@ answer when a re-read found the clause, which is the watch doing exactly its job
 and the README had gone quietly stale about it. Nobody would have noticed by
 reading. That is the entire argument for the script, made by the script, eleven
 minutes after it existed.
+
+## 2026-09-06 — the pitch was advertising a feature that was never built
+
+**The first paragraph of the README claimed the CC reply.** Fifty lines later the
+Status section said `P5 — the CC reply: not built.` Both sentences had been in the
+file since the repository was made public, and the same claim sat in the
+`What it does` line of this log, four lines above a line reading **The CC reply
+(P5) is not built.** Nobody had to dig for the contradiction; it was the first
+paragraph a judge reads and the header of the build log.
+
+**This is the exact failure the project exists to argue against.** The whole
+premise is that a claim should stop being served the moment it stops being true —
+and the front door was serving one that was never true, on a repository whose
+grounding guarantee makes fabrication structurally unrepresentable one file over.
+A guarantee in `extract.ts` does not extend to the prose around it. Only reading
+the prose does.
+
+**Cut, not deferred.** The sentence is gone from both places rather than softened
+to "coming soon". P5 may well ship this week, at which point it goes back in with
+a production run behind it — but a sentence that is false today does not get to
+stay because it might be true on Friday. That reasoning is how the README spent
+three days claiming the watch was not built.
+
+**A second stale line went with it.** The log header still said 34 answered
+findings and 13 refusals — the count `npm run gate` caught drifting the day it was
+written, because a refusal became an answer when a re-read found the clause. The
+number is not restated here. The header now points at the gate, which reads it
+from production, for the same reason the README already does.
+
+**Not touched: `docs/probe-v3.md`.** It carries the same sentence and it stays,
+because that file is predeclared and was committed before the sweep ran. It
+records what the product was intended to be on 2026-09-02, and rewriting a
+predeclaration to match the outcome is the failure it was written to prevent.
