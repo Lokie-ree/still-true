@@ -6,7 +6,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { ExtractedFinding } from "./extract.ts";
-import { changeBody, failureBody, limitBody, replyBody } from "./reply.ts";
+import {
+  changeBody,
+  failureBody,
+  limitBody,
+  replyBody,
+  stoppedBody,
+} from "./reply.ts";
 
 const CHECKED = Date.parse("2026-09-04T12:00:00Z");
 
@@ -272,4 +278,60 @@ void test("the notice says how it knows, because that is the only reason to beli
   });
   assert.match(text, /compared the text of the page against the copy I read last time/);
   assert.match(text, /not a judgment that something got worse/);
+});
+
+// ── M4, the way out ──────────────────────────────────────────────────────────
+//
+// The watch takes no opt-in, deliberately, so the offer to stop has to travel
+// with the mail it stops. These guard the two places it must appear and the one
+// claim the confirmation must not make.
+
+void test("a watched answer names the word that stops it", () => {
+  const { text, html } = replyBody({ ...base, findings: [answered] });
+  // Not "mentions STOP somewhere" — the paragraph that PROMISES the daily mail
+  // is the paragraph that has to carry the way out of it. It used to end "You
+  // don't need to do anything", which was the whole of docs/READINESS.md M4.
+  assert.match(text, /Reply STOP and I'll stop/);
+  assert.match(html, /Reply STOP and I&#39;ll stop|Reply STOP and I'll stop/);
+  assert.doesNotMatch(text, /You don't need to do anything\./);
+});
+
+void test("the change notice carries the way out, because nobody asked for it", () => {
+  // The one unsolicited mail this system sends, and after P5 it reaches
+  // everyone cc'd on a forwarded thread — none of whom wrote to this address.
+  const notice = changeBody({
+    title: "Livonia Housing Authority Public Housing Dwelling Lease",
+    kind: "lease",
+    lineCount: 418,
+    changes: [
+      {
+        kind: "moved",
+        questionKey: "L3a",
+        previousAnswer: "The late fee is $50.00.",
+        previousQuote: "a late charge of Fifty and 00/100 Dollars ($50.00)",
+        previousLineNo: 24,
+        answer: "The late fee is $75.00.",
+        quote: "a late charge of Seventy-Five and 00/100 Dollars ($75.00)",
+        lineNo: 24,
+      },
+    ],
+    checkedAt: Date.parse("2026-09-07T11:17:00Z"),
+  });
+  assert.match(notice.text, /Reply STOP and I'll stop/);
+  assert.match(notice.html, /Reply STOP/);
+});
+
+void test("the stop confirmation counts documents and withdraws nothing", () => {
+  const { text } = stoppedBody(3);
+  assert.match(text, /3 documents/);
+  // An unsubscribe that quietly deleted somebody's answers would be a surprise
+  // in the other direction, and this system does not withdraw a published
+  // receipt because someone asked for silence.
+  assert.match(text, /still stand/);
+  assert.doesNotMatch(text, /deleted your|removed your|withdrawn your/i);
+});
+
+void test("one document stopped is not '1 documents'", () => {
+  assert.match(stoppedBody(1).text, /1 document\b/);
+  assert.match(stoppedBody(0).text, /0 documents\b/);
 });

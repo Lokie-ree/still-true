@@ -13,7 +13,7 @@ import {
 import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
-import { documentUrl } from "./link";
+import { documentUrl, isStop } from "./link";
 import { fingerprint, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import {
@@ -22,6 +22,7 @@ import {
   limitBody,
   noDocumentBody,
   replyBody,
+  stoppedBody,
 } from "./reply";
 import { documentKind, extractedFinding } from "./schema";
 
@@ -242,6 +243,57 @@ const limiter = new RateLimiter(components.rateLimiter, {
 // model runs.
 const DOCUMENT_CAP = 25;
 
+// M4. Who a STOP silences.
+//
+// TWO scopes, because the person who wants out is not always the person the row
+// is keyed on. A cc'd reader was enrolled by somebody else's forward — the
+// thread's `fromEmail` is the sender's, not theirs — so stopping only "this
+// address's threads" would answer their STOP and keep mailing them. Stopping
+// only "this thread" would leave every other document they had asked about
+// still writing to them. Both, then.
+//
+// Nothing is written for a FUTURE thread and that is deliberate: a new thread
+// exists only because they mailed a new document in, which is an affirmative
+// request for an answer, and that answer names STOP again.
+//
+// Returns the distinct DOCUMENTS silenced, not the rows patched, because that
+// is the number the confirmation quotes back and a person thinks in documents.
+// The thread carrying the STOP itself has no document yet, so it never counts.
+//
+// ponytail: bounded at 200 rows per scope, matching the document cap above. A
+// reader past that keeps some threads live and can say STOP again; the fix when
+// it matters is a `stopped` flag kept per address rather than derived per row.
+async function stopFor(
+  ctx: MutationCtx,
+  threadId: string,
+  fromEmail: string,
+): Promise<number> {
+  const rows = [
+    ...(await ctx.db
+      .query("threads")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .take(200)),
+    ...(await ctx.db
+      .query("threads")
+      .withIndex("by_fromEmail", (q) => q.eq("fromEmail", fromEmail))
+      .take(200)),
+  ];
+
+  const documents = new Set<Id<"documents">>();
+  const patched = new Set<Id<"threads">>();
+  for (const row of rows) {
+    // The two scopes overlap on the thread the STOP arrived on, and a patch is
+    // a write either way.
+    if (patched.has(row._id)) continue;
+    patched.add(row._id);
+    if (row.stopped !== true) {
+      await ctx.db.patch("threads", row._id, { stopped: true });
+    }
+    if (row.documentId !== null) documents.add(row.documentId);
+  }
+  return documents.size;
+}
+
 export const received = internalMutation({
   // `thread` is optional against the component's own type, which declares it
   // required: 0.1.0 omits it entirely when AgentMail returned no thread
@@ -309,6 +361,23 @@ export const received = internalMutation({
       // The door the mail came in is the door the reply goes back out.
       inboxId,
     });
+
+    // M4, and it runs FIRST for two reasons.
+    //
+    // Ahead of the no-document branch, because a bare "STOP" carries no
+    // attachment and no link — it would otherwise be answered with "I did not
+    // find a document in that message", which is a true sentence and a refusal
+    // to hear the one thing this person is asking for.
+    //
+    // Ahead of both spend gates, because declining to process an unsubscribe on
+    // the grounds that the sender has been mailing too much is exactly
+    // backwards. A STOP costs one query and some patches: no scrape, no model
+    // call, nothing the gates exist to bound.
+    if (isStop(readString(message, "text") ?? "")) {
+      const stopped = await stopFor(ctx, threadId, fromEmail);
+      await reply(ctx, threadRowId, stoppedBody(stopped));
+      return null;
+    }
 
     // Mail with neither an attachment nor a link is still recorded, and now
     // answered: a stranger who writes to this address and hears nothing back
@@ -766,6 +835,12 @@ export const attach = internalMutation({
         .query("threads")
         .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
         .take(100)) {
+        // M4. This fan-out is the only unsolicited mail this system sends, so
+        // it is the only place the flag has to be honoured. Filtered here
+        // rather than inside `notify`, which the reply path also uses: someone
+        // who said STOP and later forwards a new document is asking a question,
+        // not re-subscribing to silence.
+        if (thread.stopped === true) continue;
         await notify(
           ctx,
           thread._id,

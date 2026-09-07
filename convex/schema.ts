@@ -161,6 +161,24 @@ export default defineSchema({
     // stays here, because it is our stack's error text and can carry a signed
     // URL.
     error: v.optional(v.string()),
+    // M4. Set when this reader replied STOP. The watch takes no opt-in — that
+    // is deliberate and stays — so this is the only way out, and the WATCH
+    // paragraph in reply.ts now names the word that sets it.
+    //
+    // On the THREAD rather than on the sender, because P5's cc reply is what
+    // made this urgent: one cc enrols everyone on a forwarded thread, none of
+    // whom wrote to this address, and the one who wants out may not be the one
+    // whose address the row is keyed on. A STOP therefore stops the thread it
+    // arrived on AND every thread from its sender.
+    //
+    // Nothing carries the stop forward to a FUTURE thread, and that is correct:
+    // a new thread only exists because they mailed a new document in, which is
+    // an affirmative request for an answer. That reply names STOP again.
+    //
+    // Optional so every row that predates it reads as not stopped — the safe
+    // direction here is the one that keeps answering, since the flag suppresses
+    // mail rather than authorising it.
+    stopped: v.optional(v.boolean()),
   })
     .index("by_messageId", ["messageId"])
     .index("by_threadId", ["threadId"])

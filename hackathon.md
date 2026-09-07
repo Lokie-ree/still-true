@@ -1298,3 +1298,76 @@ is ignored. No test covers the path.
 on the thread, and the threads table is the subscription list, so P5 multiplies
 an inbox that has no way out. M3 still lands before the next audit; it is just
 not the flag P5 makes worse.
+
+## 2026-09-07 — three shell-page detectors died, and the watch got a door out
+
+**Two more links went into production on 09-06 and one of them broke the
+differentiator.** `facebook.com/privacy/policy` came back 1,182 lines and
+answered 2 of 8 — the other six read *"Searched all 1,182 lines. This document
+does not state it."* Every word of that is true and the whole of it is
+misleading: Meta's page is a summary shell. Line 415 is
+`Delete your information or account`, 416 is blank, 417 moves on. The body of
+every section lives one link deeper, and `stripMarkup` deletes hrefs.
+
+**Three detectors were predeclared, measured on 24 documents, and all three are
+dead.** The false-positive budget was predeclared at zero — refusing to read
+somebody's real lease is the worst thing this can do — so a moved threshold was
+never a rescue.
+
+| detector | separated the shells? | what else it caught |
+| --- | --- | --- |
+| `%chars in lines ≥120 < 60` | yes, 9–50 | DOL COBRA model notice **12**, HUD-5380 **28** |
+| `"learn more" rate > 1%` | **no** — `meta.com/legal` and `apple.com/legal` score **0** | Microsoft's real privacy statement **7.01** |
+| refusal rate | Meta 75% | CMS Summary of Benefits **63%**, Verizon 50% |
+
+The second one is the one to remember. It was going to be added *for safety*, as
+the partner that widened a thin margin, and it fires hardest on a genuine
+Microsoft policy while scoring zero on the two purest link-lists in the sample.
+It was measuring a Meta house style, not a property of shells.
+
+**What survives needs no detector.** Pandora line 144 says you may cancel "by
+following the instructions outlined in this Listener Support Help Article" — and
+the href that named the article was deleted before the model ever saw the line.
+`T2b` came back `not_stated`. That is a false refusal with a proven cause.
+`lines.ts` argues hrefs are redundant because AT&T's `att.com/howtocancel` says
+it twice; true there, backwards when the link text is `this Help Article`.
+
+**Measured before proposing it: keeping hrefs breaks 6 of 54 published findings.**
+Replaying every prod finding through the real `change.stillSays` under a modified
+parser reports spotify T2b, sbc U4/U2/U1a and paypal T3b/T2b as `gone` — six
+emails saying a clause was deleted about documents that never moved. Control run
+with the current parser: 0 of 54. So the parser change ships **with a corpus
+re-read in the same deploy**, before the next 11:17 sweep. That is the 09-04
+"a reflow shifts every line at once" hazard, arriving a third time.
+
+**Not a bug, and worth writing down:** `verizon.com/support/website-use-legal/`
+contains zero occurrences of "arbitrat" in 555 lines. Those four refusals are
+correct. That was the website terms, not the wireless customer agreement — the
+09-03 AT&T landing-page trap, sender-side this time.
+
+### M4 closed — the watch has a way out
+
+**STOP, or UNSUBSCRIBE, as the first non-empty line of a reply.** Two scopes,
+because the person who wants out is not always the person the row is keyed on:
+it stops the thread it arrived on — a cc'd reader was enrolled by somebody
+else's forward — and every thread from its sender. Nothing carries to a future
+thread, which is correct: a new thread exists only because they mailed a new
+document in, and that reply names STOP again.
+
+Checked **ahead of** the no-document branch, or a bare STOP is answered "I did
+not find a document in that message"; and ahead of both spend gates, because
+refusing an unsubscribe on the grounds that the sender has been mailing too much
+is backwards. A STOP costs no scrape and no model call.
+
+**Exit test, on development, observed rather than reasoned about.** A STOP from
+the sender stopped 6 threads and the generated body said *"about 5 documents"* —
+distinct documents, deduped, read out of the scheduler's own arguments. An
+`unsubscribe` from a **cc'd stranger** on a thread started by somebody else
+stopped both of that thread's rows and said *"1 document"*. Then the watch
+fixture's late fee was moved $250 → $400, the sweep detected it and stamped
+`L3a` changed at 16:37:44 — **and scheduled no mail at all.** The same thread,
+the same fixture and the same detection produced a change notice on 09-05; the
+only difference is `stopped: true`. The fan-out was entered and the skip fired.
+
+The WATCH paragraph no longer ends "You don't need to do anything." That
+sentence was the whole of M4.

@@ -1,18 +1,63 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-05** (second pass). Score **82/100**:
-`100 − 5×3(M2,M3,M4) − 1×3(L3,L4,L5)`.
-First pass 2026-09-03 scored 58; second pass scored 67. The deltas are
-`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5` then `+15 H2 closed`.
+Last audit **2026-09-07** (third pass). Score **72/100**:
+`100 − 15(H3) − 5×2(M2,M3) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72** (09-03, 09-05, 09-05 evening, 09-07).
+The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+`+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`.
 
-**No high flags remain open.**
+**The score went DOWN and that is the point.** Nothing regressed; a flag that
+was always there got found. H3 is the first high flag since H2 closed, and it
+surfaced from feeding production two real links rather than from re-reading the
+code — which is why two audits scored 82 with it sitting open the whole time.
 
-**These are known and parked.** Randall has seen all of them and chose to
-carry them into P5 rather than fix them first. Do not re-run the audit to
-rediscover them, and do not fix one unasked — read the fix order at the
-bottom and ask.
+**M2, M3 and the lows are known and parked.** Randall has seen those and chose
+to carry them into P5 rather than fix them first. Do not re-run the audit to
+rediscover them, and do not fix one unasked — read the fix order at the bottom
+and ask. **H3 is NOT parked**: it is new as of 2026-09-07 and its fix is the
+next PR.
 
 ## Open
+
+### H3 — a link-shaped page produces confident FALSE refusals (high)
+
+`convex/lines.ts`, `stripMarkup`; measured 2026-09-07.
+
+`stripMarkup` deletes every href. On a page whose body lives behind its links,
+the href WAS the answer, and what the extractor is handed is a document with the
+content removed — which it then honestly reports as silent.
+
+**Proven case, not a theory.** Pandora `T2b "How do you cancel?"` → `not_stated`,
+while line 144 reads *"You may cancel your account and terminate this Agreement
+at any time and for any reason by following the instructions outlined in this
+Listener Support Help Article"* — and the deleted href was
+`help.pandora.com/s/article/Cancel-Deactivate-or-Delete-your-Account-…`.
+Scored **high** because the refusal is the one claim this project stakes
+everything on, and the inbox is now on a public submission page and a LinkedIn
+post. Downgrade it if you disagree; do not leave it unscored.
+
+A second, harsher shape has no cheap fix: `facebook.com/privacy/policy` is a
+summary shell whose sections are headings with the body one link away, and it
+answered 2 of 8 while printing "Searched all 1,182 lines" six times. Keeping the
+hrefs does not put Meta's text on the page — nothing cheap does — but it stops
+the parser throwing away the only pointer to where the text is.
+
+**Do NOT reach for a shell detector.** Three were predeclared and measured on 24
+documents on 2026-09-07 and all three false-positive on real documents:
+`%chars in lines ≥120 < 60` catches the DOL COBRA model notice (12) and HUD-5380
+(28); a `"learn more"` rate catches Microsoft's genuine privacy statement (7.01)
+and MISSES `meta.com/legal` and `apple.com/legal` (0 each); refusal rate puts
+Meta's 75% inside the range of the CMS Summary of Benefits (63%). The
+false-positive budget is zero — refusing to read somebody's real lease is worse
+than any refusal this flag describes.
+
+Fix: keep the href when the link label cannot stand alone (`this`, `here`,
+`article`, `page`, `help`). **It cannot ship alone.** Replaying all 54 published
+prod findings through the real `change.stillSays` under the modified parser
+reports **6 as `gone`** (spotify T2b, sbc U4/U2/U1a, paypal T3b/T2b) — change
+notices about documents that never moved. Control under the current parser: 0 of
+54. So the parser change carries a full corpus re-read in the same deploy, ahead
+of the next 11:17 UTC sweep.
 
 ### M3 — a failed `watch.recheck` is silent to everyone (medium)
 
@@ -30,28 +75,6 @@ zero failure entries, so in practice nobody sees it.
 
 Fix: a `watchError` field on the document row, the way `ingest` records one on
 the thread.
-
-### M4 — no unsubscribe (medium)
-
-`convex/reply.ts`, the `WATCH` constant.
-
-Enrolment is automatic and by design; removal does not exist. One forwarded
-link subscribes a stranger to mail from this address indefinitely, with no
-opt-out token and no reply keyword.
-
-**P5 raises this flag rather than adding to it.** A `cc` thread is replied to in
-front of everyone on it — `mail.ts:89` and `mail.ts:119` both pass
-`replyAll: thread.mode === "cc"` — and every thread against a document is mailed
-when a clause moves (`mail.ts:764`). So one CC enrols a whole thread, none of
-whom wrote to this address, in mail with no way out. The `WATCH` sentence at
-`reply.ts:103` ends "You do not need to do anything," which is true today and
-stops being defensible the moment there is something they could do.
-
-Fix: a `STOP`-style keyword handled in `mail.received`, or a signed
-unsubscribe link in the footer. The keyword has to be recognised ahead of the
-ingest path rather than inside it: `received` only returns early for mail
-carrying no document, so a bare "STOP" would otherwise be answered with
-`noDocumentBody`.
 
 ### M2 — attachment documents never dedupe (medium)
 
@@ -92,6 +115,20 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **M4 (no unsubscribe)** closed 2026-09-07. `STOP` or `UNSUBSCRIBE` as the
+  first non-empty line of a reply, recognised in `mail.received` ahead of the
+  no-document branch (a bare STOP carries no document) and ahead of both spend
+  gates (refusing an unsubscribe because the sender mailed too much is
+  backwards). Two scopes — the thread it arrived on, and every thread from its
+  sender — because a cc'd reader was enrolled by somebody else's forward and the
+  row is not keyed on them. Honoured in the change-notice fan-out only, which is
+  the sole unsolicited mail. **Verified on development, observed not reasoned:**
+  a sender's STOP stopped 6 threads and generated "about 5 documents"; a cc'd
+  stranger's `unsubscribe` stopped a thread started by someone else and said "1
+  document"; then the fixture's late fee moved $250 → $400, the sweep stamped
+  `L3a` changed at 16:37:44 and **scheduled no mail** — the same thread and
+  fixture that were emailed on 09-05, differing only by `stopped: true`. The
+  WATCH paragraph no longer ends "You do not need to do anything."
 - **H2 (unbounded, recurring spend on a publicly-listed inbox)** closed
   2026-09-05. Two gates in `mail.received`, because they stop different things:
   a `@convex-dev/rate-limiter` token bucket keyed on `fromEmail` (10/hour,
@@ -153,17 +190,20 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M4 → M3 → (M2, L3, L4, L5).**
+**H3 → M3 → (M2, L3, L4, L5).**
 
 H2 was first because it was the only one that cost money while nobody was
-watching. It is closed.
+watching. It is closed. M4 was next because P5 turned it from a flag about one
+stranger into a flag about everyone on a forwarded thread; it is closed too, and
+it shipped before the parser work deliberately — the H3 fix is the deploy most
+likely to send mail nobody asked for, and M4 is what gives anyone wrongly mailed
+a way out.
 
-**Reordered 2026-09-06: M4 moved ahead of M3.** M3 was first because until it
-lands the next audit has silence instead of evidence, and that is still true —
-it just is not the thing P5 makes worse. The CC reply turns M4 from a flag about
-one stranger into a flag about everyone on a forwarded thread, all of whom get
-replied to and none of whom wrote here. The inbox address is now on a public
-submission page and a LinkedIn post, so the people with no way out are the
-people being asked to judge it, and it is the one open flag that contradicts
-what this project argues rather than how reliably it runs. M4 ships before P5.
-M3 ships after, and before the next audit.
+**H3 is first now.** It is the only open flag that makes the product's own
+central claim wrong rather than making it run less reliably, and it is wrong in
+the direction nobody can see: a refusal carries no citation to open, so a false
+one is indistinguishable from a true one by reading the reply. Its fix must
+carry the corpus re-read described above.
+
+M3 ships after, and before the next audit. Until it lands the audit after this
+one has silence instead of evidence.
