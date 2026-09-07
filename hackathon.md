@@ -1371,3 +1371,46 @@ only difference is `stopped: true`. The fan-out was entered and the skip fired.
 
 The WATCH paragraph no longer ends "You don't need to do anything." That
 sentence was the whole of M4.
+
+### H3 closed — the address survives when the label does not say it
+
+**One rule, no keyword list: keep the href unless the label already contains
+it**, compared on alphanumerics. That is the AT&T argument generalised —
+`[att.com/howtocancel](https://www.att.com/howtocancel)` is the same string
+twice — rather than a fourth guess about which labels sound uninformative. The
+bare-url pass moved to the front behind a `(?<!\]\()` lookbehind, or it would
+have deleted the addresses the link pass had just decided to keep.
+
+**The receipt this produced is the argument for the whole change.** Spotify's
+`T2b` was already an *answered* finding, and it read:
+
+> "You may cancel your Paid Subscription at any time by logging into your
+> Spotify account and following the prompts on the Account page or by clicking
+> **here** and following the instructions."
+
+A cancellation instruction with the "here" deleted. It now carries
+`support.spotify.com/article/cancel-premium/`. PayPal's `T2b` gained the Help
+Center address the same way. Neither was a refusal — they were answers that
+could not be acted on, which is a quieter failure than a refusal and was not on
+any flag list.
+
+**`documents.parserVersion` is the part worth stealing.** `contentHash` answers
+"did the document move?" and cannot tell that from "did the parser move" — so a
+parser change makes every stored quote stop matching at once. Replaying all 54
+published prod findings through the real `change.stillSays` under the new parser
+reported **6 as `gone`**. So `attach` re-baselines instead of diffing when a
+row's version is not current, and `checked` stamps the version on the early exit
+so a document this change did not touch (every PDF in the corpus) cannot keep a
+stale version and swallow a genuine change months later.
+
+**Verified on development: a sweep that re-extracted five documents under a
+different parser produced 0 new `changedAt` stamps across 76 findings**, and
+stamped all 8 watchable rows to version 2 — three of them through the early exit
+without a model call, because their lines hashed identically. The three
+attachment-backed rows stay at version 1, correctly: no url, never re-checked,
+never diffed.
+
+The hazard this retires had arrived three times (the 09-04 markup strip, the
+09-04 reflow, and this). There is now no deploy ordering to get right, which
+matters more than the parser fix did: the ordering was the part a person had to
+remember at the exact moment they were least likely to.

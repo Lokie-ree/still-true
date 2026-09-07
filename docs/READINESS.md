@@ -1,63 +1,23 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-07** (third pass). Score **72/100**:
-`100 − 15(H3) − 5×2(M2,M3) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72** (09-03, 09-05, 09-05 evening, 09-07).
-The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
-`+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`.
+Last audit **2026-09-07** (third pass). Score **87/100**:
+`100 − 5×2(M2,M3) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 87** (09-03, 09-05, 09-05 evening,
+09-07 morning, 09-07 evening). The deltas are
+`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`, then
+`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed`.
 
-**The score went DOWN and that is the point.** Nothing regressed; a flag that
-was always there got found. H3 is the first high flag since H2 closed, and it
-surfaced from feeding production two real links rather than from re-reading the
-code — which is why two audits scored 82 with it sitting open the whole time.
+**The 72 is the honest number to keep in the history.** Nothing regressed that
+morning; a flag that had been there the whole time got found, by feeding
+production two real links rather than by re-reading the code. Two audits had
+scored 82 with it open.
 
-**M2, M3 and the lows are known and parked.** Randall has seen those and chose
-to carry them into P5 rather than fix them first. Do not re-run the audit to
-rediscover them, and do not fix one unasked — read the fix order at the bottom
-and ask. **H3 is NOT parked**: it is new as of 2026-09-07 and its fix is the
-next PR.
+**No high flags are open. M2, M3 and the lows are known and parked** — Randall
+has seen those and chose to carry them into P5 rather than fix them first. Do
+not re-run the audit to rediscover them, and do not fix one unasked: read the
+fix order at the bottom and ask.
 
 ## Open
-
-### H3 — a link-shaped page produces confident FALSE refusals (high)
-
-`convex/lines.ts`, `stripMarkup`; measured 2026-09-07.
-
-`stripMarkup` deletes every href. On a page whose body lives behind its links,
-the href WAS the answer, and what the extractor is handed is a document with the
-content removed — which it then honestly reports as silent.
-
-**Proven case, not a theory.** Pandora `T2b "How do you cancel?"` → `not_stated`,
-while line 144 reads *"You may cancel your account and terminate this Agreement
-at any time and for any reason by following the instructions outlined in this
-Listener Support Help Article"* — and the deleted href was
-`help.pandora.com/s/article/Cancel-Deactivate-or-Delete-your-Account-…`.
-Scored **high** because the refusal is the one claim this project stakes
-everything on, and the inbox is now on a public submission page and a LinkedIn
-post. Downgrade it if you disagree; do not leave it unscored.
-
-A second, harsher shape has no cheap fix: `facebook.com/privacy/policy` is a
-summary shell whose sections are headings with the body one link away, and it
-answered 2 of 8 while printing "Searched all 1,182 lines" six times. Keeping the
-hrefs does not put Meta's text on the page — nothing cheap does — but it stops
-the parser throwing away the only pointer to where the text is.
-
-**Do NOT reach for a shell detector.** Three were predeclared and measured on 24
-documents on 2026-09-07 and all three false-positive on real documents:
-`%chars in lines ≥120 < 60` catches the DOL COBRA model notice (12) and HUD-5380
-(28); a `"learn more"` rate catches Microsoft's genuine privacy statement (7.01)
-and MISSES `meta.com/legal` and `apple.com/legal` (0 each); refusal rate puts
-Meta's 75% inside the range of the CMS Summary of Benefits (63%). The
-false-positive budget is zero — refusing to read somebody's real lease is worse
-than any refusal this flag describes.
-
-Fix: keep the href when the link label cannot stand alone (`this`, `here`,
-`article`, `page`, `help`). **It cannot ship alone.** Replaying all 54 published
-prod findings through the real `change.stillSays` under the modified parser
-reports **6 as `gone`** (spotify T2b, sbc U4/U2/U1a, paypal T3b/T2b) — change
-notices about documents that never moved. Control under the current parser: 0 of
-54. So the parser change carries a full corpus re-read in the same deploy, ahead
-of the next 11:17 UTC sweep.
 
 ### M3 — a failed `watch.recheck` is silent to everyone (medium)
 
@@ -115,6 +75,42 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **H3 (a link-shaped page produced confident FALSE refusals)** closed
+  2026-09-07. `stripMarkup` deleted every href; on a page whose body lives
+  behind its links the href WAS the answer. Fixed with one rule and no keyword
+  list — keep the address unless the label already contains it, compared on
+  alphanumerics — which is the AT&T argument (`att.com/howtocancel` beside its
+  own href is the same string twice) generalised rather than a guess about
+  which labels sound uninformative. The bare-url pass moved first behind a
+  lookbehind, or it would delete the addresses the link pass had just kept.
+  **Do NOT re-propose a shell-page detector**: three were predeclared and
+  measured on 24 documents that morning and all three false-positived on real
+  documents — `%chars in lines ≥120 < 60` catches the DOL COBRA model notice
+  (12) and HUD-5380 (28); a `"learn more"` rate catches Microsoft's genuine
+  privacy statement (7.01) and MISSES `meta.com/legal` and `apple.com/legal`
+  (0 each); refusal rate puts Meta's 75% inside the range of the CMS Summary of
+  Benefits (63%). **Verified on development:** 562 lines change across the ten
+  production documents with no document's line COUNT moving, 0 bare urls
+  survive anywhere, the AT&T receipt is untouched, and two published `T2b`
+  receipts became usable — Spotify's had read "…or by clicking here and
+  following the instructions" and now carries
+  `support.spotify.com/article/cancel-premium/`.
+  **What remains unfixed and is not a flag:** `facebook.com/privacy/policy` is a
+  summary shell whose sections are headings with the body one link away. Keeping
+  hrefs does not put Meta's text on the page and nothing cheap does. Its
+  refusals are honest about what that page contains.
+- **The parser-shift hazard** closed with it, and this is the part to keep.
+  `contentHash` cannot tell a moved document from a moved parser: replaying all
+  54 published prod findings through the real `change.stillSays` under the new
+  parser reported **6 as `gone`** with nothing having changed. `documents.parserVersion`
+  makes `mail.attach` re-baseline rather than diff when a row's version is not
+  current, and `mail.checked` stamps the version on the early exit so a document
+  the change did not touch cannot keep a stale version and swallow a REAL change
+  later. **Verified on development: a sweep that re-extracted five documents
+  under the new parser produced 0 new `changedAt` stamps across 76 findings.**
+  There is no deploy ordering to get right. The three attachment-backed rows
+  stay at version 1 forever, which is correct — they carry no url, are never
+  re-checked, and are therefore never diffed.
 - **M4 (no unsubscribe)** closed 2026-09-07. `STOP` or `UNSUBSCRIBE` as the
   first non-empty line of a reply, recognised in `mail.received` ahead of the
   no-document branch (a bare STOP carries no document) and ahead of both spend
@@ -190,20 +186,14 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**H3 → M3 → (M2, L3, L4, L5).**
+**M3 → (M2, L3, L4, L5).**
 
 H2 was first because it was the only one that cost money while nobody was
-watching. It is closed. M4 was next because P5 turned it from a flag about one
-stranger into a flag about everyone on a forwarded thread; it is closed too, and
-it shipped before the parser work deliberately — the H3 fix is the deploy most
-likely to send mail nobody asked for, and M4 is what gives anyone wrongly mailed
-a way out.
+watching. M4 was next because P5 turned it from a flag about one stranger into a
+flag about everyone on a forwarded thread. H3 followed M4 deliberately: it is
+the deploy most likely to send mail nobody asked for, and M4 is what gives
+anyone wrongly mailed a way out. All three are closed.
 
-**H3 is first now.** It is the only open flag that makes the product's own
-central claim wrong rather than making it run less reliably, and it is wrong in
-the direction nobody can see: a refusal carries no citation to open, so a false
-one is indistinguishable from a true one by reading the reply. Its fix must
-carry the corpus re-read described above.
-
-M3 ships after, and before the next audit. Until it lands the audit after this
-one has silence instead of evidence.
+M3 is first now, and it is the last thing standing between the next audit and
+evidence. Until it lands, a failed `watch.recheck` is still silent to everyone
+and "no failures observed" keeps meaning "no failures observable".
