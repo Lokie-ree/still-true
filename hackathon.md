@@ -1448,3 +1448,44 @@ error, `documents:recent` returned 11 keys and `watchError` was not one of them.
 
 Readiness is **92/100**. M2 is the only medium left and it is cheap: dedupe
 attachment documents on the `contentHash` that is already computed.
+
+### P5 — the CC reply was mostly already built, and its stated gap cannot exist
+
+**What was actually missing was one line, and it was not a feature.** Being cc'd
+on a thread already worked: `received` tells a cc from a forward by which header
+carries the inbox address, `documentUrl` already scanned the whole body — so a
+link sitting behind a `>` in the quoted original was always found — and `reply`
+already passed `replyAll` through. Verified on development with a cc'd message
+whose only link was in the quoted text: read, answered with the cited findings,
+sent `reply-all`.
+
+**The gap the README named cannot be built.** It said the case that makes cc
+worth doing is "the document is attached to an earlier message". A message sent
+before this address was cc'd was never delivered to this inbox, so AgentMail
+does not have it and no endpoint can produce it. Its `GET /threads/{id}` does
+return a `messages[]` with per-message `attachments`, so the mechanism looks
+available right up until you ask what is in it — and retention makes the point
+twice over: AgentMail holds **1** thread for the development inbox while our own
+`threads` table references **12**. A feature built on that would have been a
+lookback that finds nothing, forever, and reported as shipped.
+
+**The real defect was the opposite of a missing feature.** `reply` passed
+`replyAll: thread.mode === "cc"` for every body it sent, so *every apology went
+to the whole thread*. "I did not find a document in that message", replied to a
+landlord, a tenant and a broker, is a stranger interrupting a negotiation to
+announce its own failure — and after M4 the people who never wrote here would
+have had to say STOP to mail they never asked for.
+
+So `reply` now takes an audience and **defaults to the sender**. The answer opts
+into the thread explicitly, because being read in front of everyone arguing
+about the document is the whole point; the change notice keeps the thread too,
+and the asymmetry is deliberate — a notice only ever follows an answer those
+people already received. Apologies, rate-limit replies, the M1 dead letter and
+the M4 unsubscribe confirmation all go to whoever wrote.
+
+Measured on development, same cc'd thread shape both times: the cited answer
+sent `replyAll: true`, the no-document reply sent `replyAll: false`.
+
+**P5 closes the last unbuilt sentence in the project description.** It also
+retires a sentence that had been on the roadmap for days describing work that
+was never possible, which is the more useful half.

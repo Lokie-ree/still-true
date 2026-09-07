@@ -75,6 +75,20 @@ async function reply(
   ctx: MutationCtx,
   threadRowId: Id<"threads">,
   body: { text: string; html: string },
+  // P5. Whether everyone on a cc'd thread should see this, or only the person
+  // who wrote to us.
+  //
+  // An ANSWER belongs in the thread — being read in front of everyone
+  // negotiating the document is the entire reason to cc this address. An
+  // APOLOGY does not. "I did not find a document in that message" replied to a
+  // landlord, a tenant and a broker is a stranger interrupting their thread to
+  // announce its own failure, and the people who did not write here cannot
+  // stop it without saying STOP to mail they never asked for.
+  //
+  // So the default is the sender, and the two bodies that earn the room say so
+  // explicitly. On a forward there is nobody else on the thread and this
+  // changes nothing.
+  audience: "thread" | "sender" = "sender",
 ): Promise<void> {
   const thread = await ctx.db.get("threads", threadRowId);
   if (thread === null) return;
@@ -84,10 +98,7 @@ async function reply(
     threadRowId,
     inboxId: thread.inboxId,
     parentMessageId: thread.messageId,
-    // forward → back to the sender. cc → into the thread, in front of everyone
-    // already arguing about it. P5 is where that second door gets exercised;
-    // hardcoding `false` here would simply be wrong for a row already marked.
-    replyAll: thread.mode === "cc",
+    replyAll: audience === "thread" && thread.mode === "cc",
     ...body,
   });
 }
@@ -117,6 +128,11 @@ async function notify(
     threadRowId,
     inboxId: thread.inboxId,
     parentMessageId: thread.messageId,
+    // Always the thread, where `reply` now defaults to the sender. The
+    // asymmetry is deliberate: a change notice only ever follows an answer that
+    // already went to the thread, so it is the second half of a conversation
+    // those people are already in — not a stranger announcing itself. The way
+    // out of it is STOP, which stops this thread and not just its sender.
     replyAll: thread.mode === "cc",
     ...body,
   });
@@ -908,6 +924,9 @@ export const attach = internalMutation({
           watchable: url !== null,
           checkedAt: now,
         }),
+        // The answer, and the only reply that belongs in front of
+        // everyone on the thread — that is what cc'ing this address is for.
+        "thread",
       );
     }
     return null;
