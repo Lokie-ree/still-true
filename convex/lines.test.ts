@@ -71,12 +71,57 @@ void test("a bare url is an anchor with nothing to say, and goes", () => {
   );
 });
 
-void test("the link pass runs first, which is what makes the url pass safe", () => {
-  // Reversing these would strip the href out of the markdown link, leave the
-  // brackets behind, and publish "See [att.com/howtocancel]()".
+void test("the bare-url pass runs first, and skips a link's own href", () => {
+  // H3 inverted this order. The bare url goes; the labelled link keeps its
+  // address, because "our page" does not say which page. Running the bare pass
+  // second would delete the address the link pass just decided to keep.
   const [line] = toLines("Visit [our page](https://x.test/a) or https://x.test/b now.");
-  assert.equal(line, "Visit our page or now.");
-  assert.doesNotMatch(line, /\[|\]|\(|\)/);
+  assert.equal(line, "Visit our page (https://x.test/a) or now.");
+  assert.doesNotMatch(line, /\[|\]/);
+});
+
+// ── H3: an address the label does not already carry ──────────────────────────
+
+void test("a link whose label names a document keeps the address", () => {
+  // Pandora line 144, and the proven false refusal this fixes: T2b "How do you
+  // cancel?" came back not_stated because the only thing that said WHICH help
+  // article was the href, and the href was deleted before the model saw it.
+  const [line] = toLines(
+    "You may cancel your account at any time by following the instructions " +
+      "outlined in this [Listener Support Help Article](https://help.pandora.com/s/article/Cancel-Deactivate-1519949295569).",
+  );
+  assert.match(line, /Listener Support Help Article \(https:\/\/help\.pandora\.com/);
+});
+
+void test("an image is a picture and its address is a picture", () => {
+  // Neither is made more useful by the other, so the alt text stands alone.
+  // The leading "!" goes with it now: matching the bang in order to recognise
+  // an image is also what stops it being left behind as "!Manage the...".
+  assert.deepEqual(
+    toLines("![Manage the information we collect](https://x.test/icon.png) below."),
+    ["Manage the information we collect below."],
+  );
+});
+
+void test("an anchor with no words at all is its address", () => {
+  assert.deepEqual(toLines("See [](https://x.test/terms) for terms."), [
+    "See https://x.test/terms for terms.",
+  ]);
+});
+
+void test("a relative href is not an address anyone can follow", () => {
+  assert.deepEqual(toLines("Read the [rules](/legal/rules) first."), [
+    "Read the rules first.",
+  ]);
+});
+
+void test("the redundancy test ignores punctuation and case", () => {
+  // "AT&T.com/HowToCancel" is the same string as the href once you stop
+  // counting the dots and the capitals, so the href is still the second copy.
+  assert.deepEqual(
+    toLines("See [AT&T.com/HowToCancel](https://www.att.com/howtocancel) now."),
+    ["See AT&T.com/HowToCancel now."],
+  );
 });
 
 void test("html entities decode to the character the document meant", () => {

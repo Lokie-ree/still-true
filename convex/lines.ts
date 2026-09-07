@@ -47,24 +47,52 @@ const isTocEntry = (line: string) => /\.{6,}\s*\d+$/.test(line.trim());
 // So it is stripped once, before numbering, and one substrate then serves the
 // prompt, the citation, the stored quote, the receipt and P4's re-check. Any
 // later normalisation would make those disagree.
-// Links get two passes, and the ORDER is the whole safety argument.
+// Whether a link's address adds anything its label has not already said.
 //
-// A markdown link keeps its text and loses its href: AT&T's cancellation
-// receipt reads "See [att.com/howtocancel](https://www.att.com/howtocancel) for
-// details on how to cancel", where `att.com/howtocancel` is the answer and the
-// href beside it is the same string twice.
+// H3. This file used to drop every href, and the argument for it was AT&T:
+// the cancellation receipt reads "See [att.com/howtocancel](https://www.att.com/howtocancel)
+// for details on how to cancel", where `att.com/howtocancel` IS the answer and
+// the href beside it is the same string twice. That argument is sound and it
+// only covers the case where the label is the address.
 //
-// A BARE url is then, by construction, one that had no readable text to keep —
-// an anchor whose words live somewhere else in the sentence. Every quote from a
-// Summary of Benefits and Coverage carried two of them mid-clause
-// ("...but only if https://…/#plan https://…/#specialist you have a referral"),
-// because the glossary hyperlinks on `plan` and `specialist` surface as bare
-// hrefs while those words stay in the prose. Dropping them loses nothing that
-// was not already said.
+// Pandora is the case it does not cover. Line 144 reads "...by following the
+// instructions outlined in this [Listener Support Help Article](https://help.pandora.com/s/article/Cancel-…)".
+// The label names a document; the address is the only thing that says WHICH
+// document. Dropping it cost a real answer — "How do you cancel?" came back
+// `not_stated` on a page that answers it, and a false refusal is the one thing
+// this system is built not to produce.
 //
-// Running the link pass first is what makes the bare-url pass safe: anything
-// carrying human-readable text has already been reduced to that text, so what
-// remains is only ever an address with nothing to say.
+// So: keep the address UNLESS the label already contains it. One rule, no
+// keyword list. Three shell-page detectors were predeclared and measured on 24
+// documents on 2026-09-07 and all three false-positived on real HUD and DOL
+// notices (docs/READINESS.md, H3) — a list of labels that "sound uninformative"
+// would be the same mistake a fourth time. This is instead the AT&T argument
+// generalised, and it is checkable by reading one line rather than by trusting
+// a threshold.
+//
+// A heuristic is acceptable HERE and was not there, and the difference is the
+// failure mode, not the confidence. Guess wrong on a shell page and a real
+// lease is refused unread. Guess wrong here and a line either carries an
+// address it did not need or drops one it did — the status quo, on one line.
+const saysTheSameThing = (label: string, href: string) => {
+  const alnum = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return alnum(label).length > 0 && alnum(href).includes(alnum(label));
+};
+
+// Bumped whenever `toLines` can return different text for an unchanged
+// document. That is not a version number for the file; it is the thing that
+// stops a parser change from mailing every subscriber that their lease was
+// rewritten.
+//
+// The hazard has now arrived three times: the 09-04 markup strip moved Livonia
+// 421 lines to 418 with no word of it changing, this change moves 616 lines
+// across the ten documents on production, and something will move them again.
+// `mail.attach` re-baselines instead of diffing when a document's stored
+// version is not this one — see the note on `documents.parserVersion`.
+//
+// 1 → 2: hrefs kept when the label does not already contain them (H3).
+export const PARSER_VERSION = 2;
+
 // HTML entities, decoded AFTER the tag strip above so a document that really
 // says `&lt;` keeps its `<` instead of having it eaten as a tag. `&amp;` goes
 // last for the same reason, or `&amp;lt;` would decode twice.
@@ -83,8 +111,29 @@ const decodeEntities = (line: string) =>
 const stripMarkup = (line: string) =>
   decodeEntities(
     line
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/https?:\/\/\S+/g, "")
+      // Bare urls FIRST now, which is the reverse of the order this file used
+      // to argue for, and the lookbehind is what makes it safe: a url sitting
+      // immediately after "](" is a link's href and belongs to the pass below.
+      // Everything else is an anchor whose words live elsewhere in the
+      // sentence. Every quote from a Summary of Benefits and Coverage carried
+      // two of them mid-clause ("...but only if https://…/#plan
+      // https://…/#specialist you have a referral"), because the glossary
+      // hyperlinks on `plan` and `specialist` surface as bare hrefs while those
+      // words stay in the prose. Dropping those still loses nothing.
+      //
+      // Running this pass second, as before, would delete the very addresses
+      // the pass below has just decided to keep.
+      .replace(/(?<!\]\()https?:\/\/\S+/g, "")
+      .replace(
+        /(!?)\[([^\]]*)\]\(([^)]*)\)/g,
+        (_m, bang: string, label: string, href: string) => {
+          // An image's alt text describes a picture and its address IS a
+          // picture. Neither is made more useful by the other.
+          if (bang === "!" || !/^https?:\/\//.test(href)) return label;
+          if (label.trim() === "") return href;
+          return saysTheSameThing(label, href) ? label : `${label} (${href})`;
+        },
+      )
       .replace(/<[^>]+>/g, ""),
   )
     .replace(/_{3,}/g, "___")

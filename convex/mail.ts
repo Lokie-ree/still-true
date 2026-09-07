@@ -14,7 +14,7 @@ import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl, isStop } from "./link";
-import { fingerprint, toLines } from "./lines";
+import { fingerprint, PARSER_VERSION, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import {
   changeBody,
@@ -597,6 +597,14 @@ export const checked = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch("documents", args.documentId, {
       lastCheckedAt: Date.now(),
+      // H3. This runs only when the new parse hashed IDENTICALLY to the stored
+      // one, which means this parser produced exactly the stored lines — so the
+      // stored quotes already are what it would publish, and the row can be
+      // stamped current without re-extracting. Without this a document the
+      // parser change did not touch (every PDF in the corpus) would keep a
+      // stale version forever and re-baseline — silently swallowing a REAL
+      // change — the first day its text actually moved.
+      parserVersion: PARSER_VERSION,
     });
     return null;
   },
@@ -737,6 +745,7 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: null,
         contentHash: args.contentHash,
+        parserVersion: PARSER_VERSION,
         // The probe seeds the public corpus; inbound mail never does. Set once,
         // here, and deliberately NOT re-derived on the existing-row path below:
         // a stranger emailing a URL that is already on the board must not be
@@ -752,6 +761,7 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: now,
         contentHash: args.contentHash,
+        parserVersion: PARSER_VERSION,
       });
 
       // Read the old answers BEFORE they go. A checklist is five rows, so the
@@ -771,7 +781,17 @@ export const attach = internalMutation({
       // being read. A row with no stored hash predates the watch and is treated
       // as unchanged — the safe direction for a field that decides who gets
       // mailed.
+      //
+      // H3 adds the first clause. A document whose stored quotes were produced
+      // by an older `toLines` is being RE-BASELINED, not re-checked: its hash
+      // differs because the parser differs, and every clause `diff` looked for
+      // would come back missing. Republish the findings and report nothing.
+      // The cost is one sweep in which a genuine same-day edit goes unreported;
+      // the alternative is telling everybody their lease changed on the morning
+      // of a deploy, and this system's whole argument is that it does not say
+      // that unless it happened.
       changes =
+        existing.parserVersion === PARSER_VERSION &&
         existing.contentHash !== undefined &&
         existing.contentHash !== args.contentHash
           ? diff(before, args.findings, args.text)

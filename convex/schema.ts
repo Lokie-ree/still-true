@@ -82,6 +82,25 @@ export default defineSchema({
     // which is treated as unchanged: the safe direction for a field that
     // decides whether a stranger gets an unsolicited email.
     contentHash: v.optional(v.string()),
+    // Which `toLines` produced the stored hash and the stored quotes.
+    //
+    // H3. `contentHash` answers "did the document move?" and it cannot tell a
+    // moved document from a moved PARSER: change how lines are built and every
+    // hash differs at once, every quote stops matching, and the watch mails
+    // every subscriber that their lease was rewritten on the morning of a
+    // deploy. Measured for this one: 6 of 54 published findings on production
+    // would have been reported `gone` with nothing about any document changing.
+    //
+    // So `mail.attach` re-baselines instead of diffing when this is not
+    // `PARSER_VERSION` — it republishes the findings and reports no change. The
+    // hazard has arrived three times now (the 09-04 markup strip, the 09-04
+    // reflow, H3), which is what makes it worth a stored field rather than a
+    // command somebody has to remember to run in the right order.
+    //
+    // Absent means version 1, the parser before any of this existed, so the
+    // rows already on production re-baseline on their next sweep with no
+    // backfill and no email.
+    parserVersion: v.optional(v.number()),
   })
     .index("by_url", ["url"])
     .index("by_isPublic", ["isPublic"]),
