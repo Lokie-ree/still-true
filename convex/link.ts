@@ -41,3 +41,21 @@ export function documentUrl(text: string): string | null {
   const found = text.match(/https?:\/\/[^\s<>()"'\]]+/)?.[0] ?? null;
   return found === null ? null : unwrap(found);
 }
+
+// A reader asking to be left alone.
+//
+// M4. Enrolment in the watch is automatic and by design — a person forwarding a
+// lease is asking what it requires of them, and that it stopped requiring it is
+// the same question answered later. Removal did not exist, which was defensible
+// only while there was nothing a reader could do about it. `reply.ts`'s WATCH
+// paragraph now names this word, so the sentence and the code have to agree.
+//
+// The FIRST non-empty line, and that line alone. A reply carries the quoted
+// original beneath it, so anything that searched the whole body would read
+// "STOP" out of the document it is being asked to stop watching. And the line
+// must be ONLY the keyword: a forwarded message whose prose happens to open
+// "Stop by the office before Friday" is a document, not an unsubscribe.
+export function isStop(text: string): boolean {
+  const first = text.split("\n").find((line) => line.trim() !== "") ?? "";
+  return /^\W*(stop|unsubscribe)\W*$/i.test(first.trim());
+}

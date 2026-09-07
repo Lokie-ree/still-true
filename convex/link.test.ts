@@ -5,7 +5,7 @@
 // wrong in the other direction, by rewriting a link that was already right.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { documentUrl } from "./link.ts";
+import { documentUrl, isStop } from "./link.ts";
 
 void test("a Gmail wrapper resolves to the document it wraps", () => {
   const body =
@@ -43,4 +43,30 @@ void test("a document whose own address carries ?url= is left alone", () => {
 
 void test("mail with no link at all reports none", () => {
   assert.equal(documentUrl("did it work?"), null);
+});
+
+// M4. The word has to win against a real reply — which carries the quoted
+// original underneath it — and lose against prose that merely starts with it.
+void test("a bare STOP is an unsubscribe", () => {
+  assert.equal(isStop("STOP"), true);
+  assert.equal(isStop("stop"), true);
+  assert.equal(isStop("Unsubscribe"), true);
+  assert.equal(isStop("STOP."), true);
+  assert.equal(isStop("  stop  \n"), true);
+});
+
+void test("a reply's quoted original does not un-stop it", () => {
+  const body =
+    "STOP\n\nOn Sun, Sep 6, 2026 at 4:45 PM still-true wrote:\n" +
+    "> I read Pandora TOS — 243 lines.\n> Reply STOP and I will stop.\n";
+  assert.equal(isStop(body), true);
+});
+
+void test("a document is never read as an unsubscribe", () => {
+  assert.equal(isStop("Stop by the office before Friday to sign it."), false);
+  assert.equal(isStop("Please stop the auto-renewal — see attached."), false);
+  assert.equal(
+    isStop("Can you read this?\n\nSTOP\n\nhttps://example.com/lease"),
+    false,
+  );
 });

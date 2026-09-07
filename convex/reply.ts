@@ -100,9 +100,23 @@ const FOOTER =
 // later, and making them reply a magic word to hear the answer would be a
 // second thing to get wrong for no gain. The threads table IS the subscription
 // list — see the schema note on it — so there is nothing to enrol in.
+// M4. The one sentence that had to change before P5 could ship.
+//
+// The WATCH paragraph below used to end "You don't need to do anything," which
+// was true while there was nothing anyone COULD do, and stopped being
+// defensible the moment there was. This appears in the answer AND in the change
+// notice, because the change notice is the mail somebody did not ask for — and
+// after P5 it is mail that reaches everyone cc'd on a thread, none of whom
+// wrote to this address. The word has to travel with the mail it stops.
+//
+// Declared ahead of WATCH because WATCH reads it at module load.
+const STOP_OFFER =
+  "Reply STOP and I'll stop — this thread, and every other one I have with you.";
+
 const WATCH =
   "I'll re-read this page daily and email you if any of the clauses above " +
-  "stops saying what it says today. You don't need to do anything.";
+  "stops saying what it says today. You don't need to do anything to keep it. " +
+  STOP_OFFER;
 
 // Not legal advice, and not a summary. Stated in the artifact a person actually
 // reads rather than only in the README.
@@ -299,9 +313,10 @@ export function changeBody(input: ChangeInput): { text: string; html: string } {
     h.push(`</div>`);
   }
 
-  t.push(HOW, "", DISCLAIMER);
+  t.push(HOW, "", STOP_OFFER, "", DISCLAIMER);
   h.push(
     `<p style="margin:20px 0 0;padding-top:14px;border-top:1px solid #dce1db;font-size:13px;color:#67726e">${HOW}</p>`,
+    `<p style="margin:10px 0 0;font-size:13px;color:#67726e">${STOP_OFFER}</p>`,
     `<p style="margin:10px 0 0;font-size:12px;color:#8b948f">${DISCLAIMER}</p>`,
     `</div>`,
   );
@@ -396,6 +411,38 @@ export function noDocumentBody(): { text: string; html: string } {
       said
         .split("\n\n")
         .map((p) => `<p style="margin:0 0 14px">${p}</p>`)
+        .join("") +
+      `</div>`,
+  };
+}
+
+// The answer to STOP.
+//
+// It confirms the scope, because "unsubscribed" with no scope is the thing
+// people do not believe — and here the scope is genuinely wider than the thread
+// they replied on. It also says what is NOT undone: the findings already
+// published stay published, and the documents stay on the public board if they
+// were ever on it. An unsubscribe that quietly deleted somebody's answers would
+// be a surprise in the other direction.
+export function stoppedBody(threadsStopped: number): {
+  text: string;
+  html: string;
+} {
+  const said =
+    `Stopped. I won't email you again about ${plural(threadsStopped, "document")} ` +
+    `I was watching for you.\n\n` +
+    `The answers I already sent you still stand — I have not withdrawn or ` +
+    `deleted anything I told you, and nothing you sent me was published ` +
+    `anywhere it was not already.\n\n` +
+    `If you forward me something new later, I'll read it and start watching ` +
+    `that one. This reply is the only thing that stops.`;
+  return {
+    text: said,
+    html:
+      `<div style="font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#171b1a;max-width:640px">` +
+      said
+        .split("\n\n")
+        .map((p) => `<p style="margin:0 0 14px">${escape(p)}</p>`)
         .join("") +
       `</div>`,
   };
