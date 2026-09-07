@@ -11,9 +11,18 @@ import schema from "./schema";
 // write arbitrary answers, URLs and owner emails into production. That is why
 // this file has no mutation in it.
 
+// M3's field is stripped here, in the validator AND in the rows.
+//
+// `recent` answers the open internet with whole document rows, which is a habit
+// worth naming: every field added to `documents` is published by default, and
+// the one time that was not noticed is why `isPublic` exists. `watchError`
+// carries our stack's error text — a Firecrawl response body, an OpenAI
+// message — and belongs to whoever runs `npm run gate`, not to a stranger.
+const publicDocument = schema.doc("documents").omit("watchError");
+
 export const recent = query({
   args: {},
-  returns: v.array(schema.doc("documents")),
+  returns: v.array(publicDocument),
   handler: async (ctx) => {
     // The PUBLIC corpus only. This query is unauthenticated and the app has no
     // auth foundation, so anything it returns is returned to the open
@@ -22,11 +31,17 @@ export const recent = query({
     // so a private row is never read at all.
     //
     // ponytail: bounded take, not collect. Paginate when the corpus outgrows it.
-    return await ctx.db
+    const documents = await ctx.db
       .query("documents")
       .withIndex("by_isPublic", (q) => q.eq("isPublic", true))
       .order("desc")
       .take(50);
+
+    // Dropped from the row, not just from the validator. A return validator
+    // that merely disagrees with the data is a runtime error waiting for the
+    // first failed re-check on a public document, which is exactly the moment
+    // this must not break.
+    return documents.map(({ watchError: _private, ...visible }) => visible);
   },
 });
 

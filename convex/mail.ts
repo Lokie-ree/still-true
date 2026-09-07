@@ -605,6 +605,10 @@ export const checked = internalMutation({
       // stale version forever and re-baseline — silently swallowing a REAL
       // change — the first day its text actually moved.
       parserVersion: PARSER_VERSION,
+      // M3. This document just read cleanly, so whatever it failed with last
+      // time is over. A field that only ever gets set turns into a list of
+      // things that went wrong once, which nobody reads twice.
+      watchError: undefined,
     });
     return null;
   },
@@ -762,6 +766,9 @@ export const attach = internalMutation({
         lastCheckedAt: now,
         contentHash: args.contentHash,
         parserVersion: PARSER_VERSION,
+        // M3, the other success path: a full re-read got all the way to
+        // publishing findings, so the document is readable again.
+        watchError: undefined,
       });
 
       // Read the old answers BEFORE they go. A checklist is five rows, so the

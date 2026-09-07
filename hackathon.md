@@ -1414,3 +1414,37 @@ The hazard this retires had arrived three times (the 09-04 markup strip, the
 09-04 reflow, and this). There is now no deploy ordering to get right, which
 matters more than the parser fix did: the ordering was the part a person had to
 remember at the exact moment they were least likely to.
+
+### M3 closed — a failed re-check now says so where somebody reads it
+
+`recheck` catches, records `documents.watchError`, and **rethrows**. The
+rethrow is the point: the workpool still retries with backoff and the old
+findings still stay untouched until a complete new reading replaces them, so
+the visibility is not bought by swallowing the failure. The file used to argue
+that a failed function in the logs was enough — `ingest` catches because a
+person is waiting on a reply, a re-check has nobody waiting. That was true about
+who is waiting and wrong about who can see, because prod log reads are refused
+by the read-only MCP selector and dev retains zero failure entries.
+
+**The field is deliberately off the public surface.** `documents.recent` answers
+the open internet with whole rows, which is a habit worth naming — every field
+added to `documents` is published by default, and the one time that went
+unnoticed is why `isPublic` exists. `watchError` is a vendor's error body, so
+`documents.ts` omits it from the validator and drops it from the rows.
+
+**Which leaves the question of who ever reads it, and the answer is the gate.**
+A sixth check reads the table with the runner's own credentials, so it covers
+**private** documents too — 10 rows on production, not the 6 on the board. A
+stranger's forwarded link failing every night is precisely the case the board
+cannot show and the likeliest to be quietly broken.
+
+**Verified on development in both directions, which is the half that is easy to
+skip.** The fixture was replaced with a 142-byte stub; the sweep recorded
+`Firecrawl returned 58 chars … too short to be the document` and left
+`lastCheckedAt` frozen at 16:55 — the exact symptom the flag described, now with
+a reason attached. The real fixture was restored and the next sweep cleared the
+field and advanced the stamp to 17:11. While a PUBLIC document was carrying an
+error, `documents:recent` returned 11 keys and `watchError` was not one of them.
+
+Readiness is **92/100**. M2 is the only medium left and it is cheap: dedupe
+attachment documents on the `contentHash` that is already computed.

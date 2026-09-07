@@ -1,11 +1,11 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-07** (third pass). Score **87/100**:
-`100 − 5×2(M2,M3) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 87** (09-03, 09-05, 09-05 evening,
+Last audit **2026-09-07** (third pass). Score **92/100**:
+`100 − 5(M2) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92** (09-03, 09-05, 09-05 evening,
 09-07 morning, 09-07 evening). The deltas are
 `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`, then
-`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed`.
+`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`.
 
 **The 72 is the honest number to keep in the history.** Nothing regressed that
 morning; a flag that had been there the whole time got found, by feeding
@@ -18,23 +18,6 @@ not re-run the audit to rediscover them, and do not fix one unasked: read the
 fix order at the bottom and ask.
 
 ## Open
-
-### M3 — a failed `watch.recheck` is silent to everyone (medium)
-
-`convex/watch.ts:96`.
-
-The M1 class, reopened on the watch path. A re-check throws, the workpool
-retries three times, and then nothing is written anywhere: no thread exists so
-there is no `threads.error`, and nothing lands on `documents`. The only
-surviving signal is a `lastCheckedAt` that quietly stops advancing — while
-`reply.ts`'s WATCH paragraph goes on promising a daily re-read.
-
-The code comment argues that a failed function in the logs is enough. It is
-not: prod log reads are refused by the read-only MCP selector and dev retains
-zero failure entries, so in practice nobody sees it.
-
-Fix: a `watchError` field on the document row, the way `ingest` records one on
-the thread.
 
 ### M2 — attachment documents never dedupe (medium)
 
@@ -75,6 +58,26 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **M3 (a failed `watch.recheck` was silent to everyone)** closed 2026-09-07.
+  `documents.watchError` records why the last re-check failed; `recheck` catches,
+  records and **rethrows**, so the workpool still retries and the visibility is
+  not bought by swallowing the failure. Cleared on the next success by both
+  paths — `checked` on the early exit, `attach` on a full re-read — so the field
+  means "failing now", not "failed once in July". **Never on the public
+  surface**: `documents.recent` answers the open internet with whole rows, and
+  this string is a vendor's error body, so `documents.ts` omits it from the
+  validator and drops it from the rows.
+  **A sixth gate check reads it**, via the CLI with the runner's own
+  credentials, which is what makes recording it worth anything — and it reaches
+  private documents (10 rows on prod, not the 6 public ones), the case the board
+  cannot show and the likeliest to be quietly broken.
+  **Verified on development, both directions:** the fixture was replaced with a
+  142-byte stub, the sweep recorded `Firecrawl returned 58 chars … too short to
+  be the document` and left `lastCheckedAt` frozen at 16:55 — the exact symptom
+  this flag described — then the real fixture was restored and the next sweep
+  cleared the field and advanced the stamp to 17:11. The public query returned
+  11 keys and `watchError` was not among them while a PUBLIC document was
+  carrying one.
 - **H3 (a link-shaped page produced confident FALSE refusals)** closed
   2026-09-07. `stripMarkup` deleted every href; on a page whose body lives
   behind its links the href WAS the answer. Fixed with one rule and no keyword
@@ -172,9 +175,15 @@ Documented decisions with named upgrade paths:
 
 ## Coverage — what the audit could not see
 
-Log evidence is thin and has been since 09-03. Prod log reads are refused by
-the read-only MCP selector; dev retained zero entries. "No failures observed"
-is absence of evidence, not evidence of absence.
+Log evidence has been thin since 09-03 and mostly still is: prod log reads are
+refused by the read-only MCP selector, and dev retains zero entries. "No failures
+observed" was absence of evidence rather than evidence of absence.
+
+**M3 closing changes that for the one case that matters.** A failed re-check now
+writes `documents.watchError`, and `npm run gate` reads it on every run across
+both public and private documents. That is not general log access — a failure
+anywhere else is still invisible — but the watch is the part that runs unattended
+every day, and it is no longer the part nobody can see.
 
 **One thing the rows said that the logs could not (2026-09-06).** The board carries
 `lastCheckedAt`, `fetchedAt` and `verifiedAt`, and all three are readable without
@@ -186,14 +195,14 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M3 → (M2, L3, L4, L5).**
+**M2 → (L3, L4, L5).**
 
-H2 was first because it was the only one that cost money while nobody was
-watching. M4 was next because P5 turned it from a flag about one stranger into a
-flag about everyone on a forwarded thread. H3 followed M4 deliberately: it is
-the deploy most likely to send mail nobody asked for, and M4 is what gives
-anyone wrongly mailed a way out. All three are closed.
+Everything above M2 is closed. H2 was first because it was the only one that
+cost money while nobody was watching; M4 next, because P5 turned it from a flag
+about one stranger into a flag about everyone on a forwarded thread; H3 after
+M4 deliberately, because it is the deploy most likely to send mail nobody asked
+for and M4 is the way out for anyone wrongly mailed; M3 last of the four,
+because until it landed the next audit had silence where evidence should be.
 
-M3 is first now, and it is the last thing standing between the next audit and
-evidence. Until it lands, a failed `watch.recheck` is still silent to everyone
-and "no failures observed" keeps meaning "no failures observable".
+M2 is what is left, and it is cheap: dedupe attachment documents on the
+`contentHash` that is already computed.

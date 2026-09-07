@@ -101,6 +101,27 @@ export default defineSchema({
     // rows already on production re-baseline on their next sweep with no
     // backfill and no email.
     parserVersion: v.optional(v.number()),
+    // M3. Why this document's last re-check failed, or absent if it did not.
+    //
+    // The M1 class, on the watch path. A re-check throws, the workpool retries
+    // three times, and then nothing was written anywhere: no thread exists, so
+    // there is no `threads.error` to carry it, and the only surviving signal
+    // was a `lastCheckedAt` that quietly stopped advancing — while the WATCH
+    // paragraph in reply.ts went on promising a daily re-read. The code argued
+    // a failed function in the logs was enough. It is not: prod log reads are
+    // refused by the read-only MCP selector and dev retains zero failure
+    // entries, so in practice nobody saw it.
+    //
+    // NEVER returned by `documents.recent`. That query answers the open
+    // internet with whole rows, and this string is our stack's error text — a
+    // Firecrawl response body, an OpenAI message, whatever a vendor chose to
+    // put in it. `documents.ts` omits it from both the validator and the rows,
+    // for the same reason `threads.error` is not on a public query at all.
+    //
+    // Cleared on the next success, by `checked` on the early exit and by
+    // `attach` on a full re-read, so a row carrying this is failing NOW rather
+    // than having failed once in July.
+    watchError: v.optional(v.string()),
   })
     .index("by_url", ["url"])
     .index("by_isPublic", ["isPublic"]),
