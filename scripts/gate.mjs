@@ -171,6 +171,48 @@ check("the watch has swept recently", async () => {
   return `last sweep ${(ageMs / 3_600_000).toFixed(1)}h ago, ${checked.length} documents stamped`;
 });
 
+// M3, closed, and this is the half that makes closing it worth anything.
+//
+// Recording a failed re-check on the document row only helps if something reads
+// the row. This does, on every gate run, and it reaches PRIVATE documents too —
+// a stranger's forwarded link failing every night is exactly the case the
+// public board cannot show, because `documents.recent` never returns it.
+//
+// Reads the table directly rather than through a query. `watchError` is our
+// stack's error text and is deliberately not on the public surface (see
+// `documents.ts`), so the only way to see it is with the credentials the person
+// running this already has. Same shell-out as the function-spec check above.
+check("no document is failing its re-check", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const raw = execFileSync(
+    "npx",
+    [
+      "convex", "data", "documents",
+      "--deployment", PROD,
+      "--format", "jsonLines",
+      "--limit", "500",
+    ],
+    { encoding: "utf8", shell: process.platform === "win32" },
+  );
+  const documents = raw
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line));
+  const failing = documents.filter(
+    (d) => typeof d.watchError === "string" && d.watchError !== "",
+  );
+  if (failing.length > 0) {
+    throw new Error(
+      `${failing.length} of ${documents.length} documents failing their re-check:\n` +
+        failing
+          .map((d) => `          ${d.url ?? d._id} — ${d.watchError.split("\n")[0]}`)
+          .join("\n"),
+    );
+  }
+  return `${documents.length} documents, none carrying a watch error`;
+});
+
+
 console.log(`gate: production ${PROD} (read-only)\n`);
 
 let failed = 0;

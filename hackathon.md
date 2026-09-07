@@ -1371,3 +1371,121 @@ only difference is `stopped: true`. The fan-out was entered and the skip fired.
 
 The WATCH paragraph no longer ends "You don't need to do anything." That
 sentence was the whole of M4.
+
+### H3 closed — the address survives when the label does not say it
+
+**One rule, no keyword list: keep the href unless the label already contains
+it**, compared on alphanumerics. That is the AT&T argument generalised —
+`[att.com/howtocancel](https://www.att.com/howtocancel)` is the same string
+twice — rather than a fourth guess about which labels sound uninformative. The
+bare-url pass moved to the front behind a `(?<!\]\()` lookbehind, or it would
+have deleted the addresses the link pass had just decided to keep.
+
+**The receipt this produced is the argument for the whole change.** Spotify's
+`T2b` was already an *answered* finding, and it read:
+
+> "You may cancel your Paid Subscription at any time by logging into your
+> Spotify account and following the prompts on the Account page or by clicking
+> **here** and following the instructions."
+
+A cancellation instruction with the "here" deleted. It now carries
+`support.spotify.com/article/cancel-premium/`. PayPal's `T2b` gained the Help
+Center address the same way. Neither was a refusal — they were answers that
+could not be acted on, which is a quieter failure than a refusal and was not on
+any flag list.
+
+**`documents.parserVersion` is the part worth stealing.** `contentHash` answers
+"did the document move?" and cannot tell that from "did the parser move" — so a
+parser change makes every stored quote stop matching at once. Replaying all 54
+published prod findings through the real `change.stillSays` under the new parser
+reported **6 as `gone`**. So `attach` re-baselines instead of diffing when a
+row's version is not current, and `checked` stamps the version on the early exit
+so a document this change did not touch (every PDF in the corpus) cannot keep a
+stale version and swallow a genuine change months later.
+
+**Verified on development: a sweep that re-extracted five documents under a
+different parser produced 0 new `changedAt` stamps across 76 findings**, and
+stamped all 8 watchable rows to version 2 — three of them through the early exit
+without a model call, because their lines hashed identically. The three
+attachment-backed rows stay at version 1, correctly: no url, never re-checked,
+never diffed.
+
+The hazard this retires had arrived three times (the 09-04 markup strip, the
+09-04 reflow, and this). There is now no deploy ordering to get right, which
+matters more than the parser fix did: the ordering was the part a person had to
+remember at the exact moment they were least likely to.
+
+### M3 closed — a failed re-check now says so where somebody reads it
+
+`recheck` catches, records `documents.watchError`, and **rethrows**. The
+rethrow is the point: the workpool still retries with backoff and the old
+findings still stay untouched until a complete new reading replaces them, so
+the visibility is not bought by swallowing the failure. The file used to argue
+that a failed function in the logs was enough — `ingest` catches because a
+person is waiting on a reply, a re-check has nobody waiting. That was true about
+who is waiting and wrong about who can see, because prod log reads are refused
+by the read-only MCP selector and dev retains zero failure entries.
+
+**The field is deliberately off the public surface.** `documents.recent` answers
+the open internet with whole rows, which is a habit worth naming — every field
+added to `documents` is published by default, and the one time that went
+unnoticed is why `isPublic` exists. `watchError` is a vendor's error body, so
+`documents.ts` omits it from the validator and drops it from the rows.
+
+**Which leaves the question of who ever reads it, and the answer is the gate.**
+A sixth check reads the table with the runner's own credentials, so it covers
+**private** documents too — 10 rows on production, not the 6 on the board. A
+stranger's forwarded link failing every night is precisely the case the board
+cannot show and the likeliest to be quietly broken.
+
+**Verified on development in both directions, which is the half that is easy to
+skip.** The fixture was replaced with a 142-byte stub; the sweep recorded
+`Firecrawl returned 58 chars … too short to be the document` and left
+`lastCheckedAt` frozen at 16:55 — the exact symptom the flag described, now with
+a reason attached. The real fixture was restored and the next sweep cleared the
+field and advanced the stamp to 17:11. While a PUBLIC document was carrying an
+error, `documents:recent` returned 11 keys and `watchError` was not one of them.
+
+Readiness is **92/100**. M2 is the only medium left and it is cheap: dedupe
+attachment documents on the `contentHash` that is already computed.
+
+### P5 — the CC reply was mostly already built, and its stated gap cannot exist
+
+**What was actually missing was one line, and it was not a feature.** Being cc'd
+on a thread already worked: `received` tells a cc from a forward by which header
+carries the inbox address, `documentUrl` already scanned the whole body — so a
+link sitting behind a `>` in the quoted original was always found — and `reply`
+already passed `replyAll` through. Verified on development with a cc'd message
+whose only link was in the quoted text: read, answered with the cited findings,
+sent `reply-all`.
+
+**The gap the README named cannot be built.** It said the case that makes cc
+worth doing is "the document is attached to an earlier message". A message sent
+before this address was cc'd was never delivered to this inbox, so AgentMail
+does not have it and no endpoint can produce it. Its `GET /threads/{id}` does
+return a `messages[]` with per-message `attachments`, so the mechanism looks
+available right up until you ask what is in it — and retention makes the point
+twice over: AgentMail holds **1** thread for the development inbox while our own
+`threads` table references **12**. A feature built on that would have been a
+lookback that finds nothing, forever, and reported as shipped.
+
+**The real defect was the opposite of a missing feature.** `reply` passed
+`replyAll: thread.mode === "cc"` for every body it sent, so *every apology went
+to the whole thread*. "I did not find a document in that message", replied to a
+landlord, a tenant and a broker, is a stranger interrupting a negotiation to
+announce its own failure — and after M4 the people who never wrote here would
+have had to say STOP to mail they never asked for.
+
+So `reply` now takes an audience and **defaults to the sender**. The answer opts
+into the thread explicitly, because being read in front of everyone arguing
+about the document is the whole point; the change notice keeps the thread too,
+and the asymmetry is deliberate — a notice only ever follows an answer those
+people already received. Apologies, rate-limit replies, the M1 dead letter and
+the M4 unsubscribe confirmation all go to whoever wrote.
+
+Measured on development, same cc'd thread shape both times: the cited answer
+sent `replyAll: true`, the no-document reply sent `replyAll: false`.
+
+**P5 closes the last unbuilt sentence in the project description.** It also
+retires a sentence that had been on the roadmap for days describing work that
+was never possible, which is the more useful half.

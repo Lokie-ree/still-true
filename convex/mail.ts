@@ -14,7 +14,7 @@ import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl, isStop } from "./link";
-import { fingerprint, toLines } from "./lines";
+import { fingerprint, PARSER_VERSION, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import {
   changeBody,
@@ -75,6 +75,20 @@ async function reply(
   ctx: MutationCtx,
   threadRowId: Id<"threads">,
   body: { text: string; html: string },
+  // P5. Whether everyone on a cc'd thread should see this, or only the person
+  // who wrote to us.
+  //
+  // An ANSWER belongs in the thread — being read in front of everyone
+  // negotiating the document is the entire reason to cc this address. An
+  // APOLOGY does not. "I did not find a document in that message" replied to a
+  // landlord, a tenant and a broker is a stranger interrupting their thread to
+  // announce its own failure, and the people who did not write here cannot
+  // stop it without saying STOP to mail they never asked for.
+  //
+  // So the default is the sender, and the two bodies that earn the room say so
+  // explicitly. On a forward there is nobody else on the thread and this
+  // changes nothing.
+  audience: "thread" | "sender" = "sender",
 ): Promise<void> {
   const thread = await ctx.db.get("threads", threadRowId);
   if (thread === null) return;
@@ -84,10 +98,7 @@ async function reply(
     threadRowId,
     inboxId: thread.inboxId,
     parentMessageId: thread.messageId,
-    // forward → back to the sender. cc → into the thread, in front of everyone
-    // already arguing about it. P5 is where that second door gets exercised;
-    // hardcoding `false` here would simply be wrong for a row already marked.
-    replyAll: thread.mode === "cc",
+    replyAll: audience === "thread" && thread.mode === "cc",
     ...body,
   });
 }
@@ -117,6 +128,11 @@ async function notify(
     threadRowId,
     inboxId: thread.inboxId,
     parentMessageId: thread.messageId,
+    // Always the thread, where `reply` now defaults to the sender. The
+    // asymmetry is deliberate: a change notice only ever follows an answer that
+    // already went to the thread, so it is the second half of a conversation
+    // those people are already in — not a stranger announcing itself. The way
+    // out of it is STOP, which stops this thread and not just its sender.
     replyAll: thread.mode === "cc",
     ...body,
   });
@@ -597,6 +613,18 @@ export const checked = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch("documents", args.documentId, {
       lastCheckedAt: Date.now(),
+      // H3. This runs only when the new parse hashed IDENTICALLY to the stored
+      // one, which means this parser produced exactly the stored lines — so the
+      // stored quotes already are what it would publish, and the row can be
+      // stamped current without re-extracting. Without this a document the
+      // parser change did not touch (every PDF in the corpus) would keep a
+      // stale version forever and re-baseline — silently swallowing a REAL
+      // change — the first day its text actually moved.
+      parserVersion: PARSER_VERSION,
+      // M3. This document just read cleanly, so whatever it failed with last
+      // time is over. A field that only ever gets set turns into a list of
+      // things that went wrong once, which nobody reads twice.
+      watchError: undefined,
     });
     return null;
   },
@@ -737,6 +765,7 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: null,
         contentHash: args.contentHash,
+        parserVersion: PARSER_VERSION,
         // The probe seeds the public corpus; inbound mail never does. Set once,
         // here, and deliberately NOT re-derived on the existing-row path below:
         // a stranger emailing a URL that is already on the board must not be
@@ -752,6 +781,10 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: now,
         contentHash: args.contentHash,
+        parserVersion: PARSER_VERSION,
+        // M3, the other success path: a full re-read got all the way to
+        // publishing findings, so the document is readable again.
+        watchError: undefined,
       });
 
       // Read the old answers BEFORE they go. A checklist is five rows, so the
@@ -771,7 +804,17 @@ export const attach = internalMutation({
       // being read. A row with no stored hash predates the watch and is treated
       // as unchanged — the safe direction for a field that decides who gets
       // mailed.
+      //
+      // H3 adds the first clause. A document whose stored quotes were produced
+      // by an older `toLines` is being RE-BASELINED, not re-checked: its hash
+      // differs because the parser differs, and every clause `diff` looked for
+      // would come back missing. Republish the findings and report nothing.
+      // The cost is one sweep in which a genuine same-day edit goes unreported;
+      // the alternative is telling everybody their lease changed on the morning
+      // of a deploy, and this system's whole argument is that it does not say
+      // that unless it happened.
       changes =
+        existing.parserVersion === PARSER_VERSION &&
         existing.contentHash !== undefined &&
         existing.contentHash !== args.contentHash
           ? diff(before, args.findings, args.text)
@@ -881,6 +924,9 @@ export const attach = internalMutation({
           watchable: url !== null,
           checkedAt: now,
         }),
+        // The answer, and the only reply that belongs in front of
+        // everyone on the thread — that is what cc'ing this address is for.
+        "thread",
       );
     }
     return null;

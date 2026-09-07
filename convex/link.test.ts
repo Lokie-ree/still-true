@@ -70,3 +70,30 @@ void test("a document is never read as an unsubscribe", () => {
     false,
   );
 });
+
+// ── P5: the document a cc arrives beside ─────────────────────────────────────
+//
+// Being cc'd on a reply means the link is usually in the quoted original rather
+// than in what the person just typed. Nothing had to be built for that — the
+// scan already reads the whole body — but nothing covered it either, and "it
+// happens to work" is not the same claim as "it works".
+
+void test("a link in the quoted original is still the document", () => {
+  const body =
+    "Looping in still-true to check this.\n\n" +
+    "On Sun, Sep 6, 2026 at 2:10 PM Landlord <landlord@example.com> wrote:\n" +
+    "> Here is the lease we discussed:\n" +
+    "> https://example.com/watch-test/lease.html\n" +
+    "> Let me know if you have questions.\n";
+  assert.equal(documentUrl(body), "https://example.com/watch-test/lease.html");
+});
+
+void test("what the cc'er typed wins over what the thread quoted", () => {
+  // First link in the body, as everywhere else. The person adding this address
+  // is the one asking, so the document they put above the quote is the one they
+  // mean — and the thread's older link sits below it.
+  const body =
+    "This is the one I actually need read: https://example.com/addendum.pdf\n\n" +
+    "> the original lease is at https://example.com/lease.pdf\n";
+  assert.equal(documentUrl(body), "https://example.com/addendum.pdf");
+});

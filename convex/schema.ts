@@ -82,6 +82,46 @@ export default defineSchema({
     // which is treated as unchanged: the safe direction for a field that
     // decides whether a stranger gets an unsolicited email.
     contentHash: v.optional(v.string()),
+    // Which `toLines` produced the stored hash and the stored quotes.
+    //
+    // H3. `contentHash` answers "did the document move?" and it cannot tell a
+    // moved document from a moved PARSER: change how lines are built and every
+    // hash differs at once, every quote stops matching, and the watch mails
+    // every subscriber that their lease was rewritten on the morning of a
+    // deploy. Measured for this one: 6 of 54 published findings on production
+    // would have been reported `gone` with nothing about any document changing.
+    //
+    // So `mail.attach` re-baselines instead of diffing when this is not
+    // `PARSER_VERSION` — it republishes the findings and reports no change. The
+    // hazard has arrived three times now (the 09-04 markup strip, the 09-04
+    // reflow, H3), which is what makes it worth a stored field rather than a
+    // command somebody has to remember to run in the right order.
+    //
+    // Absent means version 1, the parser before any of this existed, so the
+    // rows already on production re-baseline on their next sweep with no
+    // backfill and no email.
+    parserVersion: v.optional(v.number()),
+    // M3. Why this document's last re-check failed, or absent if it did not.
+    //
+    // The M1 class, on the watch path. A re-check throws, the workpool retries
+    // three times, and then nothing was written anywhere: no thread exists, so
+    // there is no `threads.error` to carry it, and the only surviving signal
+    // was a `lastCheckedAt` that quietly stopped advancing — while the WATCH
+    // paragraph in reply.ts went on promising a daily re-read. The code argued
+    // a failed function in the logs was enough. It is not: prod log reads are
+    // refused by the read-only MCP selector and dev retains zero failure
+    // entries, so in practice nobody saw it.
+    //
+    // NEVER returned by `documents.recent`. That query answers the open
+    // internet with whole rows, and this string is our stack's error text — a
+    // Firecrawl response body, an OpenAI message, whatever a vendor chose to
+    // put in it. `documents.ts` omits it from both the validator and the rows,
+    // for the same reason `threads.error` is not on a public query at all.
+    //
+    // Cleared on the next success, by `checked` on the early exit and by
+    // `attach` on a full re-read, so a row carrying this is failing NOW rather
+    // than having failed once in July.
+    watchError: v.optional(v.string()),
   })
     .index("by_url", ["url"])
     .index("by_isPublic", ["isPublic"]),

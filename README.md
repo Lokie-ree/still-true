@@ -44,7 +44,7 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-06
+## Status — 2026-09-07
 
 **Live on production and answering real mail.**
 
@@ -60,25 +60,45 @@ used: the signal is consumable, so reading it spends it. See
   scheduled minute: three read identically and stopped before the model ran,
   three had moved text and were re-extracted, and **no clause any finding had
   quoted was gone, so nobody was emailed.** That is both gates, on real
-  documents, with nobody watching.
-- **P5 — the CC reply:** not built. Closer than that sounds, and the gap is not
-  the routing: `mail.received` already tells a CC from a forward by which header
-  carries the inbox address, `threads.mode` stores it, and both the reply and the
-  change notice pass `replyAll` through to AgentMail's `reply-all` endpoint. What
-  is missing is the case that makes CC worth doing — on a real thread the
-  document is attached to an earlier message, and `received` only reads the
-  message that CC'd us. No test covers the CC path and it has never run against
-  production.
+  documents, with nobody watching. Enrolment is still automatic and takes no
+  opt-in; **replying STOP now ends it** — that thread and every other one from
+  the same address — and a re-check that fails now says so on the document row
+  instead of only in logs nobody can read.
+- **P5 — the CC reply:** shipped, and smaller than it was described as being.
+  Cc this address on a thread and the document is read out of the quoted
+  original, with the cited answer replied to **everyone on the thread** — which
+  is the entire reason to cc it rather than forward it. Verified on development:
+  a cc'd message whose only link sat behind a `>` was read, answered with six
+  quoted findings and one refusal, and sent `reply-all`.
 
-The public board carries six documents, 37 answered findings and 10 refusals, as
-of the `npm run gate` run on 2026-09-06. It said 35 and 12 the day before: two
-refusals became answers on the unattended sweep, on documents whose text had
-moved. Whether those clauses were added or the model simply read them this time
-is not something this system can tell you — two deployments reading these same six
-documents hours apart on 09-04 disagreed on 2 of 47 cells — and it does not claim
-either. A clause that merely appears is never reported as a change, because
-there is no previous quote to show you. The counts move on their own, which is
-why the gate reads them from production instead of trusting this line.
+  This README previously said the missing piece was "the document is attached to
+  an earlier message". **That case cannot be built, and it is worth saying why
+  rather than leaving it on a list.** A message sent before this address was
+  cc'd was never delivered to this inbox, so AgentMail does not have it and no
+  API can produce it — its threads are inbox-scoped, and it currently holds one
+  thread for the development inbox against twelve rows in our own table. What a
+  cc genuinely carries is the quoted text, which is where the link lives.
+
+  The real defect the CC path did have was the opposite of a missing feature:
+  every apology was replied to the whole thread. "I did not find a document in
+  that message", sent to a landlord, a tenant and a broker, is a stranger
+  interrupting to announce its own failure. Answers and change notices go to the
+  thread now; apologies, rate-limit notices and unsubscribe confirmations go to
+  whoever wrote.
+
+The public board carries six documents, 36 answered findings and 11 refusals, as
+of the `npm run gate` run on 2026-09-07. It said 37 and 10 the day before, and 35
+and 12 the day before that. The counts move on their own: two deployments reading
+these same six documents hours apart on 09-04 disagreed on 2 of 47 cells with
+nothing about the documents changing, so a cell crossing between answered and
+refused overnight is the expected amount of drift, not a finding. This system
+cannot tell you which of the two happened and does not claim to — a clause that
+merely appears is never reported as a change, because there is no previous quote
+to put beside it.
+
+Which is why this paragraph is the least trustworthy thing on the page, and why
+`npm run gate` reads the numbers off production rather than believing it. It has
+now caught this sentence drifting three times.
 
 - Build log and every decision, including the ones that were reversed: [`hackathon.md`](hackathon.md)
 - **Known open issues, scored, with a fix order: [`docs/READINESS.md`](docs/READINESS.md)**
@@ -91,8 +111,8 @@ why the gate reads them from production instead of trusting this line.
 npm install
 npm run dev        # convex dev + vite
 npm run lint       # typecheck + eslint
-npm test           # 66 tests, all pure: extraction, lines, change detection, reply wording
-npm run gate       # lint + test, then five read-only checks against production
+npm test           # 80 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword
+npm run gate       # lint + test, then six read-only checks against production
 npm run deploy     # build, push functions, upload static files
 ```
 
