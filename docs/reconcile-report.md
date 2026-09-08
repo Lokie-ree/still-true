@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-08 19:21 UTC` by `bash scripts/reconcile.sh`, at commit `2f4f177`.
+Generated `2026-09-08 19:33 UTC` by `bash scripts/reconcile.sh`, at commit `cb33929`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -20,52 +20,22 @@ What this cannot do, stated so a reader can discount it:
 
 | verdict | count |
 |---|---|
-| CONFIRMED | 62 |
-| DRIFTED | 8 |
-| UNVERIFIABLE | 9 |
+| CONFIRMED | 74 |
+| DRIFTED | 0 |
+| UNVERIFIABLE | 12 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
-- **docs/READINESS.md:99 cites `convex/mail.ts:575`**
-  - ran: `grep -nF 'by_url' convex/mail.ts`
-  - got: `by_url` (rarest token, 1 occurrence(s)) is at **L769**, 194 lines from the cited L575. The citation points at unrelated code; the locus it describes is L769.
-- **docs/READINESS.md:112 cites `convex/mail.ts:222`**
-  - ran: `grep -nF 'console.error' convex/mail.ts`
-  - got: `console.error` (rarest token, 1 occurrence(s)) is at **L326**, 104 lines from the cited L222. The citation points at unrelated code; the locus it describes is L326.
-- **docs/READINESS.md:115 cites `convex/mail.ts:689`**
-  - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at **L894**, 205 lines from the cited L689. The citation points at unrelated code; the locus it describes is L894.
-- **docs/probe-universal.md is orphaned**
-  - ran: `grep -l '(probe-universal.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
-  - got: no doc in the set links to it — it will not be found, and will not be maintained
-- **README.md says "six read-only checks"**
-  - ran: `grep -c '^check(' scripts/gate.mjs`
-  - got: gate.mjs defines 7 checks, not 6
-- **AGENTS.md says "six read-only checks"**
-  - ran: `grep -c '^check(' scripts/gate.mjs`
-  - got: gate.mjs defines 7 checks, not 6
-- **CLAUDE.md says "six read-only checks"**
-  - ran: `grep -c '^check(' scripts/gate.mjs`
-  - got: gate.mjs defines 7 checks, not 6
-- **README.md says "80 tests"**
-  - ran: `npm test`
-  - got: the suite reports 91 tests, not 80
-
+_Nothing._
 
 ## UNVERIFIABLE — no command run here can settle it
 
-- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
-  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in docs/transcript-sbc.md → https://www.google.com/url?q=https://www.cms.gov/cciio/.../english-sample-completed-sbc-accessible-format-012825.pdf&source=gmail&ust=...&sa=E**
   - ran: `nothing that can settle it`
   - why: the URL is elided in the prose (contains an ellipsis), so it cannot be fetched as written
 - **link in hackathon.md → http://127.0.0.1:3210**
   - ran: `nothing that can settle it`
   - why: an illustrative address, not a live resource. Deliberately not fetched; whether it is 'correct' is not a question a request can answer.
-- **link in hackathon.md → https://www.att.com/howtocancel**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
-  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in hackathon.md → https://www.google.com/url?q=https://www.spotify.com/us/legal/end-user-agreement/&source=gmail&ust=…**
   - ran: `nothing that can settle it`
   - why: the URL is elided in the prose (contains an ellipsis), so it cannot be fetched as written
@@ -77,6 +47,21 @@ What this cannot do, stated so a reader can discount it:
   - why: `reply-all` is at L179, 110 lines from the cited L289 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
 - **hackathon.md:1556 cites `mail.ts:367`**
   - ran: `sed -n '367p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:1864 cites `mail.ts:575`**
+  - ran: `grep -nF '.take(100)' convex/mail.ts`
+  - why: `.take(100)` is at L894, 319 lines from the cited L575 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1865 cites `mail.ts:222`**
+  - ran: `grep -nF '.take(100)' convex/mail.ts`
+  - why: `.take(100)` is at L894, 672 lines from the cited L222 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1866 cites `mail.ts:689`**
+  - ran: `grep -nF '.take(100)' convex/mail.ts`
+  - why: `.take(100)` is at L894, 205 lines from the cited L689 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1887 cites `mail.ts:289`**
+  - ran: `sed -n '289p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:1903 cites `mail.ts:575`**
+  - ran: `sed -n '575p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
 - **dated counts inside hackathon.md and docs/READINESS.md**
   - ran: `nothing that can settle it`
@@ -99,7 +84,7 @@ What this cannot do, stated so a reader can discount it:
   - got: 36 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 0.6h ago, 6 documents stamped
+  - got: last sweep 0.8h ago, 6 documents stamped
 - **production claim: no document is failing its re-check**
   - ran: `node scripts/gate.mjs`
   - got: 10 documents, none carrying a watch error
@@ -178,6 +163,9 @@ What this cannot do, stated so a reader can discount it:
 - **link in docs/ASSESSMENT.md → READINESS.md**
   - ran: `test -e docs/READINESS.md`
   - got: docs/READINESS.md exists
+- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
+  - got: HTTP 200
 - **link in docs/READINESS.md → https://www.paypal.com/us/legalhub/useragreement-full**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/legalhub/useragreement-full'`
   - got: HTTP 200
@@ -217,6 +205,9 @@ What this cannot do, stated so a reader can discount it:
 - **link in hackathon.md → https://vibeapps.dev/s/still-true**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://vibeapps.dev/s/still-true'`
   - got: HTTP 200
+- **link in hackathon.md → https://www.att.com/howtocancel**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
+  - got: HTTP 200
 - **link in README.md → convex/lines.ts**
   - ran: `test -e convex/lines.ts`
   - got: convex/lines.ts exists
@@ -226,12 +217,18 @@ What this cannot do, stated so a reader can discount it:
 - **link in README.md → docs/probe.md**
   - ran: `test -e docs/probe.md`
   - got: docs/probe.md exists
+- **link in README.md → docs/probe-universal.md**
+  - ran: `test -e docs/probe-universal.md`
+  - got: docs/probe-universal.md exists
 - **link in README.md → docs/probe-v3.md**
   - ran: `test -e docs/probe-v3.md`
   - got: docs/probe-v3.md exists
 - **link in README.md → docs/READINESS.md**
   - ran: `test -e docs/READINESS.md`
   - got: docs/READINESS.md exists
+- **link in README.md → docs/reconcile-report.md**
+  - ran: `test -e docs/reconcile-report.md`
+  - got: docs/reconcile-report.md exists
 - **link in README.md → docs/round-trip.md**
   - ran: `test -e docs/round-trip.md`
   - got: docs/round-trip.md exists
@@ -247,9 +244,18 @@ What this cannot do, stated so a reader can discount it:
 - **docs/ASSESSMENT.md carries a superseded/archived banner**
   - ran: `git log -1 --format=%cI -- docs/ASSESSMENT.md`
   - got: banner asserts 2026-09-02; git says last touched 2026-09-05. Label is dated, not vibes.
+- **docs/READINESS.md:99 cites `convex/mail.ts:769`**
+  - ran: `grep -nF 'by_url' convex/mail.ts`
+  - got: `by_url` (rarest token, 1 occurrence(s)) is at L769, 0 line(s) from the cited L769 — the citation points at the right code
 - **docs/READINESS.md:109 cites `convex/documents.ts:28`**
   - ran: `grep -nF 'recent' convex/documents.ts`
   - got: `recent` (rarest token, 2 occurrence(s)) is at L23, 5 line(s) from the cited L28 — the citation points at the right code
+- **docs/READINESS.md:112 cites `convex/mail.ts:326`**
+  - ran: `grep -nF 'console.error' convex/mail.ts`
+  - got: `console.error` (rarest token, 1 occurrence(s)) is at L326, 0 line(s) from the cited L326 — the citation points at the right code
+- **docs/READINESS.md:115 cites `convex/mail.ts:894`**
+  - ran: `grep -nF '.take(100)' convex/mail.ts`
+  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L894, 0 line(s) from the cited L894 — the citation points at the right code
 - **hackathon.md is reachable**
   - ran: `grep -l '(hackathon.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
   - got: at least one doc links to it
@@ -258,6 +264,9 @@ What this cannot do, stated so a reader can discount it:
   - got: at least one doc links to it
 - **docs/probe.md is reachable**
   - ran: `grep -l '(probe.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
+  - got: at least one doc links to it
+- **docs/probe-universal.md is reachable**
+  - ran: `grep -l '(probe-universal.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
   - got: at least one doc links to it
 - **docs/probe-v3.md is reachable**
   - ran: `grep -l '(probe-v3.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
@@ -271,4 +280,16 @@ What this cannot do, stated so a reader can discount it:
 - **docs/transcript-sbc.md is reachable**
   - ran: `grep -l '(transcript-sbc.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
   - got: at least one doc links to it
+- **README.md says "seven read-only checks"**
+  - ran: `grep -c '^check(' scripts/gate.mjs`
+  - got: gate.mjs defines 7
+- **AGENTS.md says "seven read-only checks"**
+  - ran: `grep -c '^check(' scripts/gate.mjs`
+  - got: gate.mjs defines 7
+- **CLAUDE.md says "seven read-only checks"**
+  - ran: `grep -c '^check(' scripts/gate.mjs`
+  - got: gate.mjs defines 7
+- **README.md says "91 tests"**
+  - ran: `npm test`
+  - got: the suite reports 91
 
