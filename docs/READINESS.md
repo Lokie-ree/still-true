@@ -1,12 +1,12 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-08** (fourth pass). Score **72/100**:
-`100 − 15(H4) − 5(M2) − 5(M5) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72** (09-03, 09-05, 09-05 evening,
-09-07 morning, 09-07 evening, 09-08). The deltas are
-`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`, then
-`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
-`−15 H4 opened, −5 M5 opened`.
+Last audit **2026-09-08** (fourth pass). Score **87/100**:
+`100 − 5(M2) − 5(M5) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 87** (09-03, 09-05, 09-05
+evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening). The deltas
+are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`,
+then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
+`−15 H4 opened, −5 M5 opened`, then `+15 H4 closed`.
 
 **The 72s are the honest numbers to keep in the history, and there are two of
 them now.** Neither is a regression. On 09-07 a flag that had been there the
@@ -16,41 +16,16 @@ Four audits scored 82 or 92 with H4 open. **Both drops came from running the
 product, and neither came from re-reading the code** — which is the only
 generalisable finding this file contains.
 
-**H4 is open and it is high.** It defeats H2's cost bound and silently narrows
-M4's unsubscribe, both of which are on the closed list below. Closed does not
-mean unreachable. **M2, M5 and the lows are known and parked** — do not re-run
-the audit to rediscover them, and do not fix one unasked: read the fix order at
-the bottom and ask.
+**H4 opened and closed on the same day**, which is not a wash: it defeated H2's
+cost bound and silently narrowed M4's unsubscribe, both of which were already on
+the closed list. **Closed does not mean unreachable**, and that is the lesson
+worth carrying rather than the two numbers cancelling out.
+
+**No high flags are open. M2, M5 and the lows are known and parked** — do not
+re-run the audit to rediscover them, and do not fix one unasked: read the fix
+order at the bottom and ask.
 
 ## Open
-
-### H4 — both spend gates and the unsubscribe key on a string the sender controls (high)
-
-`convex/mail.ts:367`. `fromEmail` is the raw `From` header, display name
-included. Observed on production 2026-09-08: the thread row for the round trip
-stores `"Randall LaPoint, Jr." <rplapointjr@gmail.com>`, not the address.
-
-Three things key on that exact string:
-
-- `limiter.limit(ctx, "ingest", { key: fromEmail })` — the burst gate,
-  `mail.ts:411`
-- the 25-document standing cap's `by_fromEmail` read, `mail.ts:421`
-- `stopFor`'s "every other thread from your address", `mail.ts:294`
-
-**Cost:** editing a display name mints a fresh burst bucket and a fresh
-25-document allowance. H2 — the flag about unbounded recurring spend on a
-publicly listed inbox — is defeated by changing a preference.
-
-**Unsubscribe, and this is the worse half because it needs no attacker:** M4
-promises "this thread, and every other one I have with you." The same person
-mailing from a phone and a laptop is two strings. They reply STOP, are told how
-many documents it covers, and keep receiving change notices on the threads whose
-header differs. M4 was closed *because* P5 enrolled people who never wrote in.
-
-Fix: normalise to the bare address at the single point where `fromEmail` is
-read, so all three gates and the stored rows agree. Existing rows carry the
-un-normalised string, so the STOP scope needs to match on the normalised form
-rather than assume a backfill.
 
 ### M5 — `excerpt` can trim away the part of the line that licenses the answer (medium)
 
@@ -129,6 +104,43 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **H4 (both spend gates and the unsubscribe keyed on a string the sender
+  controls)** opened and closed 2026-09-08. `threads.fromEmail` was the raw
+  `From` header, so a display name was part of a sender's identity: editing one
+  minted fresh quota (defeating H2) and one person's two mail clients were two
+  people whose STOP half worked. `convex/sender.ts` parses the header with the
+  RFC 5322 grammar and stores the lowercased mailbox.
+  **Checked first that nothing upstream already knew** — the component's own
+  `inboundMessages` schema declares `from: string` and passes AgentMail's message
+  through as `v.any()`, so there was nothing structured to prefer.
+  **A grammar rather than a regex, for a reason with a test behind it**:
+  "take the last angle-bracket pair" survives the quoted comma in our own
+  production row and then reads `Name <a@x.com> (note <b@evil.com>)` — a valid
+  header from `a@x.com` — as `b@evil.com`. Refuses rather than guesses on a
+  two-mailbox header (taking the first would let an attacker's STOP silence a
+  victim) and on a group like `undisclosed-recipients:;`, which parses
+  successfully with an `undefined` address.
+  **`user+tag@` is deliberately NOT merged**; the reason and its cost are in
+  `sender.ts` and pinned by a test. Do not "fix" it into stripping without
+  reading that comment — the local part is opaque per RFC 5321 §2.3.11 and this
+  key gates an unsubscribe.
+  **A seventh gate check** asserts every stored `fromEmail` is a bare address,
+  independently of `senderAddress` — asking the parser whether the parser was
+  right proves nothing. **It was observed FAILING on production first** (`6 of 6
+  threads carry a sender that is not a bare address`) and passing after the
+  backfill, which is what distinguishes it from a check that cannot fail.
+  **Backfilled both deployments** — dev 13 scanned / 12 rewritten / 0
+  unidentifiable, exposing `randall@example.com` held as two different strings;
+  prod 6 / 6 / 0. Idempotent, and tested to be.
+  **Verified by mail on production, and the number was predicted first:** seven
+  threads carried five distinct documents, so a STOP had to report five, and it
+  did — in three seconds, with no scrape and no model call. **Without the
+  backfill that same STOP would have reported 1**, leaving six older threads
+  enrolled and still being mailed. All 8 rows came back stopped; a fresh forward
+  afterwards created a live thread, so re-enrolment works as designed.
+  **Not verified:** two *different* live headers collapsing to one identity on
+  production. The Gmail API sends with the account's configured `From` and cannot
+  vary it; the unit tests and the dev merge stand in for it and are weaker.
 - **M3 (a failed `watch.recheck` was silent to everyone)** closed 2026-09-07.
   `documents.watchError` records why the last re-check failed; `recheck` catches,
   records and **rethrows**, so the workpool still retries and the visibility is
@@ -266,19 +278,18 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**H4 → M5 → M2 → (L3, L4, L5).**
+**M5 → M2 → (L3, L4, L5).**
 
-H4 first, and not because it is scored highest. It is the only open flag that
-makes a promise this project already sent to a real inbox untrue — the STOP
-sentence went out in the 09-08 reply and is quoted verbatim in
-[`transcript-sbc.md`](transcript-sbc.md). Its cost half can wait; its
-unsubscribe half cannot, because the people it fails are the ones who asked to
-be left alone.
+H4 went first and is closed. It was the only flag that made a promise this
+project had already sent to a real inbox untrue — the STOP sentence went out in
+the 09-08 reply and is quoted verbatim in
+[`transcript-sbc.md`](transcript-sbc.md) — and its unsubscribe half failed for
+people who had done nothing but own two mail clients.
 
-M5 next, because the transcript is meant to be the first thing on the landing
+M5 is next, because the transcript is meant to be the first thing on the landing
 page and M5 is the reason a hostile reader would disbelieve it.
 
-Everything above M2 that is not H4 or M5 is closed. H2 was first because it was the only one that
+Everything above M2 that is not M5 is closed. H2 was first because it was the only one that
 cost money while nobody was watching; M4 next, because P5 turned it from a flag
 about one stranger into a flag about everyone on a forwarded thread; H3 after
 M4 deliberately, because it is the deploy most likely to send mail nobody asked

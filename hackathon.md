@@ -1615,3 +1615,139 @@ findings in this entry worth anything.
 None of the three is fixed here. `crons.cron`, the README's "the model never
 writes the answer text", and the `url === null` gate check are also untouched —
 this branch is the receipt, and the fixes are a different concern.
+
+## 2026-09-08 (later) — H4 closed: a sender is a mailbox, not a display name
+
+Found by sending a document, not by reading the code. That is the second time
+this week and it is the part worth keeping.
+
+**The flag.** `threads.fromEmail` stored the raw `From` header. The round trip
+earlier today put `"Randall LaPoint, Jr." <rplapointjr@gmail.com>` in the table,
+and three things key on that string: the burst limiter, the 25-document standing
+cap, and `stopFor`'s promise that a STOP covers "every other thread from your
+address". So a sender's identity was a string the sender formats — editing a
+display name minted fresh quota, which defeats H2 by changing a preference, and
+one person's two mail clients were two people whose STOP half worked.
+
+### Asked first whether anything upstream already knew
+
+`@agentmail/convex` 0.1.0's own `inboundMessages` schema declares `from: string`,
+and the event carries `message` as `v.any()` — AgentMail's JSON passed straight
+through. There is no structured sender address anywhere to prefer over parsing
+the header, so the header is ours. Worth checking before writing a parser rather
+than after.
+
+### A grammar, not a shape
+
+The cheap rule is "take what is inside the last angle brackets". It survives the
+quoted comma in our own production row, and then loses to this:
+
+```
+Name <a@x.com> (note <b@evil.com>)
+```
+
+A valid header from `a@x.com` that the cheap rule reads as `b@evil.com`. A header
+is a grammar, and the thing keying an unsubscribe should not be decided by which
+bracket came last. `email-addresses` implements RFC 5322, has no dependencies and
+is one file of plain JavaScript, so the V8 bundle barely notices it.
+
+Two places it refuses instead of guessing, both because of what this key gates:
+
+- **A header naming two mailboxes returns null.** `From: victim@x, attacker@y` is
+  a header an attacker can write, and taking the first would charge the victim's
+  quota and let the attacker's STOP silence the victim's threads.
+- **A group parses successfully with no address.** `undisclosed-recipients:;`
+  comes back as one node whose `address` is `undefined`, so the type is checked
+  rather than the truthiness.
+
+Unparseable headers fall back to the raw string, because dropping real mail on a
+grammar edge case is worse than one unidentifiable sender keeping its own bucket
+— and the gate check below makes that fallback loud instead of silent.
+
+### The `+tag` decision, made rather than defaulted
+
+`user+lease@gmail.com` and `user@gmail.com` reach one Gmail mailbox and are **not**
+merged. The reason is that one key gates two things whose failure modes point
+opposite ways. For the spend gates merging is strictly better — same person. For
+STOP it is a risk taken with a stranger's mail: RFC 5321 §2.3.11 makes the local
+part opaque to everyone but the destination host, plenty of hosts treat `+` as an
+ordinary character, and stripping it can silence someone who never wrote here.
+
+`schema.ts` had already settled which way that asymmetry resolves, for this exact
+flag: *"the safe direction here is the one that keeps answering, since the flag
+suppresses mail rather than authorising it."* Stripping suppresses more. So it is
+not stripped, the residual cost is stated in `sender.ts` rather than waved at, and
+the upgrade path is a per-provider fact lookup — not a fourth heuristic after the
+three that died on 09-07.
+
+### The check was observed red before it was observed green
+
+A seventh gate check asserts that every stored `fromEmail` is a bare address. It
+deliberately does **not** re-run `senderAddress`: asking the parser whether the
+parser was right proves nothing, so it asserts the shape independently — one `@`,
+no brackets, no whitespace, no comma, already lowercased.
+
+Run against production before the backfill it failed, naming all six rows:
+
+```
+FAIL  every sender identity is a bare address
+      6 of 6 threads carry a sender that is not a bare address:
+        "\"Randall LaPoint, Jr.\" <rplapointjr@gmail.com>"
+```
+
+That is the half people skip. A check that has only ever been seen passing is
+indistinguishable from a check that cannot fail.
+
+### The backfill, and the merge it exposed
+
+Development: **13 scanned, 12 rewritten, 1 already bare, 0 unidentifiable**, four
+identities out of five stored strings — and the flag sitting in the data the whole
+time:
+
+```
+randall@example.com   rows: 2
+  wasStoredAs: ["randall@example.com", "Randall <randall@example.com>"]
+```
+
+Two rows, two strings, one mailbox, and a STOP on either that never reached the
+other. A second run rewrote nothing, which is tested rather than assumed, because
+a backfill whose second run corrupts its first is worse than none.
+
+Production: **6 scanned, 6 rewritten, 0 unidentifiable, one identity.**
+
+### Verified by mail, on production, not by reading the diff
+
+**The inbound path normalises.** The same mailbox and the same client that stored
+`"Randall LaPoint, Jr." <rplapointjr@gmail.com>` this morning stored
+`rplapointjr@gmail.com` this afternoon. Gate: `7 threads, 1 distinct senders, all
+bare addresses`. 7/7.
+
+**The STOP number is the proof, and it was predicted before it was sent.** Seven
+threads carried five distinct documents, so the reply had to say five. It said:
+
+> Stopped. I won't email you again about 5 documents I was watching for you.
+
+Three seconds, no scrape, no model call. **Without the backfill that same STOP
+would have said 1** — only the one thread created after the fix would have matched
+`rplapointjr@gmail.com`, and the six older ones would have sat under their
+display-name string, still enrolled, still being mailed. One number, and it is the
+whole difference between the flag and its fix. All 8 rows came back stopped, 5
+documents silenced.
+
+**Re-enrolment works as designed.** A fresh forward afterwards created a live,
+unstopped thread, so the production watch is not left dark.
+
+### What is NOT verified, and why
+
+Sending with a **changed display name** and from a **differently-formatting
+client** was in the plan and did not happen: the Gmail API sends with the account's
+configured `From` and it cannot be varied from here. What stands in for it is
+weaker and is named as weaker — eleven unit tests over the exact header shapes,
+the development backfill merging two genuinely different stored strings into one
+identity, and the live before/after above on one client. The gap is that no two
+*different* live headers have been observed collapsing to one identity on
+production. Changing the display name in Gmail's settings and forwarding once
+would close it.
+
+`crons.cron`, the README's answer-text sentence, the `url === null` gate check and
+M5 remain untouched.
