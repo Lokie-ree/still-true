@@ -108,6 +108,7 @@ now caught this sentence drifting three times.
   Predeclared first in [`docs/round-trip.md`](docs/round-trip.md), committed
   before the mail was sent. It found two flags, both now open in READINESS.
 - Evidence, including two probes that fired no decision rule: [`docs/probe.md`](docs/probe.md), [`docs/probe-v3.md`](docs/probe-v3.md)
+- The one probe that *did* fire a rule — `universal` downgraded rather than stopped, on the checklist most likely to fail: [`docs/probe-universal.md`](docs/probe-universal.md)
 - An external pre-build assessment of a since-abandoned direction, and which of its recommendations were declined: [`docs/ASSESSMENT.md`](docs/ASSESSMENT.md)
 
 ## Development
@@ -116,10 +117,20 @@ now caught this sentence drifting three times.
 npm install
 npm run dev        # convex dev + vite
 npm run lint       # typecheck + eslint
-npm test           # 80 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword
-npm run gate       # lint + test, then six read-only checks against production
+npm test           # 91 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword, the link unwrapper, the sender grammar
+npm run gate       # lint + test, then seven read-only checks against production
 npm run deploy     # build, push functions, upload static files
+
+bash scripts/reconcile.sh   # check every claim in these docs against the world
 ```
+
+`gate` asks production whether the system still works. `reconcile` asks whether
+these documents still describe it — the failure that breaks no test. It writes
+[`docs/reconcile-report.md`](docs/reconcile-report.md), grouped CONFIRMED /
+DRIFTED / UNVERIFIABLE, with the command that produced every finding attached,
+and exits non-zero on drift. **UNVERIFIABLE is not a soft pass**: an elided URL
+or a link that timed out is an open question, and the report says so instead of
+guessing.
 
 Runnable by hand against a deployment:
 

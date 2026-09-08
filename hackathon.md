@@ -1831,3 +1831,83 @@ not, and could not.
 
 Logged as **M6**. Not a broken guarantee: a public number that moves without a
 cause a reader can see, on the surface that is about to become a landing page.
+
+## 2026-09-08 (night) — the docs got their own gate, and it failed on the first run
+
+`npm run gate` asks production whether the system still works. Nothing asked
+whether the documents still describe it. That is a different failure: no test
+goes red, nothing breaks, and a sentence quietly stops being true — which has
+happened to this README three times, and is the one thing the gate structurally
+cannot catch, because the gate is itself a claim the README makes.
+
+`scripts/reconcile.sh` checks seven classes of claim and writes
+`docs/reconcile-report.md` grouped **CONFIRMED / DRIFTED / UNVERIFIABLE**, each
+finding carrying the command that produced it. The production half is delegated
+whole to `gate.mjs` rather than reimplemented — a second implementation is a
+second thing to keep true.
+
+First run: **CONFIRMED 64, DRIFTED 8, UNVERIFIABLE 7.**
+
+**The gate's own count had drifted, in all three entry-point docs.** README,
+`CLAUDE.md` and `AGENTS.md` all said *six* read-only checks. H4 added the seventh
+on 09-08 and the sentence that advertises the gate was never updated — and
+`CLAUDE.md`'s enumeration listed six items, so the sender check was invisible to
+anyone reading it. `grep -c '^check(' scripts/gate.mjs` → 7. The README also
+claimed 80 tests against a suite that reports 91.
+
+**Three of the four open flags pointed at the wrong code.** M2, L4 and L5 each
+cite a `convex/mail.ts` line, and every commit since they were written moved the
+target:
+
+| flag | cited | the code it describes is actually at |
+|---|---|---|
+| M2 | `mail.ts:575` | **769** (`by_url`) |
+| L4 | `mail.ts:222` | **326** (`console.error`) |
+| L5 | `mail.ts:689` | **894** (`.take(100)`) |
+
+Nobody had noticed because nobody had followed one. The fix order at the bottom
+of READINESS sends the next session to those lines.
+
+### The script was wrong four ways, and running it is what said so
+
+Written, run, disbelieved, fixed. Worth recording because three of the four
+would have produced a *confident* wrong answer rather than an error.
+
+1. **It confirmed two bad citations.** The corroborating token for a line
+   number was the first one in the sentence, and `attach` occurs 31 times in
+   `mail.ts` — so "is `attach` near line 689?" is always yes. It now uses the
+   **rarest** token in the sentence, because rarity is specificity. `.take(100)`
+   occurs once.
+2. **It could not see two of the three drifted counts.** Every file here is
+   CRLF, and `CLAUDE.md` wraps "six\nread-only checks", so the flattened text
+   read `six\r read-only checks` and matched nothing. A check that passes
+   because it never ran. Putting `\r` inside the grep bracket instead — the
+   obvious fix — reads in POSIX ERE as *"not a backslash and not the letter r"*
+   and would have truncated every URL containing an `r`.
+3. **It called two correct references missing.** `mail.ts:289` is informal, not
+   wrong; bare filenames now resolve against the tracked tree.
+4. **It downloaded the CMS Summary of Benefits to `/dev/null`** on every run.
+   HEAD first, ranged GET only for hosts that refuse it.
+
+### UNVERIFIABLE is a verdict, not a soft pass
+
+Four classes cannot be settled by any command run here, and the report says so
+rather than guessing: two Gmail-wrapped URLs elided with `…` in the prose, two
+illustrative addresses, line numbers inside dated log entries, and — on some
+runs but not others — `att.com` and `healthcare.gov` returning no HTTP response
+at all. That last pair is the reason the distinction is worth having: a network
+failure here is **not** evidence a link is dead, and a script that reported it
+as a 404 would be inventing a finding.
+
+**The UNVERIFIABLE count is not a score, and this entry proves it.** Writing the
+table above — which quotes `mail.ts:575`, `:222` and `:689` as the wrong numbers
+they were — added four more, because a dated log entry citing a file and a line
+is exactly the thing the script declines to score. It went 9 → 13 by recording
+history correctly. Read the classes, not the number.
+
+**Dated entries are excluded by design.** This log saying "66/66 tests" about an
+afternoon in September is correct to keep saying it. Only README, `AGENTS.md`,
+`CLAUDE.md` and the *open* half of READINESS are held to the present tense —
+reconciling a record of the past against today is not a fix, it is vandalism.
+
+After the fixes: **CONFIRMED 71, DRIFTED 0.**
