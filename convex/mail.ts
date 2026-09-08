@@ -14,6 +14,7 @@ import { diff, type Change } from "./change";
 import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl, isStop } from "./link";
+import { senderAddress } from "./sender";
 import { fingerprint, PARSER_VERSION, toLines } from "./lines";
 import { CHECKLISTS } from "./questions";
 import {
@@ -362,9 +363,22 @@ export const received = internalMutation({
 
     // Real AgentMail messages carry a scalar `from` ("Name <addr>"), not the
     // `from_` array the docs example shows. Checked against a live message
-    // rather than the docs. Hoisted because it is also the key both spend
-    // gates below are keyed on.
-    const fromEmail = readString(message, "from") ?? "";
+    // rather than the docs — and the component's own `inboundMessages` schema
+    // declares `from: string` too, so there is no structured sender address
+    // anywhere upstream to prefer over parsing the header ourselves.
+    //
+    // H4. This is the identity BOTH spend gates and `stopFor` key on, so it has
+    // to be the mailbox and not the way a client chose to format it. See
+    // convex/sender.ts for why that needs a grammar rather than a regex.
+    //
+    // Falls back to the raw header when the sender cannot be identified, which
+    // is the old behaviour for exactly the rows that cannot be improved:
+    // dropping real mail on a grammar edge case would be worse than one
+    // unparseable sender keeping a bucket of its own. The fallback is loud
+    // rather than silent — `npm run gate` fails the moment a stored row is not
+    // a bare address.
+    const fromHeader = readString(message, "from") ?? "";
+    const fromEmail = senderAddress(fromHeader) ?? fromHeader;
 
     const threadRowId = await ctx.db.insert("threads", {
       documentId: null,

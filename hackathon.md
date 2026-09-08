@@ -1489,3 +1489,345 @@ sent `replyAll: true`, the no-document reply sent `replyAll: false`.
 **P5 closes the last unbuilt sentence in the project description.** It also
 retires a sentence that had been on the roadmap for days describing work that
 was never possible, which is the more useful half.
+
+## 2026-09-08 — the first round trip anybody can read, and two flags it found
+
+Two audit passes had produced good findings and zero receipts. This is the
+receipt: one document forwarded from a real address to the live inbox, the reply
+captured verbatim, and the guarantee checked the way a hostile reader would check
+it. Predeclared in [`docs/round-trip.md`](docs/round-trip.md) and **committed at
+`f8f995a` before the mail was sent** — no finding on the target document had been
+read when it was written. Transcript in
+[`docs/transcript-sbc.md`](docs/transcript-sbc.md).
+
+**23 seconds**, Gmail send to reply received; 21.0 s of it server side. Four
+answered, four refused, on the CMS Summary of Benefits.
+
+### What held
+
+- **All three published quotes appear verbatim in the source PDF.** Fetched
+  independently, converted with `pdftotext`, searched. T1 holds.
+- **All four refusals are honest.** Sixteen search terms for termination,
+  cancellation, amendment and notice. The document's only near-hit tells you
+  where to go *after* coverage ends. Nothing was refused that the document
+  states.
+- **The Gmail link wrapper was unwrapped.** The body that arrived carried
+  `google.com/url?q=…&source=gmail` — the exact rewrite that killed production's
+  first inbound mail on 09-04. First time `link.ts`'s fix has met a real Gmail
+  send since it landed.
+- **Both change gates fired, on production, unattended.** The parse moved
+  (171 → 174 lines), so the hash moved, so it re-extracted — and every clause any
+  finding had quoted was still there, so `changedAt` stayed null on all four and
+  **nobody was emailed**. One thread exists on that document and it is mine, so
+  P10 is confirmed rather than assumed.
+- `groupByLine` printed the shared line 11 receipt once under two answers.
+- `npm run gate` 6/6 before and after.
+
+### P7 was wrong, and being wrong about it is the finding
+
+I predicted the `answer` field — model prose, guarded only by the prompt — would
+out-run its quote. It did not. Every answer is supported by the line it cites.
+
+What actually happens is narrower and worse for a reader. Firecrawl parses this
+SBC as a **markdown table** (`contextBefore` on the `$500` finding is
+`"--- | --- | ---"`), so a cited line is a whole row and `excerpt` publishes the
+one cell carrying the clause. The receipt therefore reads:
+
+```
+The overall deductible is $500 for an individual or $1,000 for a family.
+  "$500 / individual or $1,000 / family"
+  line 5
+```
+
+The word *deductible* is on the cited line — in the question cell of the same
+row — and `excerpt` trimmed it off. Same on line 11, where the row is
+`Do you need a referral to see a specialist? | Yes. | This plan will pay…` and
+only the third cell is published, cutting out the "Yes." that licenses *"You
+must obtain a referral."*
+
+Nothing is fabricated and no answer out-runs its line. But `excerpt`, added on
+09-04 so a 588-character receipt would be readable, **can remove the part of the
+line that makes the answer checkable**. Three of four answers here are supported
+by their line and under-supported by their published quote. Logged as **M5**.
+
+### H4 — the spend gates and the unsubscribe are keyed on a string the sender controls
+
+The thread row stores `fromEmail` as `"Randall LaPoint, Jr." <rplapointjr@gmail.com>`
+— the raw `From` header, display name included. `mail.ts:367` takes it as-is, and
+three things key on that exact string: the rate limiter (`limit(ctx, "ingest",
+{ key: fromEmail })`), the 25-document cap's `by_fromEmail` read, and `stopFor`'s
+"every other thread from your address".
+
+So changing a display name in Gmail's settings mints a fresh burst bucket and a
+fresh 25-document allowance. That is H2 — *the* flag about unbounded recurring
+spend on a publicly listed inbox — defeated by editing a preference.
+
+**The unsubscribe half is worse, because it fails by accident rather than by
+attack.** M4 promises "this thread, and every other one I have with you." That
+scope is a string match, and the same person mailing from their phone and their
+laptop is two strings. A reader replies STOP, is told the number of documents it
+covers, and keeps getting change notices on the threads whose header differs.
+M4 was closed *because* P5 enrolled people who never wrote in; this is the same
+hole one layer down. Logged as **H4**, high, and not fixed today.
+
+### Candidate: the line count moved on a static PDF with no parser change
+
+09-05 recorded 173 lines under parser v1. The board read 171 after H3 bumped it
+to v2. This run read **174**, same parser version, 6.5 hours after the cron's
+sweep, on a CMS sample PDF that has no reason to change. Either that file moved
+or Firecrawl's parse of it is not deterministic — and if it is the second, this
+document re-extracts every night for nothing, which is the PayPal hash-churn
+candidate reappearing on a *static* document, where it is a much stronger signal.
+Two probes ten minutes apart settle it. Not scored on one data point.
+
+### Where the predeclaration and the result diverged
+
+| Predicted | Actual |
+|---|---|
+| P1 4 answered / 4 refused | **Held.** Recalled from 09-05, so nearly free |
+| P2 refusals are U3a U3b U5a U5b | **Held**, and each verified honest against the source |
+| P3 U2 answered, most likely cell | **Held** |
+| P4 U1a/U1b/U4 are the fragile cells | **Untested** — no divergence for them to explain |
+| P5 round trip 30–90 s | **Beat it. 23 s** |
+| P6 line count 171 | **Wrong. 174**, and the board agrees now because this read patched it |
+| P7 answer out-runs its quote | **Wrong, and productively.** The line licenses every answer; the *excerpt* does not. M5 |
+| P8 quotes verbatim in source | **Held, 3 of 3** |
+| P9 WATCH + STOP present | **Held** |
+| P10 no change notice to a third party | **Held**, confirmed against the threads table |
+| P11 a stranger can check the sentence, not the index | **Held**, and it is a landing-page finding |
+
+Seven held, two wrong, one free, one untested. **A predeclaration that mostly
+came true is still a receipt** — and the two it got wrong are the only two
+findings in this entry worth anything.
+
+### What would keep this transcript off the landing page
+
+1. **The reply opens `I read Fwd: SBC for the plan we're looking at — 174 lines.`**
+   The title is the sender's subject, not the document's name; the board shows
+   "Summary of Benefits and Coverage" for the same row. Fine in an inbox, weak as
+   the first line above the fold.
+2. **M5.** The strongest-looking receipt on the page would be the deductible one,
+   and it is the one a hostile reader can most easily call made up.
+3. **P11.** The line number is the most authoritative thing in the reply and the
+   only part nobody outside this project can verify. The page has to say so
+   rather than let it imply more than it proves.
+
+None of the three is fixed here. `crons.cron`, the README's "the model never
+writes the answer text", and the `url === null` gate check are also untouched —
+this branch is the receipt, and the fixes are a different concern.
+
+## 2026-09-08 (later) — H4 closed: a sender is a mailbox, not a display name
+
+Found by sending a document, not by reading the code. That is the second time
+this week and it is the part worth keeping.
+
+**The flag.** `threads.fromEmail` stored the raw `From` header. The round trip
+earlier today put `"Randall LaPoint, Jr." <rplapointjr@gmail.com>` in the table,
+and three things key on that string: the burst limiter, the 25-document standing
+cap, and `stopFor`'s promise that a STOP covers "every other thread from your
+address". So a sender's identity was a string the sender formats — editing a
+display name minted fresh quota, which defeats H2 by changing a preference, and
+one person's two mail clients were two people whose STOP half worked.
+
+### Asked first whether anything upstream already knew
+
+`@agentmail/convex` 0.1.0's own `inboundMessages` schema declares `from: string`,
+and the event carries `message` as `v.any()` — AgentMail's JSON passed straight
+through. There is no structured sender address anywhere to prefer over parsing
+the header, so the header is ours. Worth checking before writing a parser rather
+than after.
+
+### A grammar, not a shape
+
+The cheap rule is "take what is inside the last angle brackets". It survives the
+quoted comma in our own production row, and then loses to this:
+
+```
+Name <a@x.com> (note <b@evil.com>)
+```
+
+A valid header from `a@x.com` that the cheap rule reads as `b@evil.com`. A header
+is a grammar, and the thing keying an unsubscribe should not be decided by which
+bracket came last. `email-addresses` implements RFC 5322, has no dependencies and
+is one file of plain JavaScript, so the V8 bundle barely notices it.
+
+Two places it refuses instead of guessing, both because of what this key gates:
+
+- **A header naming two mailboxes returns null.** `From: victim@x, attacker@y` is
+  a header an attacker can write, and taking the first would charge the victim's
+  quota and let the attacker's STOP silence the victim's threads.
+- **A group parses successfully with no address.** `undisclosed-recipients:;`
+  comes back as one node whose `address` is `undefined`, so the type is checked
+  rather than the truthiness.
+
+Unparseable headers fall back to the raw string, because dropping real mail on a
+grammar edge case is worse than one unidentifiable sender keeping its own bucket
+— and the gate check below makes that fallback loud instead of silent.
+
+### The `+tag` decision, made rather than defaulted
+
+`user+lease@gmail.com` and `user@gmail.com` reach one Gmail mailbox and are **not**
+merged. The reason is that one key gates two things whose failure modes point
+opposite ways. For the spend gates merging is strictly better — same person. For
+STOP it is a risk taken with a stranger's mail: RFC 5321 §2.3.11 makes the local
+part opaque to everyone but the destination host, plenty of hosts treat `+` as an
+ordinary character, and stripping it can silence someone who never wrote here.
+
+`schema.ts` had already settled which way that asymmetry resolves, for this exact
+flag: *"the safe direction here is the one that keeps answering, since the flag
+suppresses mail rather than authorising it."* Stripping suppresses more. So it is
+not stripped, the residual cost is stated in `sender.ts` rather than waved at, and
+the upgrade path is a per-provider fact lookup — not a fourth heuristic after the
+three that died on 09-07.
+
+### The check was observed red before it was observed green
+
+A seventh gate check asserts that every stored `fromEmail` is a bare address. It
+deliberately does **not** re-run `senderAddress`: asking the parser whether the
+parser was right proves nothing, so it asserts the shape independently — one `@`,
+no brackets, no whitespace, no comma, already lowercased.
+
+Run against production before the backfill it failed, naming all six rows:
+
+```
+FAIL  every sender identity is a bare address
+      6 of 6 threads carry a sender that is not a bare address:
+        "\"Randall LaPoint, Jr.\" <rplapointjr@gmail.com>"
+```
+
+That is the half people skip. A check that has only ever been seen passing is
+indistinguishable from a check that cannot fail.
+
+### The backfill, and the merge it exposed
+
+Development: **13 scanned, 12 rewritten, 1 already bare, 0 unidentifiable**, four
+identities out of five stored strings — and the flag sitting in the data the whole
+time:
+
+```
+randall@example.com   rows: 2
+  wasStoredAs: ["randall@example.com", "Randall <randall@example.com>"]
+```
+
+Two rows, two strings, one mailbox, and a STOP on either that never reached the
+other. A second run rewrote nothing, which is tested rather than assumed, because
+a backfill whose second run corrupts its first is worse than none.
+
+Production: **6 scanned, 6 rewritten, 0 unidentifiable, one identity.**
+
+### Verified by mail, on production, not by reading the diff
+
+**The inbound path normalises.** The same mailbox and the same client that stored
+`"Randall LaPoint, Jr." <rplapointjr@gmail.com>` this morning stored
+`rplapointjr@gmail.com` this afternoon. Gate: `7 threads, 1 distinct senders, all
+bare addresses`. 7/7.
+
+**The STOP number is the proof, and it was predicted before it was sent.** Seven
+threads carried five distinct documents, so the reply had to say five. It said:
+
+> Stopped. I won't email you again about 5 documents I was watching for you.
+
+Three seconds, no scrape, no model call. **Without the backfill that same STOP
+would have said 1** — only the one thread created after the fix would have matched
+`rplapointjr@gmail.com`, and the six older ones would have sat under their
+display-name string, still enrolled, still being mailed. One number, and it is the
+whole difference between the flag and its fix. All 8 rows came back stopped, 5
+documents silenced.
+
+**Re-enrolment works as designed.** A fresh forward afterwards created a live,
+unstopped thread, so the production watch is not left dark.
+
+### What is NOT verified, and why
+
+Sending with a **changed display name** and from a **differently-formatting
+client** was in the plan and did not happen: the Gmail API sends with the account's
+configured `From` and it cannot be varied from here. What stands in for it is
+weaker and is named as weaker — eleven unit tests over the exact header shapes,
+the development backfill merging two genuinely different stored strings into one
+identity, and the live before/after above on one client. The gap is that no two
+*different* live headers have been observed collapsing to one identity on
+production. Changing the display name in Gmail's settings and forwarding once
+would close it.
+
+`crons.cron`, the README's answer-text sentence, the `url === null` gate check and
+M5 remain untouched.
+
+## 2026-09-08 (evening) — the display name changed, and the line count moved on its own
+
+Two findings from one forward, and the second one was not being looked for.
+
+### H4's last gap is closed
+
+The morning's write-up recorded what had NOT been verified: two *different* live
+`From` headers collapsing to one identity on production. The Gmail API sends with
+the account's configured name and cannot vary it, so the unit tests and the
+development merge were standing in for a live observation.
+
+The display name was changed on the account and one document forwarded. Both raw
+headers, off the wire:
+
+```
+this morning:  From: "Randall LaPoint, Jr." <rplapointjr@gmail.com>
+this evening:  From: Lokie-ree <rplapointjr@gmail.com>
+```
+
+Different name and a different *syntactic form* — a quoted string containing a
+comma, then a bare atom. AgentMail's own quoted-original confirms what it
+received: `On Tue, Sep 8, 2026 at 6:45 PM UTC Lokie-ree <rplapointjr@gmail.com>
+wrote:`. The stored row reads `rplapointjr@gmail.com`, and the table now holds
+**10 threads and one distinct identity**.
+
+Under the old code that forward was a second person: fresh burst bucket, fresh
+25-document allowance, and a STOP that would have reached nine of ten threads.
+The gap is closed and the "not verified" note comes off.
+
+### Firecrawl's PDF parse is not deterministic, and this is now observed
+
+The line count was a loose end from the morning: 173 on 09-05 under parser v1,
+171 on the board after H3, then 174 on the round trip. One reading was that the
+CMS sample PDF had moved. It has not.
+
+Same URL, same `PARSER_VERSION`, one afternoon:
+
+| read | lines |
+|---|---|
+| 11:17 cron sweep | 171 |
+| 17:49 round trip | 174 |
+| 18:31 forward | 174 |
+| 18:46 forward | **171** |
+
+And the file itself is byte-identical across that window — downloaded at 17:49
+and again at 18:47, `sha256 863bf56f…` both times, `cmp` clean. **So the document
+did not change and the parse did.** That is not an inference from a line count;
+it is two hashes of the same bytes beside four different readings of them.
+
+**What it costs.** `contentHash` moves whenever the parse flips, so the early
+exit misses, the document is re-extracted, and two model calls are spent to
+rediscover the same answers. On six documents that is small. It is also the third
+time this project has had a number move with no cause a reader could see, and the
+first two both ended up in the README.
+
+**What it does NOT cost, and this is the better half.** Every one of those churns
+produced a hash change, a full re-extraction, and **no email** — because `diff`
+asks whether the clause a finding quoted is still in the document, and it always
+was. The second gate has now been exercised against genuine parser noise on
+production rather than against an edited fixture, and it held every time. Hashing
+the text instead of diffing two model runs was the P4 design decision; this is
+the strongest evidence for it so far, and it arrived by accident.
+
+**The model reworded its answers across those runs, too**, with the quotes
+identical:
+
+```
+18:31  "Benefits could be reduced by half of the service's total cost if
+        preauthorization is not obtained."
+18:46  "If you do not obtain required preauthorization, benefits may be reduced
+        by 50 percent of the service's total cost."
+```
+
+Same line, same receipt, different prose — the 2-of-47-cells drift, live. An
+answer-diffing watch would have mailed a change notice for that. This one did
+not, and could not.
+
+Logged as **M6**. Not a broken guarantee: a public number that moves without a
+cause a reader can see, on the surface that is about to become a landing page.

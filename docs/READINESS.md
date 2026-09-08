@@ -1,23 +1,98 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-07** (third pass). Score **92/100**:
-`100 − 5(M2) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92** (09-03, 09-05, 09-05 evening,
-09-07 morning, 09-07 evening). The deltas are
-`+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`, then
-`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`.
+Last audit **2026-09-08** (fourth pass). Score **82/100**:
+`100 − 5(M2) − 5(M5) − 5(M6) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82** (09-03, 09-05, 09-05
+evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening). The deltas
+are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`,
+then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
+`−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`.
 
-**The 72 is the honest number to keep in the history.** Nothing regressed that
-morning; a flag that had been there the whole time got found, by feeding
-production two real links rather than by re-reading the code. Two audits had
-scored 82 with it open.
+**Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
+all produced by forwarding documents and reading what came back — none by
+re-reading code, and none by an audit pass. Two audits had scored 92 with H4 and
+M5 already present.
 
-**No high flags are open. M2, M3 and the lows are known and parked** — Randall
-has seen those and chose to carry them into P5 rather than fix them first. Do
-not re-run the audit to rediscover them, and do not fix one unasked: read the
-fix order at the bottom and ask.
+**The 72s are the honest numbers to keep in the history, and there are two of
+them now.** Neither is a regression. On 09-07 a flag that had been there the
+whole time got found by feeding production two real links; on 09-08 two more
+were found by forwarding one document and reading the reply against its source.
+Four audits scored 82 or 92 with H4 open. **Both drops came from running the
+product, and neither came from re-reading the code** — which is the only
+generalisable finding this file contains.
+
+**H4 opened and closed on the same day**, which is not a wash: it defeated H2's
+cost bound and silently narrowed M4's unsubscribe, both of which were already on
+the closed list. **Closed does not mean unreachable**, and that is the lesson
+worth carrying rather than the two numbers cancelling out.
+
+**No high flags are open. M2, M5 and the lows are known and parked** — do not
+re-run the audit to rediscover them, and do not fix one unasked: read the fix
+order at the bottom and ask.
 
 ## Open
+
+### M5 — `excerpt` can trim away the part of the line that licenses the answer (medium)
+
+`convex/extract.ts`, `excerpt`. Not a fabrication and not a contract violation:
+the answer is supported by the line it cites. The *published quote* is a slice of
+that line, and on a table row the slice can exclude the cell that makes the
+answer checkable.
+
+Observed on production 2026-09-08 on the Summary of Benefits, which Firecrawl
+parses as a markdown table:
+
+```
+The overall deductible is $500 for an individual or $1,000 for a family.
+  "$500 / individual or $1,000 / family"
+  line 5
+```
+
+*Deductible* is on line 5, in the question cell of the same row. The reader
+cannot see it. Same on line 11, where the "Yes." that licenses "You must obtain a
+referral" is trimmed off. Three of that document's four answers are supported by
+their line and under-supported by their receipt.
+
+This is the direct cost of the 09-04 fix that stopped receipts running 588
+characters, so it is a trade rather than a defect to simply undo. A candidate
+that keeps both: when the cited line is a table row, publish the row's first cell
+alongside the matched cell.
+
+### M6 — Firecrawl's PDF parse is not deterministic (medium)
+
+Observed on production 2026-09-08, not inferred. The CMS Summary of Benefits at
+one URL, one `PARSER_VERSION`, one afternoon:
+
+| read | lines |
+|---|---|
+| 11:17 cron sweep | 171 |
+| 17:49 round trip | 174 |
+| 18:31 forward | 174 |
+| 18:46 forward | **171** |
+
+The file did not move. Downloaded at 17:49 and again at 18:47, `sha256
+863bf56f…` both times, `cmp` clean. Two hashes of the same bytes beside four
+different readings of them.
+
+**Cost:** every flip moves `contentHash`, so the early exit in `readAndPublish`
+misses, the document is re-extracted, and two model calls are spent to
+rediscover the same answers. Small at six documents; it grows with the corpus.
+
+**Why it is scored at all:** `lineCount` is on the public board and the refusal
+sentence quotes it — "Searched all 171 lines" one hour and "all 174 lines" the
+next, for a document nobody touched. That is a public number moving with no cause
+a reader can see, on the surface about to become a landing page, and this project
+has had a number move unexplained three times already.
+
+**What it is NOT:** a broken guarantee. Every churn produced a hash change, a
+full re-extraction and **no email**, because `change.diff` asks whether the
+quoted clause is still present and it always was. This is the strongest evidence
+yet for hashing the text rather than diffing model runs — the second gate,
+exercised against real parser noise on production instead of an edited fixture.
+
+Confirm the scope before acting: this is one document. Whether it affects the
+other PDFs is unmeasured, and the fix is not obvious — normalising the parse
+would mean finding what actually varies first.
 
 ### M2 — attachment documents never dedupe (medium)
 
@@ -44,7 +119,15 @@ Fix: dedupe attachments on `contentHash`, which is already computed.
 
 ## Candidate — evidence too thin to score
 
-**Hash churn on dynamic pages.** `lines.ts` `fingerprint` hashes the stripped
+*(The line-count candidate opened earlier today was settled the same day by four
+readings of a byte-identical file, and is now scored as **M6** above. It was a
+candidate for about six hours.)*
+
+**Hash churn on dynamic pages.** Note that M6 makes this one harder to read, not
+easier: a `contentHash` that moved on PayPal may be per-request page content, as
+this entry assumes, or the same parser non-determinism M6 documents. The two
+scrapes below no longer distinguish them on their own — the PDF case is settled
+because the bytes could be hashed, and a live page cannot be. `lines.ts` `fingerprint` hashes the stripped
 lines; `stripMarkup` removes tags and URLs but not dates, prices, or
 per-request text. On dev, PayPal's `contentHash` moved between two sweeps
 twelve minutes apart while the other seven documents held — one data point,
@@ -58,6 +141,46 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
 
+- **H4 (both spend gates and the unsubscribe keyed on a string the sender
+  controls)** opened and closed 2026-09-08. `threads.fromEmail` was the raw
+  `From` header, so a display name was part of a sender's identity: editing one
+  minted fresh quota (defeating H2) and one person's two mail clients were two
+  people whose STOP half worked. `convex/sender.ts` parses the header with the
+  RFC 5322 grammar and stores the lowercased mailbox.
+  **Checked first that nothing upstream already knew** — the component's own
+  `inboundMessages` schema declares `from: string` and passes AgentMail's message
+  through as `v.any()`, so there was nothing structured to prefer.
+  **A grammar rather than a regex, for a reason with a test behind it**:
+  "take the last angle-bracket pair" survives the quoted comma in our own
+  production row and then reads `Name <a@x.com> (note <b@evil.com>)` — a valid
+  header from `a@x.com` — as `b@evil.com`. Refuses rather than guesses on a
+  two-mailbox header (taking the first would let an attacker's STOP silence a
+  victim) and on a group like `undisclosed-recipients:;`, which parses
+  successfully with an `undefined` address.
+  **`user+tag@` is deliberately NOT merged**; the reason and its cost are in
+  `sender.ts` and pinned by a test. Do not "fix" it into stripping without
+  reading that comment — the local part is opaque per RFC 5321 §2.3.11 and this
+  key gates an unsubscribe.
+  **A seventh gate check** asserts every stored `fromEmail` is a bare address,
+  independently of `senderAddress` — asking the parser whether the parser was
+  right proves nothing. **It was observed FAILING on production first** (`6 of 6
+  threads carry a sender that is not a bare address`) and passing after the
+  backfill, which is what distinguishes it from a check that cannot fail.
+  **Backfilled both deployments** — dev 13 scanned / 12 rewritten / 0
+  unidentifiable, exposing `randall@example.com` held as two different strings;
+  prod 6 / 6 / 0. Idempotent, and tested to be.
+  **Verified by mail on production, and the number was predicted first:** seven
+  threads carried five distinct documents, so a STOP had to report five, and it
+  did — in three seconds, with no scrape and no model call. **Without the
+  backfill that same STOP would have reported 1**, leaving six older threads
+  enrolled and still being mailed. All 8 rows came back stopped; a fresh forward
+  afterwards created a live thread, so re-enrolment works as designed.
+  **Verified with two different live headers**, after the display name was
+  changed on the account: `"Randall LaPoint, Jr." <rplapointjr@gmail.com>` and
+  `Lokie-ree <rplapointjr@gmail.com>` — a quoted string containing a comma and a
+  bare atom — both stored as `rplapointjr@gmail.com`, 10 threads, one identity.
+  Under the old code the second was a new person with fresh quota and a STOP that
+  reached nine of ten threads.
 - **M3 (a failed `watch.recheck` was silent to everyone)** closed 2026-09-07.
   `documents.watchError` records why the last re-check failed; `recheck` catches,
   records and **rethrows**, so the workpool still retries and the visibility is
@@ -195,9 +318,23 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M2 → (L3, L4, L5).**
+**M5 → M2 → M6 → (L3, L4, L5).**
 
-Everything above M2 is closed. H2 was first because it was the only one that
+M6 is last of the mediums and that is deliberate: its first step is a
+measurement, not a fix. Nobody knows yet whether the non-determinism touches the
+other five documents or only this PDF, and "normalise the parse" is not a task
+until something has been shown to vary. M5 and M2 are both understood.
+
+H4 went first and is closed. It was the only flag that made a promise this
+project had already sent to a real inbox untrue — the STOP sentence went out in
+the 09-08 reply and is quoted verbatim in
+[`transcript-sbc.md`](transcript-sbc.md) — and its unsubscribe half failed for
+people who had done nothing but own two mail clients.
+
+M5 is next, because the transcript is meant to be the first thing on the landing
+page and M5 is the reason a hostile reader would disbelieve it.
+
+Everything above M2 that is not M5 is closed. H2 was first because it was the only one that
 cost money while nobody was watching; M4 next, because P5 turned it from a flag
 about one stranger into a flag about everyone on a forwarded thread; H3 after
 M4 deliberately, because it is the deploy most likely to send mail nobody asked

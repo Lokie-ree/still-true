@@ -102,6 +102,11 @@ now caught this sentence drifting three times.
 
 - Build log and every decision, including the ones that were reversed: [`hackathon.md`](hackathon.md)
 - **Known open issues, scored, with a fix order: [`docs/READINESS.md`](docs/READINESS.md)**
+- **One round trip, unedited — a document forwarded to the live inbox and the
+  reply it got back, with every quote checked by hand against the source PDF and
+  every refusal interrogated: [`docs/transcript-sbc.md`](docs/transcript-sbc.md).**
+  Predeclared first in [`docs/round-trip.md`](docs/round-trip.md), committed
+  before the mail was sent. It found two flags, both now open in READINESS.
 - Evidence, including two probes that fired no decision rule: [`docs/probe.md`](docs/probe.md), [`docs/probe-v3.md`](docs/probe-v3.md)
 - An external pre-build assessment of a since-abandoned direction, and which of its recommendations were declined: [`docs/ASSESSMENT.md`](docs/ASSESSMENT.md)
 

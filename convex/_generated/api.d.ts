@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as backfill from "../backfill.js";
 import type * as change from "../change.js";
 import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
@@ -19,6 +20,7 @@ import type * as link from "../link.js";
 import type * as mail from "../mail.js";
 import type * as questions from "../questions.js";
 import type * as reply from "../reply.js";
+import type * as sender from "../sender.js";
 import type * as watch from "../watch.js";
 
 import type {
@@ -28,6 +30,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  backfill: typeof backfill;
   change: typeof change;
   crons: typeof crons;
   documents: typeof documents;
@@ -39,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   mail: typeof mail;
   questions: typeof questions;
   reply: typeof reply;
+  sender: typeof sender;
   watch: typeof watch;
 }>;
 

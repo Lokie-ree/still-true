@@ -213,6 +213,60 @@ check("no document is failing its re-check", async () => {
 });
 
 
+// H4, and the reason this is a check rather than a sentence in a log.
+//
+// `threads.fromEmail` is the identity the burst limiter, the 25-document cap
+// and STOP's "every other thread from your address" all key on. It used to be
+// the raw `From` header, so a display name was part of a sender's identity:
+// editing one minted fresh quota, and one person's two mail clients were two
+// people whose STOP only half worked.
+//
+// Deliberately NOT a re-run of `senderAddress`. If the parser is wrong, asking
+// the parser whether the parser was right proves nothing. This asserts the
+// SHAPE of what is stored, independently: one `@`, no brackets, no whitespace,
+// no comma, already lowercased. A row that fails is either a header the parser
+// could not identify — which `mail.received` stores raw on purpose, so it is
+// visible here instead of silent — or a regression.
+check("every sender identity is a bare address", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const raw = execFileSync(
+    "npx",
+    [
+      "convex", "data", "threads",
+      "--deployment", PROD,
+      "--format", "jsonLines",
+      "--limit", "500",
+    ],
+    { encoding: "utf8", shell: process.platform === "win32" },
+  );
+  const threads = raw
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line));
+
+  const bare = /^[^\s<>@",]+@[^\s<>@",]+\.[^\s<>@",]+$/;
+  const bad = threads.filter((t) => {
+    const from = t.fromEmail;
+    return (
+      typeof from !== "string" ||
+      !bare.test(from) ||
+      from !== from.toLowerCase()
+    );
+  });
+  if (bad.length > 0) {
+    throw new Error(
+      `${bad.length} of ${threads.length} threads carry a sender that is not a bare address:\n` +
+        bad
+          .map((t) => `          ${JSON.stringify(t.fromEmail)}`)
+          .join("\n") +
+        `\n          run: npx convex run backfill:senderIdentities --prod`,
+    );
+  }
+  const senders = new Set(threads.map((t) => t.fromEmail));
+  return `${threads.length} threads, ${senders.size} distinct senders, all bare addresses`;
+});
+
+
 console.log(`gate: production ${PROD} (read-only)\n`);
 
 let failed = 0;
