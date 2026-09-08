@@ -25,14 +25,15 @@ is already decided.
 
 ## Before you say it works
 
-Run **`npm run gate`**. It is `npm run lint && npm test` followed by six
+Run **`npm run gate`**. It is `npm run lint && npm test` followed by seven
 read-only checks against production: the public surface is queries only, the
 site serves the app, the board leaks nothing private, every published answer
-carries a quote and a line number, the watch has swept inside 48 hours, and no
-document is failing its re-check. Read-only and free — no mutation, no scrape,
-no model call — so there is no reason not to have run it.
+carries a quote and a line number, the watch has swept inside 48 hours, no
+document is failing its re-check, and every stored sender identity is a bare
+address. Read-only and free — no mutation, no scrape, no model call — so there
+is no reason not to have run it.
 
-The last one reads the `documents` table with your credentials rather than
+The re-check one reads the `documents` table with your credentials rather than
 through a public query, so it covers PRIVATE forwarded documents too — the ones
 the board cannot show and the ones most likely to be quietly broken.
 

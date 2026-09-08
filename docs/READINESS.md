@@ -96,7 +96,7 @@ would mean finding what actually varies first.
 
 ### M2 — attachment documents never dedupe (medium)
 
-`convex/mail.ts:575`. `attach` skips the `by_url` lookup when `url === null`,
+`convex/mail.ts:769`. `attach` skips the `by_url` lookup when `url === null`,
 which is every forwarded attachment.
 
 Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
@@ -109,10 +109,10 @@ Fix: dedupe attachments on `contentHash`, which is already computed.
 - **L3** `convex/documents.ts:28` — `recent` orders by `_creationTime`, but a
   re-read patches `fetchedAt`. A freshly re-checked document never resurfaces
   on the board. Needs a `by_fetchedAt` index if freshness is the intent.
-- **L4** `convex/mail.ts:222` — an unrecognized payload is dropped with
+- **L4** `convex/mail.ts:326` — an unrecognized payload is dropped with
   `console.error` and no record, which is invisible in a deployment that
   retains no failure logs.
-- **L5** `convex/mail.ts:689` — `attach` notifies at most `.take(100)` threads.
+- **L5** `convex/mail.ts:894` — `attach` notifies at most `.take(100)` threads.
   Subscriber 101 is silently never told the clause moved, which is the one
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
@@ -307,6 +307,29 @@ writes `documents.watchError`, and `npm run gate` reads it on every run across
 both public and private documents. That is not general log access — a failure
 anywhere else is still invisible — but the watch is the part that runs unattended
 every day, and it is no longer the part nobody can see.
+
+**What `scripts/reconcile.sh` still cannot settle (2026-09-08).** The doc
+reconciler closed eight drifts, including three open flags above that pointed at
+the wrong `mail.ts` line. Four classes stayed UNVERIFIABLE across every run and
+will not resolve on another. **Do not read the UNVERIFIABLE count as a score** —
+it grows every time a dated log entry quotes a file and a line, which is the
+point of a log:
+
+- **Two Gmail-wrapped URLs** in `transcript-sbc.md` and `hackathon.md` are
+  elided with `…` in the prose. They cannot be fetched as written, and expanding
+  them would edit a quoted receipt.
+- **`att.com/howtocancel` and `healthcare.gov/sbc-glossary`** answered on two
+  runs and returned no HTTP response at all on two others. A network failure
+  here is not evidence a link is dead, and the report refuses to score it as
+  one — but it does mean **link liveness is sampled, not known**.
+- **Line numbers inside dated log entries** point into the tree as it stood that
+  day. Whether one was right when written cannot be decided by reading today's
+  file.
+
+The general gap is unchanged and worth stating plainly: the reconciler checks a
+link for a **status code**, not for saying what the doc says it says. HTTP 200
+is not agreement, and no check here reads a page and compares it to the sentence
+citing it.
 
 **One thing the rows said that the logs could not (2026-09-06).** The board carries
 `lastCheckedAt`, `fetchedAt` and `verifiedAt`, and all three are readable without
