@@ -1,23 +1,82 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-07** (third pass). Score **92/100**:
-`100 − 5(M2) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92** (09-03, 09-05, 09-05 evening,
-09-07 morning, 09-07 evening). The deltas are
+Last audit **2026-09-08** (fourth pass). Score **72/100**:
+`100 − 15(H4) − 5(M2) − 5(M5) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72** (09-03, 09-05, 09-05 evening,
+09-07 morning, 09-07 evening, 09-08). The deltas are
 `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`, then
-`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`.
+`+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
+`−15 H4 opened, −5 M5 opened`.
 
-**The 72 is the honest number to keep in the history.** Nothing regressed that
-morning; a flag that had been there the whole time got found, by feeding
-production two real links rather than by re-reading the code. Two audits had
-scored 82 with it open.
+**The 72s are the honest numbers to keep in the history, and there are two of
+them now.** Neither is a regression. On 09-07 a flag that had been there the
+whole time got found by feeding production two real links; on 09-08 two more
+were found by forwarding one document and reading the reply against its source.
+Four audits scored 82 or 92 with H4 open. **Both drops came from running the
+product, and neither came from re-reading the code** — which is the only
+generalisable finding this file contains.
 
-**No high flags are open. M2, M3 and the lows are known and parked** — Randall
-has seen those and chose to carry them into P5 rather than fix them first. Do
-not re-run the audit to rediscover them, and do not fix one unasked: read the
-fix order at the bottom and ask.
+**H4 is open and it is high.** It defeats H2's cost bound and silently narrows
+M4's unsubscribe, both of which are on the closed list below. Closed does not
+mean unreachable. **M2, M5 and the lows are known and parked** — do not re-run
+the audit to rediscover them, and do not fix one unasked: read the fix order at
+the bottom and ask.
 
 ## Open
+
+### H4 — both spend gates and the unsubscribe key on a string the sender controls (high)
+
+`convex/mail.ts:367`. `fromEmail` is the raw `From` header, display name
+included. Observed on production 2026-09-08: the thread row for the round trip
+stores `"Randall LaPoint, Jr." <rplapointjr@gmail.com>`, not the address.
+
+Three things key on that exact string:
+
+- `limiter.limit(ctx, "ingest", { key: fromEmail })` — the burst gate,
+  `mail.ts:411`
+- the 25-document standing cap's `by_fromEmail` read, `mail.ts:421`
+- `stopFor`'s "every other thread from your address", `mail.ts:294`
+
+**Cost:** editing a display name mints a fresh burst bucket and a fresh
+25-document allowance. H2 — the flag about unbounded recurring spend on a
+publicly listed inbox — is defeated by changing a preference.
+
+**Unsubscribe, and this is the worse half because it needs no attacker:** M4
+promises "this thread, and every other one I have with you." The same person
+mailing from a phone and a laptop is two strings. They reply STOP, are told how
+many documents it covers, and keep receiving change notices on the threads whose
+header differs. M4 was closed *because* P5 enrolled people who never wrote in.
+
+Fix: normalise to the bare address at the single point where `fromEmail` is
+read, so all three gates and the stored rows agree. Existing rows carry the
+un-normalised string, so the STOP scope needs to match on the normalised form
+rather than assume a backfill.
+
+### M5 — `excerpt` can trim away the part of the line that licenses the answer (medium)
+
+`convex/extract.ts`, `excerpt`. Not a fabrication and not a contract violation:
+the answer is supported by the line it cites. The *published quote* is a slice of
+that line, and on a table row the slice can exclude the cell that makes the
+answer checkable.
+
+Observed on production 2026-09-08 on the Summary of Benefits, which Firecrawl
+parses as a markdown table:
+
+```
+The overall deductible is $500 for an individual or $1,000 for a family.
+  "$500 / individual or $1,000 / family"
+  line 5
+```
+
+*Deductible* is on line 5, in the question cell of the same row. The reader
+cannot see it. Same on line 11, where the "Yes." that licenses "You must obtain a
+referral" is trimmed off. Three of that document's four answers are supported by
+their line and under-supported by their receipt.
+
+This is the direct cost of the 09-04 fix that stopped receipts running 588
+characters, so it is a trade rather than a defect to simply undo. A candidate
+that keeps both: when the cited line is a table row, publish the row's first cell
+alongside the matched cell.
 
 ### M2 — attachment documents never dedupe (medium)
 
@@ -43,6 +102,18 @@ Fix: dedupe attachments on `contentHash`, which is already computed.
   carries no `ponytail:` note naming its ceiling.
 
 ## Candidate — evidence too thin to score
+
+**Line count moved on a static PDF with no parser change.** The CMS Summary of
+Benefits read 173 lines on 09-05 under parser v1, 171 on the board after H3
+bumped it to v2, and **174** on 09-08 — same parser version, 6.5 hours after that
+morning's cron sweep, on a sample PDF with no reason to change. Either the file
+moved or Firecrawl's parse of it is not deterministic. If it is the second, this
+document re-extracts every night for nothing, and the hash-churn candidate below
+is not about dynamic pages at all.
+
+Confirm before acting: two `mail:probe` runs ten minutes apart against that URL,
+comparing `contentHash` and `lineCount`. Same shape as the PayPal test below and
+worth running in the same sitting.
 
 **Hash churn on dynamic pages.** `lines.ts` `fingerprint` hashes the stripped
 lines; `stripMarkup` removes tags and URLs but not dates, prices, or
@@ -195,9 +266,19 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M2 → (L3, L4, L5).**
+**H4 → M5 → M2 → (L3, L4, L5).**
 
-Everything above M2 is closed. H2 was first because it was the only one that
+H4 first, and not because it is scored highest. It is the only open flag that
+makes a promise this project already sent to a real inbox untrue — the STOP
+sentence went out in the 09-08 reply and is quoted verbatim in
+[`transcript-sbc.md`](transcript-sbc.md). Its cost half can wait; its
+unsubscribe half cannot, because the people it fails are the ones who asked to
+be left alone.
+
+M5 next, because the transcript is meant to be the first thing on the landing
+page and M5 is the reason a hostile reader would disbelieve it.
+
+Everything above M2 that is not H4 or M5 is closed. H2 was first because it was the only one that
 cost money while nobody was watching; M4 next, because P5 turned it from a flag
 about one stranger into a flag about everyone on a forwarded thread; H3 after
 M4 deliberately, because it is the deploy most likely to send mail nobody asked

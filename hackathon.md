@@ -1489,3 +1489,129 @@ sent `replyAll: true`, the no-document reply sent `replyAll: false`.
 **P5 closes the last unbuilt sentence in the project description.** It also
 retires a sentence that had been on the roadmap for days describing work that
 was never possible, which is the more useful half.
+
+## 2026-09-08 — the first round trip anybody can read, and two flags it found
+
+Two audit passes had produced good findings and zero receipts. This is the
+receipt: one document forwarded from a real address to the live inbox, the reply
+captured verbatim, and the guarantee checked the way a hostile reader would check
+it. Predeclared in [`docs/round-trip.md`](docs/round-trip.md) and **committed at
+`f8f995a` before the mail was sent** — no finding on the target document had been
+read when it was written. Transcript in
+[`docs/transcript-sbc.md`](docs/transcript-sbc.md).
+
+**23 seconds**, Gmail send to reply received; 21.0 s of it server side. Four
+answered, four refused, on the CMS Summary of Benefits.
+
+### What held
+
+- **All three published quotes appear verbatim in the source PDF.** Fetched
+  independently, converted with `pdftotext`, searched. T1 holds.
+- **All four refusals are honest.** Sixteen search terms for termination,
+  cancellation, amendment and notice. The document's only near-hit tells you
+  where to go *after* coverage ends. Nothing was refused that the document
+  states.
+- **The Gmail link wrapper was unwrapped.** The body that arrived carried
+  `google.com/url?q=…&source=gmail` — the exact rewrite that killed production's
+  first inbound mail on 09-04. First time `link.ts`'s fix has met a real Gmail
+  send since it landed.
+- **Both change gates fired, on production, unattended.** The parse moved
+  (171 → 174 lines), so the hash moved, so it re-extracted — and every clause any
+  finding had quoted was still there, so `changedAt` stayed null on all four and
+  **nobody was emailed**. One thread exists on that document and it is mine, so
+  P10 is confirmed rather than assumed.
+- `groupByLine` printed the shared line 11 receipt once under two answers.
+- `npm run gate` 6/6 before and after.
+
+### P7 was wrong, and being wrong about it is the finding
+
+I predicted the `answer` field — model prose, guarded only by the prompt — would
+out-run its quote. It did not. Every answer is supported by the line it cites.
+
+What actually happens is narrower and worse for a reader. Firecrawl parses this
+SBC as a **markdown table** (`contextBefore` on the `$500` finding is
+`"--- | --- | ---"`), so a cited line is a whole row and `excerpt` publishes the
+one cell carrying the clause. The receipt therefore reads:
+
+```
+The overall deductible is $500 for an individual or $1,000 for a family.
+  "$500 / individual or $1,000 / family"
+  line 5
+```
+
+The word *deductible* is on the cited line — in the question cell of the same
+row — and `excerpt` trimmed it off. Same on line 11, where the row is
+`Do you need a referral to see a specialist? | Yes. | This plan will pay…` and
+only the third cell is published, cutting out the "Yes." that licenses *"You
+must obtain a referral."*
+
+Nothing is fabricated and no answer out-runs its line. But `excerpt`, added on
+09-04 so a 588-character receipt would be readable, **can remove the part of the
+line that makes the answer checkable**. Three of four answers here are supported
+by their line and under-supported by their published quote. Logged as **M5**.
+
+### H4 — the spend gates and the unsubscribe are keyed on a string the sender controls
+
+The thread row stores `fromEmail` as `"Randall LaPoint, Jr." <rplapointjr@gmail.com>`
+— the raw `From` header, display name included. `mail.ts:367` takes it as-is, and
+three things key on that exact string: the rate limiter (`limit(ctx, "ingest",
+{ key: fromEmail })`), the 25-document cap's `by_fromEmail` read, and `stopFor`'s
+"every other thread from your address".
+
+So changing a display name in Gmail's settings mints a fresh burst bucket and a
+fresh 25-document allowance. That is H2 — *the* flag about unbounded recurring
+spend on a publicly listed inbox — defeated by editing a preference.
+
+**The unsubscribe half is worse, because it fails by accident rather than by
+attack.** M4 promises "this thread, and every other one I have with you." That
+scope is a string match, and the same person mailing from their phone and their
+laptop is two strings. A reader replies STOP, is told the number of documents it
+covers, and keeps getting change notices on the threads whose header differs.
+M4 was closed *because* P5 enrolled people who never wrote in; this is the same
+hole one layer down. Logged as **H4**, high, and not fixed today.
+
+### Candidate: the line count moved on a static PDF with no parser change
+
+09-05 recorded 173 lines under parser v1. The board read 171 after H3 bumped it
+to v2. This run read **174**, same parser version, 6.5 hours after the cron's
+sweep, on a CMS sample PDF that has no reason to change. Either that file moved
+or Firecrawl's parse of it is not deterministic — and if it is the second, this
+document re-extracts every night for nothing, which is the PayPal hash-churn
+candidate reappearing on a *static* document, where it is a much stronger signal.
+Two probes ten minutes apart settle it. Not scored on one data point.
+
+### Where the predeclaration and the result diverged
+
+| Predicted | Actual |
+|---|---|
+| P1 4 answered / 4 refused | **Held.** Recalled from 09-05, so nearly free |
+| P2 refusals are U3a U3b U5a U5b | **Held**, and each verified honest against the source |
+| P3 U2 answered, most likely cell | **Held** |
+| P4 U1a/U1b/U4 are the fragile cells | **Untested** — no divergence for them to explain |
+| P5 round trip 30–90 s | **Beat it. 23 s** |
+| P6 line count 171 | **Wrong. 174**, and the board agrees now because this read patched it |
+| P7 answer out-runs its quote | **Wrong, and productively.** The line licenses every answer; the *excerpt* does not. M5 |
+| P8 quotes verbatim in source | **Held, 3 of 3** |
+| P9 WATCH + STOP present | **Held** |
+| P10 no change notice to a third party | **Held**, confirmed against the threads table |
+| P11 a stranger can check the sentence, not the index | **Held**, and it is a landing-page finding |
+
+Seven held, two wrong, one free, one untested. **A predeclaration that mostly
+came true is still a receipt** — and the two it got wrong are the only two
+findings in this entry worth anything.
+
+### What would keep this transcript off the landing page
+
+1. **The reply opens `I read Fwd: SBC for the plan we're looking at — 174 lines.`**
+   The title is the sender's subject, not the document's name; the board shows
+   "Summary of Benefits and Coverage" for the same row. Fine in an inbox, weak as
+   the first line above the fold.
+2. **M5.** The strongest-looking receipt on the page would be the deductible one,
+   and it is the one a hostile reader can most easily call made up.
+3. **P11.** The line number is the most authoritative thing in the reply and the
+   only part nobody outside this project can verify. The page has to say so
+   rather than let it imply more than it proves.
+
+None of the three is fixed here. `crons.cron`, the README's "the model never
+writes the answer text", and the `url === null` gate check are also untouched —
+this branch is the receipt, and the fixes are a different concern.
