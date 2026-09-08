@@ -14,6 +14,15 @@ already on the public board, so publishing this exchange discloses nothing.
 the thread row records the webhook at `17:49:04.201Z` and the accepted reply at
 `17:49:25.133Z`.
 
+> **Why this says 174 lines and the board may say 171.** Both are real readings
+> of the same unchanged file. Firecrawl's parse of this PDF is not
+> deterministic — four readings the same afternoon gave 171, 174, 174, 171 while
+> the file stayed byte-identical (`sha256 863bf56f…`, downloaded an hour apart).
+> That is logged as **M6** in [`READINESS.md`](READINESS.md). It changes none of
+> the quotes below and it sent no email, because a change is only reported when
+> the quoted clause is actually gone — but a reader who checks the number twice
+> deserves to know why it moved rather than to discover it.
+
 ---
 
 ## Sent

@@ -1751,3 +1751,83 @@ would close it.
 
 `crons.cron`, the README's answer-text sentence, the `url === null` gate check and
 M5 remain untouched.
+
+## 2026-09-08 (evening) — the display name changed, and the line count moved on its own
+
+Two findings from one forward, and the second one was not being looked for.
+
+### H4's last gap is closed
+
+The morning's write-up recorded what had NOT been verified: two *different* live
+`From` headers collapsing to one identity on production. The Gmail API sends with
+the account's configured name and cannot vary it, so the unit tests and the
+development merge were standing in for a live observation.
+
+The display name was changed on the account and one document forwarded. Both raw
+headers, off the wire:
+
+```
+this morning:  From: "Randall LaPoint, Jr." <rplapointjr@gmail.com>
+this evening:  From: Lokie-ree <rplapointjr@gmail.com>
+```
+
+Different name and a different *syntactic form* — a quoted string containing a
+comma, then a bare atom. AgentMail's own quoted-original confirms what it
+received: `On Tue, Sep 8, 2026 at 6:45 PM UTC Lokie-ree <rplapointjr@gmail.com>
+wrote:`. The stored row reads `rplapointjr@gmail.com`, and the table now holds
+**10 threads and one distinct identity**.
+
+Under the old code that forward was a second person: fresh burst bucket, fresh
+25-document allowance, and a STOP that would have reached nine of ten threads.
+The gap is closed and the "not verified" note comes off.
+
+### Firecrawl's PDF parse is not deterministic, and this is now observed
+
+The line count was a loose end from the morning: 173 on 09-05 under parser v1,
+171 on the board after H3, then 174 on the round trip. One reading was that the
+CMS sample PDF had moved. It has not.
+
+Same URL, same `PARSER_VERSION`, one afternoon:
+
+| read | lines |
+|---|---|
+| 11:17 cron sweep | 171 |
+| 17:49 round trip | 174 |
+| 18:31 forward | 174 |
+| 18:46 forward | **171** |
+
+And the file itself is byte-identical across that window — downloaded at 17:49
+and again at 18:47, `sha256 863bf56f…` both times, `cmp` clean. **So the document
+did not change and the parse did.** That is not an inference from a line count;
+it is two hashes of the same bytes beside four different readings of them.
+
+**What it costs.** `contentHash` moves whenever the parse flips, so the early
+exit misses, the document is re-extracted, and two model calls are spent to
+rediscover the same answers. On six documents that is small. It is also the third
+time this project has had a number move with no cause a reader could see, and the
+first two both ended up in the README.
+
+**What it does NOT cost, and this is the better half.** Every one of those churns
+produced a hash change, a full re-extraction, and **no email** — because `diff`
+asks whether the clause a finding quoted is still in the document, and it always
+was. The second gate has now been exercised against genuine parser noise on
+production rather than against an edited fixture, and it held every time. Hashing
+the text instead of diffing two model runs was the P4 design decision; this is
+the strongest evidence for it so far, and it arrived by accident.
+
+**The model reworded its answers across those runs, too**, with the quotes
+identical:
+
+```
+18:31  "Benefits could be reduced by half of the service's total cost if
+        preauthorization is not obtained."
+18:46  "If you do not obtain required preauthorization, benefits may be reduced
+        by 50 percent of the service's total cost."
+```
+
+Same line, same receipt, different prose — the 2-of-47-cells drift, live. An
+answer-diffing watch would have mailed a change notice for that. This one did
+not, and could not.
+
+Logged as **M6**. Not a broken guarantee: a public number that moves without a
+cause a reader can see, on the surface that is about to become a landing page.

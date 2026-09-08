@@ -1,12 +1,17 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-08** (fourth pass). Score **87/100**:
-`100 − 5(M2) − 5(M5) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 87** (09-03, 09-05, 09-05
+Last audit **2026-09-08** (fourth pass). Score **82/100**:
+`100 − 5(M2) − 5(M5) − 5(M6) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82** (09-03, 09-05, 09-05
 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening). The deltas
 are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`,
 then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
-`−15 H4 opened, −5 M5 opened`, then `+15 H4 closed`.
+`−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`.
+
+**Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
+all produced by forwarding documents and reading what came back — none by
+re-reading code, and none by an audit pass. Two audits had scored 92 with H4 and
+M5 already present.
 
 **The 72s are the honest numbers to keep in the history, and there are two of
 them now.** Neither is a regression. On 09-07 a flag that had been there the
@@ -53,6 +58,42 @@ characters, so it is a trade rather than a defect to simply undo. A candidate
 that keeps both: when the cited line is a table row, publish the row's first cell
 alongside the matched cell.
 
+### M6 — Firecrawl's PDF parse is not deterministic (medium)
+
+Observed on production 2026-09-08, not inferred. The CMS Summary of Benefits at
+one URL, one `PARSER_VERSION`, one afternoon:
+
+| read | lines |
+|---|---|
+| 11:17 cron sweep | 171 |
+| 17:49 round trip | 174 |
+| 18:31 forward | 174 |
+| 18:46 forward | **171** |
+
+The file did not move. Downloaded at 17:49 and again at 18:47, `sha256
+863bf56f…` both times, `cmp` clean. Two hashes of the same bytes beside four
+different readings of them.
+
+**Cost:** every flip moves `contentHash`, so the early exit in `readAndPublish`
+misses, the document is re-extracted, and two model calls are spent to
+rediscover the same answers. Small at six documents; it grows with the corpus.
+
+**Why it is scored at all:** `lineCount` is on the public board and the refusal
+sentence quotes it — "Searched all 171 lines" one hour and "all 174 lines" the
+next, for a document nobody touched. That is a public number moving with no cause
+a reader can see, on the surface about to become a landing page, and this project
+has had a number move unexplained three times already.
+
+**What it is NOT:** a broken guarantee. Every churn produced a hash change, a
+full re-extraction and **no email**, because `change.diff` asks whether the
+quoted clause is still present and it always was. This is the strongest evidence
+yet for hashing the text rather than diffing model runs — the second gate,
+exercised against real parser noise on production instead of an edited fixture.
+
+Confirm the scope before acting: this is one document. Whether it affects the
+other PDFs is unmeasured, and the fix is not obvious — normalising the parse
+would mean finding what actually varies first.
+
 ### M2 — attachment documents never dedupe (medium)
 
 `convex/mail.ts:575`. `attach` skips the `by_url` lookup when `url === null`,
@@ -78,19 +119,15 @@ Fix: dedupe attachments on `contentHash`, which is already computed.
 
 ## Candidate — evidence too thin to score
 
-**Line count moved on a static PDF with no parser change.** The CMS Summary of
-Benefits read 173 lines on 09-05 under parser v1, 171 on the board after H3
-bumped it to v2, and **174** on 09-08 — same parser version, 6.5 hours after that
-morning's cron sweep, on a sample PDF with no reason to change. Either the file
-moved or Firecrawl's parse of it is not deterministic. If it is the second, this
-document re-extracts every night for nothing, and the hash-churn candidate below
-is not about dynamic pages at all.
+*(The line-count candidate opened earlier today was settled the same day by four
+readings of a byte-identical file, and is now scored as **M6** above. It was a
+candidate for about six hours.)*
 
-Confirm before acting: two `mail:probe` runs ten minutes apart against that URL,
-comparing `contentHash` and `lineCount`. Same shape as the PayPal test below and
-worth running in the same sitting.
-
-**Hash churn on dynamic pages.** `lines.ts` `fingerprint` hashes the stripped
+**Hash churn on dynamic pages.** Note that M6 makes this one harder to read, not
+easier: a `contentHash` that moved on PayPal may be per-request page content, as
+this entry assumes, or the same parser non-determinism M6 documents. The two
+scrapes below no longer distinguish them on their own — the PDF case is settled
+because the bytes could be hashed, and a live page cannot be. `lines.ts` `fingerprint` hashes the stripped
 lines; `stripMarkup` removes tags and URLs but not dates, prices, or
 per-request text. On dev, PayPal's `contentHash` moved between two sweeps
 twelve minutes apart while the other seven documents held — one data point,
@@ -138,9 +175,12 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
   backfill that same STOP would have reported 1**, leaving six older threads
   enrolled and still being mailed. All 8 rows came back stopped; a fresh forward
   afterwards created a live thread, so re-enrolment works as designed.
-  **Not verified:** two *different* live headers collapsing to one identity on
-  production. The Gmail API sends with the account's configured `From` and cannot
-  vary it; the unit tests and the dev merge stand in for it and are weaker.
+  **Verified with two different live headers**, after the display name was
+  changed on the account: `"Randall LaPoint, Jr." <rplapointjr@gmail.com>` and
+  `Lokie-ree <rplapointjr@gmail.com>` — a quoted string containing a comma and a
+  bare atom — both stored as `rplapointjr@gmail.com`, 10 threads, one identity.
+  Under the old code the second was a new person with fresh quota and a STOP that
+  reached nine of ten threads.
 - **M3 (a failed `watch.recheck` was silent to everyone)** closed 2026-09-07.
   `documents.watchError` records why the last re-check failed; `recheck` catches,
   records and **rethrows**, so the workpool still retries and the visibility is
@@ -278,7 +318,12 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M5 → M2 → (L3, L4, L5).**
+**M5 → M2 → M6 → (L3, L4, L5).**
+
+M6 is last of the mediums and that is deliberate: its first step is a
+measurement, not a fix. Nobody knows yet whether the non-determinism touches the
+other five documents or only this PDF, and "normalise the parse" is not a task
+until something has been shown to vary. M5 and M2 are both understood.
 
 H4 went first and is closed. It was the only flag that made a promise this
 project had already sent to a real inbox untrue — the STOP sentence went out in
