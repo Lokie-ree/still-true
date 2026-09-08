@@ -158,12 +158,23 @@ So the receipt for the deductible reads:
 > The overall deductible is $500 for an individual or $1,000 for a family.
 > `"$500 / individual or $1,000 / family"`
 
-The word *deductible* is in neither the quote nor anything the reader can see —
-but it **is** on the cited line, in the question cell of the same row, which
-`excerpt` trimmed away. The same happens on line 11: the row reads
-`Do you need a referral to see a specialist? | Yes. | This plan will pay some or
-all of the costs…`, and only the third cell is published, so the "Yes" that
-licenses *"You must obtain a referral"* is cut out of its own receipt.
+The word *deductible* is in neither the quote nor anything the reader can see.
+
+**What is observed, and what is inferred.** Observed: `contextBefore` is the
+table separator, so line 5 is the first data row of a three-column table, and the
+published quote is one cell of it. Observed in the source PDF: that table's
+first row pairs *"What is the overall deductible?"* with *"$500 / individual or
+$1,000 / family"*. Inferred, and not directly checkable without a Firecrawl call:
+that those two cells are on the same line in *Firecrawl's* parse, and therefore
+that the answer's licensing text was on the cited line and got trimmed. The same
+inference covers line 11, where the row should carry *"Do you need a referral to
+see a specialist?"* and *"Yes."* ahead of the published cell.
+
+The alternative reading — that the cells landed on different lines and the model
+answered from a line that does not license its answer — would be a **worse**
+finding, not a lesser one, so nothing here is being rounded in the flattering
+direction. One `mail:probe` with the line array dumped would settle which it is,
+and until that runs this is the honest description.
 
 **Nothing was fabricated and no answer out-ran its cited line.** What happened is
 narrower and more awkward: `excerpt` — added on 2026-09-04 so a 588-character
