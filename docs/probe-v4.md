@@ -364,3 +364,46 @@ production**. Re-forward the two fixtures that found them. Pass is all three:
 If (1) or (2) fails, production did not get the deploy — the same failure A0
 was written to catch, and the same reason: shipping code is not the same as a
 reply changing.
+
+### A5 result — 2026-09-09, 15:13 UTC · **one pass, one unverified, one flag**
+
+Run against production after PRs #39 and #40 were merged and deployed.
+
+**(1) PASS — two receipts on one line.** `probe-v4/injection.html`, the exact
+case M7 broke:
+
+```
+Yes, they may modify the agreement at any time.
+  "We may modify this Agreement at any time, including the terms governing pricing…"   line 60
+
+For a material change, you receive at least 30 days' email notice before it takes effect.
+  "We will provide you with at least thirty (30) days' notice by email…"                line 60
+```
+
+Each answer under its own receipt. M7 is closed on production, by mail.
+
+**(2) UNVERIFIED — the refusal sentence never rendered.** The contradiction
+fixture *answered* the late fee this time instead of refusing, so nothing printed
+`No single line states it`. The wording is pinned by a test and unproven on
+production. **Do not record it as passed**; the next document that genuinely
+refuses is what settles it.
+
+**(3) FAIL, and it opened H6.** The check said *"nothing else in either reply
+moves"*. Things moved. The document was re-extracted rather than early-exited,
+and the same unchanged page that refused the late fee at 14:15 answered it at
+15:13:
+
+```
+The late fee is $50.00.
+  "Dollars ($50.00) for that month."     line 23
+```
+
+Line 23 does not say *late fee*; line 22 does. The answer out-runs the line it
+cites, which the extractor's own contract forbids —
+[**H6**](READINESS.md), high. On the same run the deposit answer flipped from the
+addendum's 14 days to the body's 30, which is the A2c limitation observed
+drifting between two runs of one document.
+
+**A5 was written to confirm a fix and found a worse flag than the one it was
+confirming.** That is the case for predeclared checks, made by a check that cost
+two emails.

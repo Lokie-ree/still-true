@@ -2139,3 +2139,68 @@ The video does not exist, the landing page does not exist, and no outside person
 has ever used this. Those are the deliverables, and no amount of flag work is a
 substitute for them. The freeze starts here: no further probes until the video
 is shot.
+
+## 2026-09-09 (night) — the check written to confirm a fix found a worse flag
+
+A5 was three lines in `probe-v4.md`, predeclared that afternoon: after the next
+production deploy, re-forward the two fixtures and confirm the receipts separate,
+the refusal reads *"No single line states it"*, and nothing else moves.
+
+**The first passed.** Two answers citing line 60, each under its own receipt. M7
+closed on production, by mail rather than by deploy log.
+
+**The second could not be checked**, because the contradiction fixture answered
+the late fee this time instead of refusing it. The new refusal sentence is pinned
+by a test and is still unproven where it matters. It is recorded as unverified
+rather than as a pass, which is the entire reason the check was written down
+before it was run.
+
+**The third failed, and that is the day's finding.** The same page, unchanged,
+refused the late fee at 14:15 and answered it at 15:13:
+
+```
+The late fee is $50.00.
+  "Dollars ($50.00) for that month."     line 23
+```
+
+Line 23 does not say *late fee*. Line 22 does, and reflow would not join them
+because the wrap landed after a numeral — M8, opened six hours earlier, now with
+a consequence attached.
+
+### What broke and what did not
+
+The quote is verbatim, located by index, after the model stopped talking. Nothing
+was fabricated. **The structural guarantee — it cannot show you a sentence that
+is not in your document — held exactly as advertised.**
+
+What failed is one level up: that the sentence shown *supports* the answer above
+it. That has always been an instruction to the model rather than a property of
+the system, and the difference has been written in `extract.ts` since the day it
+was built. Today is the first time it broke where a person could see it. **H6,
+fifteen points, 82 → 67.**
+
+### The fix order changed, and not toward the flag
+
+M8 was parked behind M2 that afternoon because its first step is a measurement.
+It is now **first**, because it is the measurement that decides whether H6 is a
+class or a single parser artefact: the answer out-ran its line because reflow had
+orphaned the amount onto a line of its own. Fix the parser, re-run the document,
+and H6 either disappears or becomes real.
+
+**What was NOT done, deliberately.** No checker was written. Three shell-page
+heuristics were predeclared and measured on 24 documents on 09-07 and all three
+false-positived on real HUD and DOL notices; "the cited line must contain a noun
+from the answer" is that mistake in a new hat, and it buys a false refusal —
+which is worse than what H6 does — to prevent a rare false answer.
+
+### And the video script changed by one sentence
+
+Shot B said *"every claim comes with the sentence that carries it."* Twenty
+minutes later production published a sentence that did not carry its answer. The
+narration now claims only the provable half: the quote is in your document,
+because the system never writes one. The script says out loud, with the date and
+the receipt, not to improve that wording back.
+
+**The freeze holds.** M8 bumps `PARSER_VERSION`, and a bump between the enrolment
+and the fixture edit makes `attach` re-baseline and swallow the change the video
+exists to show. Nothing in the fix order happens before the video is shot.
