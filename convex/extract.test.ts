@@ -221,15 +221,67 @@ function flatten(s: string) {
 }
 
 void test("an excerpt never opens or closes on a table delimiter", () => {
-  // A sentence inside a multi-cell row begins right after an interior pipe.
-  // The real SBC receipt opened "| This plan will pay some or all of the
-  // costs" — the delimiter is the parser showing through, not the document.
+  // The delimiter is the parser showing through, not the document: the real
+  // SBC receipt once opened "| This plan will pay some or all of the costs".
   const row =
     "Common Question | Answer | This plan will pay some or all of the costs " +
     "but only if you have a referral. | Why this matters";
   const got = excerpt(row, "you have a referral");
   assert.doesNotMatch(got, /^\||\|$/);
-  assert.match(got, /^This plan will pay/);
+  // The row, not the cell (M5) — and the trailing column is still dropped.
+  assert.match(got, /^Common Question/);
+  assert.doesNotMatch(got, /Why this matters/);
+});
+
+// ── M5: a cell alone is not a receipt ───────────────────────────────────────
+//
+// Both rows are the CMS Summary of Benefits as Firecrawl parsed it on
+// 2026-09-09, verbatim through `toLines`. They are here because production
+// published one cell out of each on 2026-09-08 and the word that licensed the
+// answer was in a cell the reader never saw.
+const SBC_5 =
+  "What is the overall deductible? | $500 / individual or $1,000 / family | " +
+  "Generally, you must pay all of the costs from providers up to the " +
+  "deductible amount before this plan begins to pay.";
+const SBC_11 =
+  "Do you need a referral to see a specialist? | Yes. | This plan will pay " +
+  "some or all of the costs to see a specialist for covered services but only " +
+  "if you have a referral before you see the specialist.";
+
+void test("a table receipt carries the cell that licenses the answer", () => {
+  // The answer was "The overall deductible is $500 for an individual or $1,000
+  // for a family." The quote was the middle cell alone, and *deductible* was
+  // in neither.
+  const got = excerpt(SBC_5, "$500 / individual or $1,000 / family");
+  assert.match(got, /What is the overall deductible\?/);
+  assert.match(got, /\$500 \/ individual/);
+  // The third column is the plan's commentary, not the answer. Still dropped.
+  assert.doesNotMatch(got, /Generally, you must pay/);
+});
+
+void test("a table receipt reaches back past an intervening cell", () => {
+  // Line 11's licensing cell is "Yes.", and it sits between the question and
+  // the clause the model cited. Stitching cells 1 and 3 would leave a quote
+  // that is not in the document; the whole span is published instead.
+  const got = excerpt(SBC_11, "you have a referral");
+  assert.match(got, /^Do you need a referral to see a specialist\?/);
+  assert.match(got, /\| Yes\. \|/);
+});
+
+void test("a table receipt is still one unbroken slice of the line", () => {
+  // The property `change.stillSays` depends on: it searches the stored quote
+  // inside the document text, so a receipt that is not a substring of its own
+  // line would report every re-check of an unchanged document as `gone`.
+  for (const [row, proposed] of [
+    [SBC_5, "$500 / individual or $1,000 / family"],
+    [SBC_11, "you have a referral"],
+    [SBC_11, "Yes."],
+  ] as const) {
+    assert.ok(
+      flatten(row).includes(excerpt(row, proposed)),
+      `receipt is not a slice of: ${proposed}`,
+    );
+  }
 });
 
 void test("the excerpt always contains the whole proposed clause", () => {
