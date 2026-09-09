@@ -77,7 +77,14 @@ export type ReplyInput = {
 // of them carried the answer. That is true when the fact is absent and true
 // when it is split, so it is the sentence that can be published without knowing
 // which case fired. It is weaker than what shipped before. It is not false.
-const refusalLine = (linesSearched: number) =>
+// Exported because the board renders refusals too, and on 2026-09-09 it did
+// not get this fix. H5 was closed in three places — this line, the section
+// header, and the no-document reply — and `src/App.tsx` was a fourth copy
+// nobody counted, so the public page went on asserting absence for a day after
+// the email stopped. One function now, read by both renderers: the wording
+// cannot drift again, and `reply.test.ts`'s class guard covers the board
+// through it.
+export const refusalLine = (linesSearched: number) =>
   `Searched all ${plural(linesSearched, "line")}. No single line states it.`;
 
 // Splitting the compound questions was right for the engine contract, but it
@@ -99,15 +106,24 @@ const refusalLine = (linesSearched: number) =>
 // different slice of the same line now prints as what it is, its own receipt.
 type Cited = { answers: string[]; quote: string; lineNo: number };
 
+// The line alone cannot key this and the quote alone should not: two lines
+// could in principle carry the same sentence, and merging them would publish
+// one line number for a receipt that came from two places.
+//
+// Exported for the same reason as `refusalLine` above. The board carried its
+// own copy of the merge keyed on the LINE — M7 exactly, still live on the
+// public page after M7 was closed in the email. Both renderers now agree on
+// what makes two findings the same receipt, because they ask the same
+// function.
+export const receiptKey = (f: { lineNo: number; quote: string }) =>
+  `${f.lineNo}:${f.quote}`;
+
 function groupByReceipt(
   answered: Extract<ExtractedFinding, { verdict: "answered" }>[],
 ): Cited[] {
-  // The line alone cannot key this and the quote alone should not: two lines
-  // could in principle carry the same sentence, and merging them would publish
-  // one line number for a receipt that came from two places.
   const byReceipt = new Map<string, Cited>();
   for (const f of answered) {
-    const key = `${f.lineNo}:${f.quote}`;
+    const key = receiptKey(f);
     const seen = byReceipt.get(key);
     if (seen === undefined) {
       byReceipt.set(key, {
