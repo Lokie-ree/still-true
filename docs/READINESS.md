@@ -3,14 +3,15 @@
 Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
 opened the same day by the probe-v4 playtest, which is not an audit either —
 it is the product being used; **H5 and M7 closed the same evening**, together,
-by an invariant rather than by two patches. Score **82/100**:
-`100 − 5(M2) − 5(M6) − 5(M8) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82** (09-03, 09-05,
+by an invariant rather than by two patches — and **H6 opened the same evening**,
+by the A5 check written to confirm that fix on production. Score **67/100**:
+`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09 midday, 09-09 afternoon, 09-09 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
-then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`.
+then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -45,10 +46,73 @@ closed together, behind a property test over the rendered reply rather than two
 more patches. M8 is what is left of that day, and it is a parser flag rather
 than a receipt one.
 
-**No high flags are open. M2, M6, M8 and the lows are known and parked** — do
-not fix one unasked: read the fix order at the bottom and ask.
+**H6 is open, and it is the first flag to reach the central claim rather than
+the wording around it.** M2, M6, M8 and the lows are known and parked — do not
+fix one unasked: read the fix order at the bottom and ask.
+
+**Four flags in one day, all four found by sending mail**, and the fourth was
+found by the check written to confirm the third was fixed.
 
 ## Open
+
+### H6 — an answer can out-run the line it cites (high)
+
+`convex/extract.ts`: the `SYSTEM` prompt's central instruction, and `verify()`,
+which cannot check it.
+
+The contract is stated to the model in as many words: *"That line must state the
+answer BY ITSELF: a reader shown only that line must be able to see that your
+answer is true."* On production 2026-09-09 at 15:13 UTC, on
+`probe-v4/contradiction.html`:
+
+```
+The late fee is $50.00.
+  "Dollars ($50.00) for that month."
+  line 23 · read Sep 9
+```
+
+Line 23 does not say *late fee*. Those words are on line 22, which reflow
+declined to join (**M8**). A reader shown only the cited line cannot see that
+the answer is true, which is the one thing the contract forbids.
+
+**What did NOT fail, and the distinction is the whole product.** The quote is
+verbatim from the document, located by index, after the model finished talking.
+Nothing was fabricated and the structural guarantee — *it cannot show you a
+sentence that is not in your document* — holds exactly as advertised. What failed
+is the claim one level up: that the sentence shown **supports** the answer above
+it. That has always been a model instruction rather than a structural property,
+and this is the first time it has been observed breaking on production.
+
+**How it surfaced, which is worth as much as the flag.** This document refused
+the same question at 14:15 and answered it at 15:13, unchanged. The morning's
+refusal was correct and produced **H5**; the afternoon's answer is incorrect and
+produces this. The same extraction noise measured at 2 cells in 47 on 09-04 is
+what moved it, and on the same run the deposit answer flipped from the addendum's
+14 days to the body's 30. **A5 was written to confirm H5's fix and found a worse
+flag instead**, which is the argument for predeclared checks rather than for
+re-reading code.
+
+**Do not reach for a checker.** Three shell-page heuristics were predeclared and
+measured on 24 documents on 09-07 and all three false-positived; a fourth
+heuristic — "the cited line must contain a noun from the answer" — is the same
+mistake wearing a different hat, and a false refusal is worse than this. The
+candidates, in the order they should be considered:
+
+1. **Fix M8 first.** The orphaned `Dollars ($50.00)` line exists only because
+   reflow will not join a wrap that lands after a numeral. That removes this
+   instance and any like it, and it is a parser fix with a measurable before and
+   after — unlike anything that tries to judge support.
+2. **Then measure whether the class recurs** on a corpus where no clause is
+   split. If it does not, the class was M8 wearing a mask.
+3. **A second model call to verify support is the last resort**, and it puts a
+   non-deterministic judgment inside a gate — the thing `change.diff` was
+   deliberately built to avoid. It would need the 09-04 drift measurement run
+   against it before anyone believes it.
+
+**Not scored higher than 15** because the structural guarantee is intact and the
+receipt is still a real sentence a reader can find. Not scored lower because the
+answer above it was wrong, on production, in a reply a person would have acted
+on.
 
 ### M8 — reflow leaves a sentence broken when the wrap lands after a numeral (medium)
 
@@ -452,7 +516,19 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M8 → M2 → M6 → (L3, L4, L5).** M5, H5 and M7 are closed.
+**M8 → (measure H6 again) → M2 → M6 → (L3, L4, L5).** M5, H5 and M7 are closed.
+
+**M8 moved to the front on 2026-09-09 night and H6 is why.** It was parked
+behind M2 that afternoon on the grounds that its first step is a measurement.
+It is still a measurement, but it is now the measurement that decides whether
+H6 is a class or a single parser artefact — the answer that out-ran its line did
+so because reflow had orphaned the amount onto a line of its own. Fix the parser,
+re-run the same document, and H6 either disappears or becomes real.
+
+**The freeze still applies.** M8 bumps `PARSER_VERSION`, and a bump between the
+enrolment and the edit makes `attach` re-baseline and swallow the change the
+video exists to show. **Nothing in this fix order happens before the video is
+shot.**
 
 H5 and M7 went first and went together, because both published something false
 and both were instances of one class. They were fixed as the class: the two
