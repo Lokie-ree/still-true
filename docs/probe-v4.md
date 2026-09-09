@@ -346,3 +346,21 @@ already present.
 
 The generalisable half is unchanged from 09-08 and is now five for five:
 **everything found this week was found by sending mail.**
+
+---
+
+## A5 — the check to run after the next production deploy
+
+Predeclared 2026-09-09 evening, with H5 and M7 fixed on `main` and **not yet on
+production**. Re-forward the two fixtures that found them. Pass is all three:
+
+1. `probe-v4/injection.html` — `T3a` and `T3b` both cite line 60 and print as
+   **two receipts**, each under its own answer. The 30-days-notice answer must
+   not appear under the "we may modify" quote.
+2. `probe-v4/contradiction.html` — the late-fee refusal reads **"No single line
+   states it"**, and the section header reads **"WHAT NO SINGLE LINE SAYS"**.
+3. Nothing else in either reply moves. Same answers, same line numbers.
+
+If (1) or (2) fails, production did not get the deploy — the same failure A0
+was written to catch, and the same reason: shipping code is not the same as a
+reply changing.

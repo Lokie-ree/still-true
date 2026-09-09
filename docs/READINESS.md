@@ -2,14 +2,15 @@
 
 Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
 opened the same day by the probe-v4 playtest, which is not an audit either —
-it is the product being used. Score **62/100**:
-`100 − 15(H5) − 5(M2) − 5(M6) − 5(M7) − 5(M8) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62** (09-03, 09-05,
+it is the product being used; **H5 and M7 closed the same evening**, together,
+by an invariant rather than by two patches. Score **82/100**:
+`100 − 5(M2) − 5(M6) − 5(M8) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09 midday, 09-09 afternoon). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon, 09-09 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
-then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`.
+then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -29,92 +30,25 @@ cost bound and silently narrowed M4's unsubscribe, both of which were already on
 the closed list. **Closed does not mean unreachable**, and that is the lesson
 worth carrying rather than the two numbers cancelling out.
 
-**62 is the lowest score since 09-03 and it is not a regression.** Nothing broke
-on 09-09. Four documents were forwarded through production and three defects
+**62 was the lowest score since 09-03, it was not a regression, and it lasted one
+evening.** Nothing broke on 09-09. Four documents were forwarded through production and three defects
 that had been shipping the whole time became visible — one of them on the
 refusal, which is the half of this product nobody else ships. **Four audits and
 one code review scored this build at 82 or higher with all three present.** That
 is now five for five: **everything found this week was found by sending mail,
 and nothing was found by re-reading the code.**
 
-**H5 is open. Do not fix one unasked**: read the fix order at the bottom and
-ask.
+**The three flags were not three problems.** M5, M7 and the 09-04 excerpt bug
+were one class — *the receipt published under an answer was not that answer's
+receipt* — walking down a pipeline and being swatted at each station. H5 and M7
+closed together, behind a property test over the rendered reply rather than two
+more patches. M8 is what is left of that day, and it is a parser flag rather
+than a receipt one.
+
+**No high flags are open. M2, M6, M8 and the lows are known and parked** — do
+not fix one unasked: read the fix order at the bottom and ask.
 
 ## Open
-
-### H5 — a refusal can publish a false sentence about the document (high)
-
-`convex/reply.ts`, `refusalLine`. Every `not_stated` verdict prints:
-
-> Searched all 120 lines. This document does not state it.
-
-That sentence is unconditional, and the verdict behind it is not. `extract.ts`'s
-prompt tells the model to return `not_stated` **"including when the document does
-say it but spreads it across lines you would have to combine"** — so the system
-distinguishes *absent* from *uncitable*, and then publishes the same sentence for
-both. When the second case fires, the product asserts something false about a
-document it read correctly.
-
-Observed on production 2026-09-09, `probe-v4/contradiction.html`:
-
-```
-22  …TENANT shall pay a late charge of Fifty and 00/100
-23  Dollars ($50.00) for that month. The late charge is additional rent…
-```
-
-`L3a` — *"What is the late fee amount?"* — was refused, **correctly**: no single
-line says both *late charge* and *$50.00* (see **M8** for why the sentence is
-broken in two). The reply then told the reader the document does not state it.
-The document states it twice, at two different amounts.
-
-**Scored high, and the comparison is H3.** H3 was fifteen points for confident
-false refusals produced by a parser that destroyed the href. Nothing is destroyed
-here — the refusal logic is right — but what reaches the reader is the same
-thing: a confident false claim, on the half of this product that is
-differentiated. `README.md` says the system "says plainly where the document is
-silent"; on this document it said the opposite of the truth.
-
-**Not the whole fix, and worth saying now:** `not_stated` carries a question key
-and a line count and nothing else, so `reply.ts` has nothing to branch on. The
-cheap honest sentence — "no single line states it" — is true in every case
-including genuine absence, and it is weaker than what ships today. Whether the
-stronger sentence is worth a reason field on the refusal is a product decision,
-not a bug fix.
-
-### M7 — an answer can be published under another finding's quote (medium)
-
-`convex/reply.ts:73`, `groupByLine`. Two findings that cite the same line are
-merged into one block: **both answers are kept and the first finding's quote
-wins.** The second answer is then published under a receipt that does not
-license it.
-
-Observed on production 2026-09-09, `probe-v4/injection.html`, line 60:
-
-| stored finding | its own quote |
-|---|---|
-| `T3a` | `We may modify this Agreement at any time, including the terms governing pricing, features, and permitted use.` |
-| `T3b` | `We will provide you with at least thirty (30) days' notice by email to the address associated with your account before a material change takes effect…` |
-
-Both findings are individually correct and each carries the right quote in the
-`findings` table. The **email** printed only `T3a`'s, under both answers, so
-*"You receive at least 30 days' email notice"* went out beneath a sentence that
-does not mention notice.
-
-**This is M5's failure mode one layer up**, and the function's own comment says
-why it was safe when written: before `excerpt` shipped on 2026-09-04, two
-findings on one line always carried the *identical* whole-line quote, and
-grouping them lost nothing. `excerpt` made that assumption false and nothing
-re-read the assumption.
-
-Fix: key the group on the line **and** the quote. Identical quotes still merge,
-which is the duplicate-receipt problem the grouping was added for.
-
-**The gate cannot see this one and passed 7/7 with it open**, which is the part
-worth keeping. "Every published answer carries its quote" reads the `findings`
-table, where both quotes are correct and present. The defect is in what the
-email prints, and nothing checks the email against the rows it was rendered
-from. Same for H5: the gate reads verdicts, not the sentence published under
-them.
 
 ### M8 — reflow leaves a sentence broken when the wrap lands after a numeral (medium)
 
@@ -240,6 +174,50 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **H5 (a refusal published a false sentence about the document)** opened and
+  closed 2026-09-09. Every `not_stated` printed *"This document does not state
+  it"*, and `extract.ts` tells the model to refuse **also** when the document
+  says it across lines you would have to combine — so the verdict meant one of
+  two things and the sentence asserted the stronger one. Observed on production
+  on `probe-v4/contradiction.html`, where the late fee sits on lines 22 and 23
+  and the refusal was **correct**. It now reads *"Searched all N lines. No
+  single line states it."*, which is true when the fact is absent and true when
+  it is split. The section header asserted absence too, so **"WHAT IT NEVER
+  SAYS" is now "WHAT NO SINGLE LINE SAYS"**, and so did the no-document reply —
+  the third copy of the same claim, fixed with them.
+  **Deliberately weaker than what shipped before.** Buying the stronger sentence
+  back means giving `not_stated` a reason field so `reply.ts` has something to
+  branch on. That is a product decision and **NOT a flag**; do not open one.
+  **The test guards the class, not the wording**: nothing in a refusal may match
+  `/does not state|never says|is silent/`.
+  **Not verified on production**, which cannot be deployed from a Claude
+  session. The check to run after the next deploy is written into
+  [`probe-v4.md`](probe-v4.md).
+
+- **M7 (an answer could be published under another finding's quote)** opened and
+  closed 2026-09-09. `groupByLine` merged two findings citing one line, keeping
+  both answers and the **first** quote. Observed on production: `T3b`'s *"you
+  receive at least 30 days' email notice"* went out under `T3a`'s quote, which
+  does not mention notice, while both rows in the `findings` table were correct.
+  Keyed on line **and** quote now, so identical receipts still merge and a
+  different slice of one line prints as its own receipt.
+  **The comment above the function had already stated the assumption that made
+  it safe** — two findings on one line carry the same quote, because the quote
+  WAS the line — and `excerpt` falsified that on 09-04 while nothing came back
+  to re-read it. **That is the finding to carry, not the fix.**
+  **Why it survived four audits and a 7/7 gate:** the gate reads the `findings`
+  table, and the defect was in the email. The test covering this grouping built
+  both findings by spreading one fixture, so they shared a quote — it asserted
+  an instance and could not fail on M7 in principle.
+
+- **The receipt invariant closed both**, and it is the part worth keeping.
+  `reply.test.ts` parses the rendered reply back into blocks and requires every
+  answer to sit above **its own** quote and **its own** line number. M5, M7 and
+  the 09-04 excerpt bug were three files and one class; a fourth instance in a
+  fifth file fails this test without anyone having to predict where it would
+  appear. **Observed failing against the old renderer first**: 4 fail / 93 pass,
+  including `every answer is printed under its OWN receipt`.
 
 - **M5 (`excerpt` could trim away the part of the line that licenses the
   answer)** opened 2026-09-08, closed 2026-09-09. On a markdown table row the
@@ -474,13 +452,11 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**H5 → M7 → M8 → M2 → M6 → (L3, L4, L5).** M5 is closed.
+**M8 → M2 → M6 → (L3, L4, L5).** M5, H5 and M7 are closed.
 
-H5 and M7 both stop something false being published and both have a one-line
-first fix, which is why they go before the flags that merely cost money or
-patience. H5 leads because its falsehood is on the refusal — the claim no rival
-makes — and M7 follows because it is understood completely: key the group on the
-quote as well as the line.
+H5 and M7 went first and went together, because both published something false
+and both were instances of one class. They were fixed as the class: the two
+patches are four lines and **the test is the deliverable**.
 
 M8 sits behind them for M6's reason: its first step is a measurement. "Join a
 line ending in a digit" is a guess until it has been run against the four real
