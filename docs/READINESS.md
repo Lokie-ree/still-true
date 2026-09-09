@@ -1,12 +1,14 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-08** (fourth pass). Score **82/100**:
-`100 − 5(M2) − 5(M5) − 5(M6) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82** (09-03, 09-05, 09-05
-evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening). The deltas
-are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then `+15 H2 closed`,
-then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3 closed`, then
-`−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`.
+Last audit **2026-09-08** (fourth pass); **M5 closed 2026-09-09**, which is a
+fix rather than a fifth pass. Score **87/100**:
+`100 − 5(M2) − 5(M6) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87** (09-03, 09-05,
+09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
+09-09). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+`+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
+closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
+then `+5 M5 closed`.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -26,37 +28,11 @@ cost bound and silently narrowed M4's unsubscribe, both of which were already on
 the closed list. **Closed does not mean unreachable**, and that is the lesson
 worth carrying rather than the two numbers cancelling out.
 
-**No high flags are open. M2, M5 and the lows are known and parked** — do not
+**No high flags are open. M2, M6 and the lows are known and parked** — do not
 re-run the audit to rediscover them, and do not fix one unasked: read the fix
 order at the bottom and ask.
 
 ## Open
-
-### M5 — `excerpt` can trim away the part of the line that licenses the answer (medium)
-
-`convex/extract.ts`, `excerpt`. Not a fabrication and not a contract violation:
-the answer is supported by the line it cites. The *published quote* is a slice of
-that line, and on a table row the slice can exclude the cell that makes the
-answer checkable.
-
-Observed on production 2026-09-08 on the Summary of Benefits, which Firecrawl
-parses as a markdown table:
-
-```
-The overall deductible is $500 for an individual or $1,000 for a family.
-  "$500 / individual or $1,000 / family"
-  line 5
-```
-
-*Deductible* is on line 5, in the question cell of the same row. The reader
-cannot see it. Same on line 11, where the "Yes." that licenses "You must obtain a
-referral" is trimmed off. Three of that document's four answers are supported by
-their line and under-supported by their receipt.
-
-This is the direct cost of the 09-04 fix that stopped receipts running 588
-characters, so it is a trade rather than a defect to simply undo. A candidate
-that keeps both: when the cited line is a table row, publish the row's first cell
-alongside the matched cell.
 
 ### M6 — Firecrawl's PDF parse is not deterministic (medium)
 
@@ -140,6 +116,39 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **M5 (`excerpt` could trim away the part of the line that licenses the
+  answer)** opened 2026-09-08, closed 2026-09-09. On a markdown table row the
+  published quote was one cell, so the SBC deductible receipt read `"$500 /
+  individual or $1,000 / family"` with the word *deductible* nowhere the reader
+  could see. **The inference was measured before it was fixed**: the 09-08
+  transcript recorded as *inferred* that the licensing cell was on the cited
+  line at all, and one Firecrawl scrape on 09-09 settled it — line 5 is
+  `What is the overall deductible? | $500 / individual …` and line 11 is
+  `Do you need a referral to see a specialist? | Yes. | This plan will pay …`.
+  Both cells were on the line and both were trimmed.
+  **The fix is one rule**: on a table row the receipt opens at the ROW rather
+  than at the matched cell. The END still snaps to the cell, so the third
+  column's "Why This Matters" commentary — the thing cell-snapping was added
+  for — stays out. Prose lines are untouched, and the 588-character Livonia
+  receipt that motivated `excerpt` is not a table row.
+  **The candidate written down here was wrong and this is the reason to keep
+  it written down.** "Publish the row's first cell alongside the matched cell"
+  would stitch cells 1 and 3 of line 11 into a string that is not in the
+  document — and `change.stillSays` decides whether to mail a subscriber by
+  searching the document for exactly that string. Every re-check of an
+  unchanged document would have reported the clause `gone`. A receipt has to be
+  one unbroken slice of one line, and a test now pins that property.
+  **Three tests, all observed failing against the old `excerpt` first.**
+  **Verified end to end on development**, not by test alone: a real `mail:probe`
+  scrape and two real model calls republished all four SBC answers, and each now
+  carries its licensing cell — U2 `What is the overall deductible? | $500 /
+  individual or $1,000 / family`, U1a/U1b `Do you need a referral to see a
+  specialist? | Yes. | …`, U4 the row through `Preauthorization is required`.
+  The AT&T and Spotify receipts are byte-identical, which is the check that the
+  rule only fires on rows.
+  **Not verified on production**, which cannot be deployed from a Claude
+  session. The 09-08 transcript's four receipts are unchanged until it is.
 
 - **H4 (both spend gates and the unsubscribe keyed on a string the sender
   controls)** opened and closed 2026-09-08. `threads.fromEmail` was the raw
@@ -341,12 +350,12 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M5 → M2 → M6 → (L3, L4, L5).**
+**M2 → M6 → (L3, L4, L5).** M5 is closed.
 
 M6 is last of the mediums and that is deliberate: its first step is a
 measurement, not a fix. Nobody knows yet whether the non-determinism touches the
 other five documents or only this PDF, and "normalise the parse" is not a task
-until something has been shown to vary. M5 and M2 are both understood.
+until something has been shown to vary. M2 is understood.
 
 H4 went first and is closed. It was the only flag that made a promise this
 project had already sent to a real inbox untrue — the STOP sentence went out in
@@ -354,10 +363,13 @@ the 09-08 reply and is quoted verbatim in
 [`transcript-sbc.md`](transcript-sbc.md) — and its unsubscribe half failed for
 people who had done nothing but own two mail clients.
 
-M5 is next, because the transcript is meant to be the first thing on the landing
-page and M5 is the reason a hostile reader would disbelieve it.
+M5 went first, because the transcript is meant to be the first thing on the
+landing page and M5 was the reason a hostile reader would disbelieve it. It cost
+one Firecrawl scrape to settle the inference the transcript had left open, and
+that scrape is what showed the fix written down here would have broken the
+watch.
 
-Everything above M2 that is not M5 is closed. H2 was first because it was the only one that
+Everything above M2 is closed. H2 was first because it was the only one that
 cost money while nobody was watching; M4 next, because P5 turned it from a flag
 about one stranger into a flag about everyone on a forwarded thread; H3 after
 M4 deliberately, because it is the deploy most likely to send mail nobody asked

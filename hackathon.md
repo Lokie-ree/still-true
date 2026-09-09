@@ -1911,3 +1911,75 @@ afternoon in September is correct to keep saying it. Only README, `AGENTS.md`,
 reconciling a record of the past against today is not a fix, it is vandalism.
 
 After the fixes: **CONFIRMED 71, DRIFTED 0.**
+
+## 2026-09-09 — M5 closed, and the fix this file had written down would have broken the watch
+
+The 09-08 round trip found that a published receipt could be one cell of a
+markdown table, with the word that licenses the answer sitting in a cell the
+reader never sees. The SBC deductible receipt read `"$500 / individual or $1,000
+/ family"` under the answer *"The overall deductible is $500 for an individual or
+$1,000 for a family."* — true, quoted, and uncheckable.
+
+### The inference was measured before anything was edited
+
+`docs/transcript-sbc.md` was careful on 09-08 to mark one step as **inferred**:
+that the question cell was on the *same* Firecrawl line as the answer cell.
+`contextBefore` being a table separator proved line 5 was a row; it did not prove
+which cells were on it. The transcript said one probe with the line array dumped
+would settle it, and named the alternative — cells on different lines, meaning
+the model answered from a line that does not license its answer — as the **worse**
+finding, not the lesser one.
+
+One scrape, 09-09, through the real `toLines`:
+
+```
+[5]  What is the overall deductible? | $500 / individual or $1,000 / family | Generally, you must pay …
+[11] Do you need a referral to see a specialist? | Yes. | This plan will pay some or all of the costs …
+```
+
+The licensing cell was on the line both times. The better reading held, and it
+was cheap to stop guessing.
+
+### The candidate in READINESS was wrong, and the scrape is what showed it
+
+READINESS had written the fix down on 09-08: *"when the cited line is a table
+row, publish the row's first cell alongside the matched cell."* Line 5 would have
+been fine. Line 11 is why it is wrong — the model cited the **third** cell, so
+that rule produces `Do you need a referral to see a specialist? | This plan will
+pay …`, a string that **is not in the document**.
+
+`change.stillSays` decides whether a subscriber gets an email by searching the
+document text for the stored quote. A welded receipt is never found, so every
+re-check of an untouched document would have reported the clause `gone` and
+mailed everybody that their plan had dropped its referral rule. The fix written
+down to make a receipt *more* trustworthy would have made the watch lie.
+
+So the rule is narrower and duller: **on a table row the receipt opens at the
+row.** The end still snaps to the matched cell, so the third column's "Why This
+Matters" commentary — the thing cell-snapping was added for on 09-04 — stays out.
+What is published is still one unbroken slice of one line, and a test now pins
+that property rather than leaving it as a comment.
+
+### Verified by running it, not by reasoning about it
+
+Three tests, all observed failing against the old `excerpt` first. Then a real
+`mail:probe` on development — one Firecrawl scrape, two model calls — republished
+all four SBC answers:
+
+| | receipt on 09-08 | receipt on 09-09 |
+|---|---|---|
+| U2 | `$500 / individual or $1,000 / family` | `What is the overall deductible? \| $500 / individual or $1,000 / family` |
+| U1a | `This plan will pay … but only if you have a referral …` | `Do you need a referral to see a specialist? \| Yes. \| This plan will pay …` |
+| U4 | `Preauthorization is required. …` | `… \| Specialist visit \| $50 copay/visit \| … Preauthorization is required. …` |
+
+The AT&T and Spotify receipts came back byte-identical, which is the check that
+the rule fires on rows and nowhere else.
+
+**Not verified on production.** Prod cannot be deployed from a Claude session,
+so the four receipts quoted in `transcript-sbc.md` are still the 09-08 ones. The
+transcript carries a dated note saying exactly that rather than being rewritten:
+it is a receipt for a reply that was actually sent, and editing it to describe a
+better reply nobody received would be the one kind of dishonesty this project
+cannot afford.
+
+Score 82 → 87.

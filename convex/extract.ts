@@ -40,14 +40,16 @@ export function lineAt(lines: string[], lineNo: number): string {
   return lineNo >= 1 && lineNo <= lines.length ? lines[lineNo - 1].trim() : "";
 }
 
-// Where a readable unit starts within a line. Offset 0 always begins one.
+// Where a readable unit ENDS within a line. Offset 0 always begins one.
 //
 // A sentence is one such unit and a TABLE CELL is another. Reflow joins a whole
 // markdown row into a single line, and a row carries no full stops between its
-// cells — so snapping outward by sentence alone walks back across every cell to
-// the start of the row, and a Summary of Benefits receipt opens on two columns
-// of table header nobody asked for. A cell boundary is exactly as real a break
-// as a full stop, so `|` counts as one.
+// cells, so without `|` the excerpt would run from the matched clause to the
+// end of the row — the "Why This Matters" essay a Summary of Benefits carries
+// in its third column. A cell boundary is exactly as real a break as a full
+// stop, so `|` counts as one.
+//
+// It bounds the END and no longer the start; see `excerpt` for why (M5).
 const unitStarts = (line: string): number[] => {
   const starts = [0];
   const boundary = /[.!?]\s+|\s*\|\s*/g;
@@ -110,7 +112,28 @@ export function excerpt(line: string, proposed: unknown): string {
   if (from === -1) return whole;
 
   const starts = unitStarts(whole);
-  const start = starts.filter((at) => at <= from).pop() ?? 0;
+  // On a table row the receipt starts at the ROW, not at the matched cell (M5).
+  //
+  // Snapping the start to the nearest cell boundary published one cell alone,
+  // and a cell alone is not a receipt: the real SBC quote read "$500 /
+  // individual or $1,000 / family" with the word *deductible* nowhere the
+  // reader could see it, because it sits in the row's first cell. Three of that
+  // document's four answers were supported by their line and under-supported by
+  // their published quote.
+  //
+  // The row's leading cells are the label — "What is the overall deductible?",
+  // "Do you need a referral to see a specialist? | Yes." — so opening at the row
+  // is what makes the answer checkable rather than merely true.
+  //
+  // CONTIGUOUS, deliberately, and this is the constraint that rules out
+  // stitching the first cell onto the matched one: `change.stillSays` decides
+  // whether to mail a subscriber by searching the stored quote inside the
+  // document text. A quote welded from cells 1 and 3 is not in the document, so
+  // every re-check would report the clause `gone` on a document nobody touched.
+  // Everything published here is still one unbroken slice of one line.
+  const start = whole.includes("|")
+    ? 0
+    : (starts.filter((at) => at <= from).pop() ?? 0);
   const end = starts.find((at) => at >= from + needle.length);
 
   // Trim table delimiters off the EDGES of the slice as well as whitespace.

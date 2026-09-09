@@ -206,3 +206,35 @@ this project can check.
 
 **Cannot:** that the answer follows from the quote, in three of four cases,
 because the licensing cell was trimmed out.
+
+---
+
+## Addendum, 2026-09-09 — the inference above was measured, and M5 is fixed
+
+Nothing above this line has been edited. It is a record of a reply that was
+actually sent on 2026-09-08, and the four receipts it quotes are the ones that
+went out.
+
+**The one inference has been settled.** The section above marks as *inferred*
+that the licensing cell was on the same Firecrawl line as the cell that was
+published. One scrape through the real `toLines` on 09-09 says it was:
+
+```
+[5]  What is the overall deductible? | $500 / individual or $1,000 / family | Generally, you must pay …
+[11] Do you need a referral to see a specialist? | Yes. | This plan will pay some or all of the costs …
+```
+
+So the better of the two readings held — the answers were licensed by their
+cited lines, and `excerpt` trimmed the licence away. The worse reading, named
+above as the one that would not be rounded away, is ruled out.
+
+**Fixed the same day.** On a table row the receipt now opens at the row rather
+than at the matched cell. On development the same document republishes as
+`What is the overall deductible? | $500 / individual or $1,000 / family` and
+`Do you need a referral to see a specialist? | Yes. | This plan will pay …`.
+
+**Not yet true on production**, which cannot be deployed from a Claude session.
+Until a fresh document is forwarded through production, the "Cannot" at the end
+of this transcript still describes what a stranger would get. The next real
+round trip is what replaces it, and it will be filed as its own dated transcript
+rather than as an edit to this one.
