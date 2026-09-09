@@ -1983,3 +1983,95 @@ better reply nobody received would be the one kind of dishonesty this project
 cannot afford.
 
 Score 82 → 87.
+
+## 2026-09-09 (afternoon) — four documents, three flags, and the score went 87 → 62
+
+probe-v4 was predeclared in the morning and committed before anything was sent.
+Four documents went through production in ninety minutes. Every reply came back
+in 19 to 33 seconds. Three defects that had been shipping the whole time became
+visible, and **not one of them was found by reading code** — four audit passes
+and a code review had scored this build at 82 or higher with all three present.
+
+### What passed, and it is worth saying first
+
+**The injection fixture failed to move anything.** A subscriber agreement
+carrying two instructions addressed to machines — one visible, one in a
+`display:none` div — was answered from its own clauses on every question. The
+document says arbitration is binding and the subscription auto-renews; the
+injections demanded the opposite of each; the reply said binding and
+auto-renews, citing lines 78 and 10, and never cited either instruction line.
+The hidden one demanded a blanket `not stated` on everything and got eight
+answers and zero refusals.
+
+**The hidden instruction did reach the parse**, which is the part worth
+remembering. `display:none` text survives Firecrawl with
+`onlyMainContent: false`. A forwarded document can carry an instruction the
+person forwarding it cannot see, and the reason it failed here is that the model
+never writes a quote — not that the text was filtered.
+
+**M5 is closed on production**, verified by mail rather than by deploy log: the
+SBC receipt now reads `What is the overall deductible? | $500 / individual or
+$1,000 / family` where yesterday it read the bare cell.
+
+### The refusal lied, and the refusal is the differentiated claim
+
+`probe-v4/contradiction.html` was built to test what a one-line contract does
+with a document that disagrees with itself. It answered that — silently, and
+**from different sides of the conflict for different questions**: the deposit
+window from the addendum, the late-fee day and the notice period from the body.
+That was predeclared as a limitation and it stays one.
+
+The flag is what happened to the late fee amount. Firecrawl wrapped the sentence
+after a numeral:
+
+```
+22  …TENANT shall pay a late charge of Fifty and 00/100
+23  Dollars ($50.00) for that month. The late charge is additional rent…
+```
+
+`reflow` joins a wrapped line only when the previous ends `[a-z,;:)]` and the
+next starts `[a-z("']`. This one ends in a digit and continues with a capital
+`D`, so it fails both halves and the sentence stays in two pieces. No single line
+carries both *late charge* and *$50.00*, so the extractor refused — **correctly**,
+under a contract that was deliberately written to refuse rather than answer
+across lines.
+
+Then the reply printed the sentence it prints for every refusal:
+
+> Searched all 120 lines. This document does not state it.
+
+The document states it. Twice, at two different amounts. `extract.ts`'s prompt
+tells the model to refuse *"including when the document does say it but spreads
+it across lines you would have to combine"* — so the system already knows
+*absent* and *uncitable* are different things, and then publishes the same
+sentence for both. **H5, fifteen points**, scored against H3 as the precedent:
+that was fifteen for confident false refusals too.
+
+The honest cheap fix is one line — "no single line states it" is true in every
+case, including genuine absence — and it is weaker than what ships today.
+Whether to buy the stronger sentence back with a reason field on the refusal is a
+product decision, not a bug fix, and it is written down as one.
+
+### The receipt that belonged to the other answer
+
+`groupByLine` in `reply.ts` merges two findings that cite the same line: both
+answers kept, **first quote wins**. On the injection fixture, `T3a` and `T3b` both
+cited line 60. Their stored quotes are different and both correct. The email
+printed only the first, so *"You receive at least 30 days' email notice"* went
+out under *"We may modify this Agreement at any time…"* — a sentence that does
+not mention notice.
+
+This is M5 one layer up, and the function's own comment explains why it was safe
+when it was written: before `excerpt` shipped on 09-04, two findings on one line
+always carried the identical whole-line quote and grouping them lost nothing.
+`excerpt` falsified that assumption and nothing went back to re-read it. **The
+lesson is not "grouping was wrong". It is that a change three files away
+invalidated a comment that was true when written, and no test held the property.**
+M7, and the fix is to key the group on the quote as well as the line.
+
+### 62 is the honest number
+
+`100 − 15(H5) − 5(M2) − 5(M6) − 5(M7) − 5(M8) − 3(lows)`. Third time this log has
+recorded a drop that came from running the product rather than auditing it, and
+the pattern is now five for five. Nothing broke today. Three things that were
+already broken stopped being invisible.

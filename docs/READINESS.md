@@ -1,14 +1,15 @@
 # Readiness flags — open at the start of P5
 
-Last audit **2026-09-08** (fourth pass); **M5 closed 2026-09-09**, which is a
-fix rather than a fifth pass. Score **87/100**:
-`100 − 5(M2) − 5(M6) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87** (09-03, 09-05,
+Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
+opened the same day by the probe-v4 playtest, which is not an audit either —
+it is the product being used. Score **62/100**:
+`100 − 15(H5) − 5(M2) − 5(M6) − 5(M7) − 5(M8) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
-then `+5 M5 closed`.
+then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -28,11 +29,118 @@ cost bound and silently narrowed M4's unsubscribe, both of which were already on
 the closed list. **Closed does not mean unreachable**, and that is the lesson
 worth carrying rather than the two numbers cancelling out.
 
-**No high flags are open. M2, M6 and the lows are known and parked** — do not
-re-run the audit to rediscover them, and do not fix one unasked: read the fix
-order at the bottom and ask.
+**62 is the lowest score since 09-03 and it is not a regression.** Nothing broke
+on 09-09. Four documents were forwarded through production and three defects
+that had been shipping the whole time became visible — one of them on the
+refusal, which is the half of this product nobody else ships. **Four audits and
+one code review scored this build at 82 or higher with all three present.** That
+is now five for five: **everything found this week was found by sending mail,
+and nothing was found by re-reading the code.**
+
+**H5 is open. Do not fix one unasked**: read the fix order at the bottom and
+ask.
 
 ## Open
+
+### H5 — a refusal can publish a false sentence about the document (high)
+
+`convex/reply.ts`, `refusalLine`. Every `not_stated` verdict prints:
+
+> Searched all 120 lines. This document does not state it.
+
+That sentence is unconditional, and the verdict behind it is not. `extract.ts`'s
+prompt tells the model to return `not_stated` **"including when the document does
+say it but spreads it across lines you would have to combine"** — so the system
+distinguishes *absent* from *uncitable*, and then publishes the same sentence for
+both. When the second case fires, the product asserts something false about a
+document it read correctly.
+
+Observed on production 2026-09-09, `probe-v4/contradiction.html`:
+
+```
+22  …TENANT shall pay a late charge of Fifty and 00/100
+23  Dollars ($50.00) for that month. The late charge is additional rent…
+```
+
+`L3a` — *"What is the late fee amount?"* — was refused, **correctly**: no single
+line says both *late charge* and *$50.00* (see **M8** for why the sentence is
+broken in two). The reply then told the reader the document does not state it.
+The document states it twice, at two different amounts.
+
+**Scored high, and the comparison is H3.** H3 was fifteen points for confident
+false refusals produced by a parser that destroyed the href. Nothing is destroyed
+here — the refusal logic is right — but what reaches the reader is the same
+thing: a confident false claim, on the half of this product that is
+differentiated. `README.md` says the system "says plainly where the document is
+silent"; on this document it said the opposite of the truth.
+
+**Not the whole fix, and worth saying now:** `not_stated` carries a question key
+and a line count and nothing else, so `reply.ts` has nothing to branch on. The
+cheap honest sentence — "no single line states it" — is true in every case
+including genuine absence, and it is weaker than what ships today. Whether the
+stronger sentence is worth a reason field on the refusal is a product decision,
+not a bug fix.
+
+### M7 — an answer can be published under another finding's quote (medium)
+
+`convex/reply.ts:73`, `groupByLine`. Two findings that cite the same line are
+merged into one block: **both answers are kept and the first finding's quote
+wins.** The second answer is then published under a receipt that does not
+license it.
+
+Observed on production 2026-09-09, `probe-v4/injection.html`, line 60:
+
+| stored finding | its own quote |
+|---|---|
+| `T3a` | `We may modify this Agreement at any time, including the terms governing pricing, features, and permitted use.` |
+| `T3b` | `We will provide you with at least thirty (30) days' notice by email to the address associated with your account before a material change takes effect…` |
+
+Both findings are individually correct and each carries the right quote in the
+`findings` table. The **email** printed only `T3a`'s, under both answers, so
+*"You receive at least 30 days' email notice"* went out beneath a sentence that
+does not mention notice.
+
+**This is M5's failure mode one layer up**, and the function's own comment says
+why it was safe when written: before `excerpt` shipped on 2026-09-04, two
+findings on one line always carried the *identical* whole-line quote, and
+grouping them lost nothing. `excerpt` made that assumption false and nothing
+re-read the assumption.
+
+Fix: key the group on the line **and** the quote. Identical quotes still merge,
+which is the duplicate-receipt problem the grouping was added for.
+
+**The gate cannot see this one and passed 7/7 with it open**, which is the part
+worth keeping. "Every published answer carries its quote" reads the `findings`
+table, where both quotes are correct and present. The defect is in what the
+email prints, and nothing checks the email against the rows it was rendered
+from. Same for H5: the gate reads verdicts, not the sentence published under
+them.
+
+### M8 — reflow leaves a sentence broken when the wrap lands after a numeral (medium)
+
+`convex/lines.ts`, `reflow`. A wrapped line is joined only when the previous line
+ends `[a-z,;:)]` **and** the next starts `[a-z("']`. A money clause breaks both
+halves:
+
+```
+22  …TENANT shall pay a late charge of Fifty and 00/100
+23  Dollars ($50.00) for that month.
+```
+
+Ends in a digit; continues with a capital `D`. So the sentence stays in two
+pieces, no single line carries the obligation and its amount, and the answer is
+refused — which is the root cause under **H5**'s false sentence.
+
+**Why it is scored rather than shrugged at:** the wrap point is arbitrary, but
+what it breaks is not. Amounts are where numerals are, and "what does this cost
+me" is the question this product exists to answer. The Livonia late fee is
+citable today because its wrap happened to land elsewhere.
+
+**The fix is not one character.** Adding `0-9` to the trailing class does not
+help while the continuation test still rejects a capital `D`, and loosening
+*that* would start welding sentences onto headings — which is the guard reflow
+was built around. Measure a candidate against the four real PDFs before
+believing it, the way the original 1,688-to-0 measurement was taken.
 
 ### M6 — Firecrawl's PDF parse is not deterministic (medium)
 
@@ -94,6 +202,22 @@ Fix: dedupe attachments on `contentHash`, which is already computed.
   carries no `ponytail:` note naming its ceiling.
 
 ## Candidate — evidence too thin to score
+
+**A ranging question refused on a document made of answers.** On production
+2026-09-09, `probe-v4/fee-schedule.html` — thirty-three rows of prices — refused
+`U2`, *"What does it cost you: fees, charges, deposits, or penalties?"*, and
+published `Searched all 46 lines. This document does not state it.` Line 6 alone
+reads `Late payment charge | $75.00 | Assessed on any rent not received in full
+by the end of the fifth day of the month`, which states a cost by itself, so
+unlike **H5** this refusal is not explained by the one-line contract.
+
+**Why it is not scored:** one document, one question, and no root cause. It may
+be the model declining a question that ranges over thirty-three rows when the
+contract demands a single line; it may be ordinary extraction noise, which was
+measured at 2 cells in 47 drifting between two runs on 09-04. **Confirm before
+acting:** forward the same fixture twice more and see whether `U2` refuses all
+three times. A question that refuses once is noise; one that refuses every time
+is a defect in how a list-shaped document meets a one-line contract.
 
 *(The line-count candidate opened earlier today was settled the same day by four
 readings of a byte-identical file, and is now scored as **M6** above. It was a
@@ -350,7 +474,18 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M2 → M6 → (L3, L4, L5).** M5 is closed.
+**H5 → M7 → M8 → M2 → M6 → (L3, L4, L5).** M5 is closed.
+
+H5 and M7 both stop something false being published and both have a one-line
+first fix, which is why they go before the flags that merely cost money or
+patience. H5 leads because its falsehood is on the refusal — the claim no rival
+makes — and M7 follows because it is understood completely: key the group on the
+quote as well as the line.
+
+M8 sits behind them for M6's reason: its first step is a measurement. "Join a
+line ending in a digit" is a guess until it has been run against the four real
+PDFs that produced reflow's original 1,688-broken-clauses-to-0, and a reflow
+change moves every line number in the corpus.
 
 M6 is last of the mediums and that is deliberate: its first step is a
 measurement, not a fix. Nobody knows yet whether the non-determinism touches the
