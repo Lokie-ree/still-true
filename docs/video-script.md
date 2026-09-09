@@ -61,16 +61,24 @@ the number out loud only after it appears. If it takes forty seconds, say forty.
 
 **On screen:** the reply, then the lease beside it.
 
-> Every claim comes with the sentence from the document that carries it, and the
-> line it came from.
+> Every claim comes with a sentence from your document, and the line it came
+> from. It cannot show you a sentence that isn't in there — because it never
+> writes one.
 
 Read the late-charge finding aloud, then **switch to the lease and find it**.
 Scroll to it. Do not cut. The point of the shot is that the scroll is possible.
 
 > I did not write that sentence. The model returns a line *number*. The sentence
 > is pulled out of the document by index, on the server, after the model has
-> finished talking — so it cannot show you a sentence that is not in your
-> document, because it never writes one.
+> finished talking.
+
+**Do not "improve" that wording back.** An earlier draft of this script said
+*"the sentence that carries it"*, and on 2026-09-09 production published *"The
+late fee is $50.00"* citing a line that reads only `Dollars ($50.00) for that
+month.` — a real sentence from the document, under an answer it does not carry
+(**H6**). What this system can prove is that the quote is in your document. That
+the quote *supports* the answer is a model instruction, not a guarantee, and the
+narration says only the provable half.
 
 **Then scroll to the refusal half.**
 
@@ -174,3 +182,60 @@ narration and let the reply show whatever it shows.
 **The change notice needs a sweep.** It will not arrive on its own until 11:17
 UTC. Run `watch:sweep` by hand and wait — on development that was 2m17s from edit
 to inbox. The wait is honest footage. Do not fake it with a cut.
+
+---
+
+## How to actually record it
+
+Everything below is preinstalled on Windows 11. Nothing to buy, nothing to
+install.
+
+### Before any recording — ten minutes
+
+1. **Notifications off.** Settings → System → Notifications → **Do Not Disturb**.
+   Quit Slack, Discord, Steam. A popup mid-take is the commonest ruin of a first
+   video.
+2. **Clean browser.** A new Chrome window with exactly two tabs — Gmail and the
+   lease fixture. Hide the bookmarks bar with `Ctrl+Shift+B`. Zoom to **125%**
+   with `Ctrl` and `+`, then look at a quote and ask whether it is readable on a
+   laptop. The quotes are long, and this matters more than anything else here.
+3. **The inbox is on camera.** Search Gmail for `still-true` first, so the list
+   shows only these threads and not every subject line in the account.
+4. **Test the mic.** Voice Recorder, ten seconds, play it back. Bad audio loses
+   more demo videos than bad video does.
+
+### Rehearse once with recording OFF
+
+Read the script aloud while clicking through. Two sentences will not fit your
+mouth. Change them — it is your script, and the constraint is that every claim
+stays checkable, not that the wording is mine.
+
+### Record shot by shot, not in one take
+
+`Win + Shift + R` → drag a box around the Chrome window → Start. One shot. Stop.
+Save as `A.mp4`, `B.mp4`, and so on. Redo any shot as often as you like.
+
+Nobody records a good first take. The third is usually fine.
+
+- **A** — the wait is real, 25 to 30 seconds, and the narration is what fills it.
+  Fluffed a line? Forward again with a slightly different subject and reshoot.
+- **B** — scroll slowly, or better, use `Ctrl+F` in the lease to find the quote.
+  A judge watching find-in-page land on the exact sentence is the most
+  convincing four seconds in the video.
+- **C** — the only shot with a real cost, because deploying the edit changes the
+  page for good. **Shoot A and B first and confirm they are good.** If C goes
+  wrong it can be redone: edit the clause again, $600 → $700, deploy, sweep.
+- **D and E** — screen and voice only. Leave them until last, when warmed up.
+
+### Stitch it in Clipchamp
+
+Search Clipchamp in Start. New project → import the clips → drag them onto the
+timeline in order → trim the dead air off each head and tail → export 1080p.
+
+**No music and no transitions.** A hard cut between shots is correct; anything
+else reads as a product video, which is the register this whole thing is arguing
+against.
+
+### Budget
+
+Two to three hours including setup and reshoots. That is normal for a first one.
