@@ -6,8 +6,14 @@ Send a lease, a terms-of-service update, an insurance renewal — as an attachme
 or a link — to an email address. You get back what that document requires of you
 and by when, with **every claim quoted from the source and the line it came
 from**. Where the document is silent, it says so and tells you how many lines it
-searched. For documents that live at a URL it keeps watching, and tells you when
-the specific thing you asked about changes.
+searched — with one caveat found on 2026-09-09 and open as
+[H5](docs/READINESS.md): a document that states a fact **across two lines**
+cannot be cited under a one-line contract, and the refusal that follows says the
+document does not state it. That sentence is wrong on such a document, and it is
+the next thing being fixed.
+
+For documents that live at a URL it keeps watching, and tells you when the
+specific thing you asked about changes.
 
 Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
@@ -44,7 +50,7 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-07
+## Status — 2026-09-09
 
 **Live on production and answering real mail.**
 
