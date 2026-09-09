@@ -2204,3 +2204,79 @@ the receipt, not to improve that wording back.
 **The freeze holds.** M8 bumps `PARSER_VERSION`, and a bump between the enrolment
 and the fixture edit makes `attach` re-baseline and swallow the change the video
 exists to show. Nothing in the fix order happens before the video is shot.
+
+---
+
+## 2026-09-09 (evening) — the board was a second renderer, and it had not been read
+
+The video script was being rewritten when the reason it needed rewriting turned
+out to be in the product. The script led with *documents are long* and buried
+the refusal past the point a judge decides. **So does the page**, and the page
+is the older mistake.
+
+`documents.recent` orders by `_creationTime`. Which document leads is therefore
+an accident of when the corpus was seeded, and the accident put the **Las Vegas
+employee handbook — which refuses nothing — on the first screen.** A stranger's
+first impression of this project was answers-with-quotes, which is what all six
+inbox-and-citation entries on the identical stack also show. The differentiator
+was in the fourth card, below the fold.
+
+The comment at the top of `src/App.tsx` has asserted refusal-first ordering
+since 09-05, and it is worth quoting against itself:
+
+> A person who arrived here has not asked anything yet, and the reason to keep
+> reading is the half nobody else ships.
+
+True inside a card. False at the page level, for four days. **A decision written
+down in one file and applied in another is not applied**, and reading either
+file alone confirms it.
+
+### The two that were worse, because they were already closed
+
+H5 and M7 were both found, fixed, scored and moved to *Closed* earlier the same
+day. Both were still live on the public board that evening.
+
+- The refusal read **"Searched all 174 lines. This document does not state it"**
+  under a header reading **"WHAT IT NEVER SAYS"** — the sentence H5 exists to
+  say is not knowable — for a day after the email stopped saying it. H5's
+  closure names three copies fixed. There were four.
+- `groupByLine` in `App.tsx` still keyed on `f.lineNo` alone, the exact shape M7
+  was opened for, so the page could publish one answer under another finding's
+  receipt while the email could not.
+
+Nothing tests `src/App.tsx`. The `reply.test.ts` guard that forbids
+`/does not state|never says|is silent/` could never have reached it, because the
+board **restated** the sentence instead of calling the function that produces it.
+
+### The fix is the import, not the two patches
+
+`refusalLine` and `receiptKey` are now exported from `reply.ts` and imported by
+the board. One definition of what a refusal says and one definition of what
+makes two findings the same receipt. A fix to either reaches both renderers, and
+the existing class guard now covers the page transitively. `reply.ts` was
+already pure — it imports two types and `questions.ts` — so this cost nothing.
+
+That is the same move that closed H5 and M7 themselves: an invariant rather than
+an instance. **The instances keep being the second copy.**
+
+### Two smaller things in the same pass
+
+The re-check stamp rendered a bare date, so the cron's 11:17 UTC sweep and a
+hand-run sweep at 15:00 printed an identical string — the one genuinely live
+thing on the page was invisible. It carries the time now, in UTC, for the same
+reason `reply.ts` stamps receipts in UTC. And the corpus line says what the
+watch does, derived from the rows rather than restating the schedule:
+**re-read daily, last sweep Sep 9, 12:48 PM UTC.**
+
+### What this says about the discovery modes
+
+`READINESS.md` has said all week that everything was found by sending mail and
+nothing by re-reading code. **These three were found by neither.** They came
+from opening the public page beside the email and reading the two against each
+other. An audit reads files one at a time, which is precisely how a defect
+fixed in `reply.ts` and alive in `App.tsx` survives. Sending mail exercises one
+renderer. **The mode that worked was comparing two surfaces that are supposed
+to agree.**
+
+Score unchanged at 67. Nothing new is open; two closures were completed and one
+ordering defect closed unscored.

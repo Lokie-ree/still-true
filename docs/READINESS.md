@@ -39,6 +39,17 @@ one code review scored this build at 82 or higher with all three present.** That
 is now five for five: **everything found this week was found by sending mail,
 and nothing was found by re-reading the code.**
 
+**Amended 2026-09-09 (evening): there is a third discovery mode, and it found
+three things in twenty minutes.** Neither auditing the code nor sending mail
+found that `src/App.tsx` was still shipping H5's false sentence and M7's wrong
+receipt after both were closed, or that the board led with the one document
+that refuses nothing. All three were found by **opening the public page and
+reading it against the email** — the two renderers put side by side. Sending
+mail exercises one of them. A code audit reads files one at a time, which is
+exactly how a defect fixed in `reply.ts` and alive in `App.tsx` stays
+invisible. **The mode is: compare the two surfaces that are supposed to say the
+same thing.**
+
 **The three flags were not three problems.** M5, M7 and the 09-04 excerpt bug
 were one class — *the receipt published under an answer was not that answer's
 receipt* — walking down a pipeline and being swatted at each station. H5 and M7
@@ -258,6 +269,42 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
   **Not verified on production**, which cannot be deployed from a Claude
   session. The check to run after the next deploy is written into
   [`probe-v4.md`](probe-v4.md).
+  **Amended 2026-09-09: the closure reached three copies and there were four.**
+  `src/App.tsx` is a second renderer of the same findings and it went on
+  printing *"This document does not state it"* and *"What it never says"* to
+  the open internet after the email stopped. Nothing tests that file, and the
+  class guard could not reach it because the board restated the sentence
+  instead of calling the function. Fixed by **exporting `refusalLine` from
+  `reply.ts` and importing it**, so the wording has one definition and the
+  existing guard now covers the board through it.
+
+- **M7 on the board (the same defect, in the second renderer)** found and closed
+  2026-09-09, hours after M7 itself. `src/App.tsx` carried its own
+  `groupByLine` keyed on `f.lineNo` alone — the exact pre-fix shape — so the
+  public page could publish one answer under another finding's receipt while
+  the email no longer could. Fixed by **exporting `receiptKey` from `reply.ts`**
+  and keying the board's merge with it.
+  **The generalisable half is not either patch.** Two flags were found, fixed,
+  scored and moved to *Closed* on 09-09, and both stayed live on the public
+  surface, because "closed" was recorded against the file where the defect was
+  found rather than against every renderer of the data. That is the **third**
+  instance of the H4 lesson — *closed does not mean unreachable* — and the first
+  where the still-open copy was the one a stranger can see. The structural
+  answer taken here is the same one that closed H5 and M7 themselves: **one
+  function, imported, instead of two copies that agree today.**
+
+- **The board buried its own differentiator** — found and closed 2026-09-09, not
+  scored, because it is an ordering defect rather than a false claim.
+  `documents.recent` orders by `_creationTime`, so which document leads was an
+  accident of seeding, and the accident put the Las Vegas handbook — which
+  refuses nothing — on the first screen. The comment at the top of
+  `src/App.tsx` had asserted refusal-first ordering since 09-05; it was true
+  inside a card and false at the page level for four days, which is why nobody
+  caught it reading either file alone. A visitor's first impression was
+  answers-with-quotes, which every rival on the same stack also shows. Cards
+  that refuse something now sort first, **from the findings rather than from a
+  hand-picked id**, so seeding a seventh document cannot quietly put grounding
+  back on the first screen.
 
 - **M7 (an answer could be published under another finding's quote)** opened and
   closed 2026-09-09. `groupByLine` merged two findings citing one line, keeping
