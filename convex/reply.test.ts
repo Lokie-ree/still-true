@@ -60,6 +60,22 @@ void test("a refusal is countable and reads as a search, not a verdict", () => {
   assert.match(text, /How many days after move-out/);
 });
 
+void test("a refusal claims no more than the search it performed (H5)", () => {
+  // What shipped until 2026-09-09 was "This document does not state it", and
+  // on probe-v4's contradiction fixture that was false: the late fee is on
+  // lines 22 and 23, the refusal was correct under a one-line contract, and
+  // the reader was told the document does not state a thing it states twice.
+  //
+  // Guard the CLASS, not the wording. Nothing in a refusal may assert that the
+  // document is silent, because a `not_stated` finding cannot know that — it
+  // fires both when the fact is absent and when it is split across lines.
+  const { text, html } = replyBody({ ...base, findings: [refused] });
+  for (const rendered of [text, html]) {
+    assert.match(rendered, /No single line states it/i);
+    assert.doesNotMatch(rendered, /does not state|never says|is silent/i);
+  }
+});
+
 void test("a refusal never asserts anything the finding does not store", () => {
   // The plan's mockup said the lease "defers to Michigan statute without
   // naming one". A not_stated finding holds a question key and a line count,
@@ -93,8 +109,8 @@ void test("watch is offered only on a document that can actually be watched", ()
 void test("both halves render together, refusal included", () => {
   const { text } = replyBody({ ...base, findings: [answered, refused] });
   assert.match(text, /WHAT IT REQUIRES OF YOU/);
-  assert.match(text, /WHAT IT NEVER SAYS/);
-  assert.ok(text.indexOf("WHAT IT REQUIRES") < text.indexOf("WHAT IT NEVER"));
+  assert.match(text, /WHAT NO SINGLE LINE SAYS/);
+  assert.ok(text.indexOf("WHAT IT REQUIRES") < text.indexOf("WHAT NO SINGLE"));
 });
 
 void test("a document that answered nothing still gets an honest reply", () => {
@@ -176,6 +192,94 @@ void test("two answers citing one line print that line once", () => {
   assert.match(text, /It applies after the fifth day\./);
   assert.equal(text.split("Entry may be made only").length - 1, 1);
   assert.equal(text.split("line 268").length - 1, 1);
+});
+
+// ── the invariant ───────────────────────────────────────────────────────────
+//
+// M5, M7 and the 09-04 excerpt bug were three defects in three different files
+// and one class: THE RECEIPT PUBLISHED UNDER AN ANSWER WAS NOT THAT ANSWER'S
+// RECEIPT. Each was found by forwarding a document and reading the reply, after
+// the tests passed and after `npm run gate` passed 7/7 — the gate reads the
+// `findings` table, where every quote was correct, and the defect was in what
+// the email printed.
+//
+// The test directly above this one is why that kept happening. It covers the
+// grouping M7 broke, and it builds both findings by spreading `...answered`, so
+// they carry the IDENTICAL quote. It asserts an instance. It cannot fail on M7,
+// and it passed through the whole week M7 was shipping.
+//
+// So this asserts the property instead: parse the rendered reply back into
+// blocks, and require every answer to sit above its own quote and its own line.
+// A future change that merges, reorders, dedupes or truncates receipts fails
+// here regardless of which file it lives in.
+
+// The rendered text, read back the way a person reads it: answers, then the
+// receipt printed beneath them.
+function blocks(text: string): { answers: string[]; quote: string; lineNo: number }[] {
+  const out: { answers: string[]; quote: string; lineNo: number }[] = [];
+  for (const block of text.split("\n\n")) {
+    const lines = block.split("\n");
+    const at = lines.findIndex((l) => l.startsWith('  "'));
+    const cite = lines.find((l) => /^ {2}line \d+ · read/.test(l));
+    if (at === -1 || cite === undefined) continue;
+    out.push({
+      answers: lines.slice(0, at),
+      quote: lines[at].trim().replace(/^"|"$/g, ""),
+      lineNo: Number(/line (\d+)/.exec(cite)?.[1]),
+    });
+  }
+  return out;
+}
+
+void test("every answer is printed under its OWN receipt", () => {
+  // Two findings citing one line and slicing different sentences out of it —
+  // exactly production's line 60 on 2026-09-09, where T3b's answer about
+  // 30 days' notice went out under T3a's quote, which does not mention notice.
+  const findings: ExtractedFinding[] = [
+    {
+      ...answered,
+      questionKey: "T3a",
+      answer: "They can change the terms at any time.",
+      quote: "We may modify this Agreement at any time.",
+      lineNo: 60,
+    },
+    {
+      ...answered,
+      questionKey: "T3b",
+      answer: "You get 30 days' email notice before a change takes effect.",
+      quote: "We will provide you with at least thirty (30) days' notice by email.",
+      lineNo: 60,
+    },
+    { ...answered, questionKey: "L2", lineNo: 268 },
+  ];
+
+  const printed = blocks(replyBody({ ...base, findings }).text);
+
+  for (const f of findings) {
+    if (f.verdict !== "answered") continue;
+    const carrying = printed.filter((b) => b.answers.includes(f.answer));
+    assert.equal(carrying.length, 1, `not printed exactly once: ${f.answer}`);
+    assert.equal(carrying[0].quote, f.quote, `wrong receipt under: ${f.answer}`);
+    assert.equal(carrying[0].lineNo, f.lineNo, `wrong line under: ${f.answer}`);
+  }
+});
+
+void test("identical receipts still merge, and only identical ones", () => {
+  // The property above must not be bought by undoing what the grouping is for:
+  // one line, one quote, two answers, printed once.
+  const twice: ExtractedFinding[] = [
+    { ...answered, questionKey: "L3a", answer: "The late fee is $25.00." },
+    { ...answered, questionKey: "L3b", answer: "It applies after the fifth day." },
+  ];
+  assert.equal(blocks(replyBody({ ...base, findings: twice }).text).length, 1);
+
+  // Same sentence, two different lines: two receipts, because one line number
+  // under a quote that came from two places would be a false citation.
+  const twoLines: ExtractedFinding[] = [
+    { ...answered, questionKey: "L3a", lineNo: 42 },
+    { ...answered, questionKey: "L3b", answer: "Also here.", lineNo: 99 },
+  ];
+  assert.equal(blocks(replyBody({ ...base, findings: twoLines }).text).length, 2);
 });
 
 // ── the watch's email ────────────────────────────────────────────────────────
@@ -260,7 +364,7 @@ void test("a clause that disappeared reports the refusal, not an empty quote", (
     checkedAt: Date.UTC(2026, 8, 14),
   });
   assert.match(text, /shall be returned within 30 days/);
-  assert.match(text, /Searched all 418 lines\. This document does not state it\./);
+  assert.match(text, /Searched all 418 lines\. No single line states it\./);
 });
 
 // The "a clause appeared" case used to be tested here. It no longer exists:

@@ -61,23 +61,56 @@ export type ReplyInput = {
 // That clause was written by hand for the mockup and CANNOT be generated: a
 // `not_stated` finding stores a question key and a line count and nothing else.
 // Publishing it would be the product asserting something it did not read.
+//
+// H5. "This document does not state it" is what this printed until 2026-09-09,
+// and it was a claim this system is not in a position to make.
+//
+// `extract.ts` tells the model to answer `not_stated` "including when the
+// document does say it but spreads it across lines you would have to combine".
+// So the verdict already means one of two different things, and the sentence
+// printed for both asserted the stronger one. On probe-v4's contradiction
+// fixture the late fee is on lines 22 and 23 — "a late charge of Fifty and
+// 00/100" / "Dollars ($50.00) for that month" — the refusal was CORRECT, and
+// the reader was told the document does not state a thing it states twice.
+//
+// What is actually known is exactly this: every line was searched, and no ONE
+// of them carried the answer. That is true when the fact is absent and true
+// when it is split, so it is the sentence that can be published without knowing
+// which case fired. It is weaker than what shipped before. It is not false.
 const refusalLine = (linesSearched: number) =>
-  `Searched all ${plural(linesSearched, "line")}. This document does not state it.`;
+  `Searched all ${plural(linesSearched, "line")}. No single line states it.`;
 
 // Splitting the compound questions was right for the engine contract, but it
 // left two findings citing one line with one 600-character quote printed twice
-// in a row, which reads as a bug. Two answers, one receipt: group by the line
-// they cite, preserving order of first appearance.
+// in a row, which reads as a bug. Two answers, one receipt.
+//
+// M7. It grouped on the LINE until 2026-09-09, and the comment that made that
+// safe said so out loud: two findings citing one line carried the same quote,
+// because the quote WAS the line. `excerpt` shipped on 09-04 and made that
+// false — two findings can now cite line 60 and slice different sentences out
+// of it — and nothing came back to re-read the assumption. The merge kept both
+// answers and the FIRST quote, so on production `T3b`'s "you receive at least
+// 30 days' email notice" was published under `T3a`'s quote, which does not
+// mention notice. Both findings were correct in the database. The email was
+// not.
+//
+// So the receipt is the key, not the line. Identical quotes still merge, which
+// is the duplicated 600-character receipt this function exists to prevent; a
+// different slice of the same line now prints as what it is, its own receipt.
 type Cited = { answers: string[]; quote: string; lineNo: number };
 
-function groupByLine(
+function groupByReceipt(
   answered: Extract<ExtractedFinding, { verdict: "answered" }>[],
 ): Cited[] {
-  const byLine = new Map<number, Cited>();
+  // The line alone cannot key this and the quote alone should not: two lines
+  // could in principle carry the same sentence, and merging them would publish
+  // one line number for a receipt that came from two places.
+  const byReceipt = new Map<string, Cited>();
   for (const f of answered) {
-    const seen = byLine.get(f.lineNo);
+    const key = `${f.lineNo}:${f.quote}`;
+    const seen = byReceipt.get(key);
     if (seen === undefined) {
-      byLine.set(f.lineNo, {
+      byReceipt.set(key, {
         answers: [f.answer],
         quote: f.quote,
         lineNo: f.lineNo,
@@ -86,7 +119,7 @@ function groupByLine(
       seen.answers.push(f.answer);
     }
   }
-  return [...byLine.values()];
+  return [...byReceipt.values()];
 }
 
 const FOOTER =
@@ -124,7 +157,7 @@ const DISCLAIMER =
   "This quotes and counts. It does not interpret or advise, and it is not legal advice.";
 
 export function replyBody(input: ReplyInput): { text: string; html: string } {
-  const cited = groupByLine(
+  const cited = groupByReceipt(
     input.findings.filter((f) => f.verdict === "answered"),
   );
   const missing = input.findings.filter((f) => f.verdict === "not_stated");
@@ -148,7 +181,7 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
   }
 
   if (missing.length > 0) {
-    t.push("WHAT IT NEVER SAYS", "");
+    t.push("WHAT NO SINGLE LINE SAYS", "");
     for (const f of missing) {
       t.push(
         questionFor(input.kind, f.questionKey),
@@ -199,7 +232,7 @@ export function replyBody(input: ReplyInput): { text: string; html: string } {
   }
 
   if (missing.length > 0) {
-    h.push(label("What it never says", "#8a6414"));
+    h.push(label("What no single line says", "#8a6414"));
     for (const f of missing) {
       h.push(
         `<div style="margin:0 0 16px;padding-left:14px;border-left:2px solid #dce1db">`,
