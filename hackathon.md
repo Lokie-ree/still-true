@@ -2075,3 +2075,67 @@ M7, and the fix is to key the group on the quote as well as the line.
 recorded a drop that came from running the product rather than auditing it, and
 the pattern is now five for five. Nothing broke today. Three things that were
 already broken stopped being invisible.
+
+## 2026-09-09 (evening) — the three flags were one flag, and the test is the fix
+
+A fair question got asked after the playtest: *are we not just putting band-aids
+on issues the next playtest rips off?* It is answerable, so it was measured
+before it was argued.
+
+**Code churn per working day: 1298 → 1807 → 622 → 328.** Docs churn overtook it
+on 09-08 and stayed there. That half of the worry is real and the numbers say so.
+
+**The "circles" half is not.** The three flags found that afternoon are in three
+different files at three different layers — `extract.ts` (M5), `reply.ts` (M7),
+`lines.ts` (M8). What made them feel repetitive is that two of them are **one
+class**: *the receipt published under an answer was not that answer's receipt.*
+Not going round; one bug walking down a pipeline while it got swatted at each
+station.
+
+### The thing three days of auditing had not found
+
+`reply.test.ts` covered the grouping M7 broke. It built both findings like this:
+
+```js
+{ ...answered, questionKey: "L3a", answer: "The late fee is $25.00." },
+{ ...answered, questionKey: "L3b", answer: "It applies after the fifth day." },
+```
+
+Both spread the same fixture, so both carry the **identical quote** — the exact
+assumption `excerpt` falsified on 09-04. The test asserts an instance. It passed
+all week and **could not fail on M7 in principle**.
+
+Three tests asserting three instances, and no test asserting the property. The
+gate has the same shape: it reads the `findings` table, where every quote was
+correct, and every defect this week lived in the gap between that table and the
+email nobody checks.
+
+### So the fix is the invariant, and the patches are incidental
+
+`reply.test.ts` now parses the rendered reply back into blocks and requires every
+answer to sit above its own quote and its own line number. A fourth instance, in
+a fifth file, fails it without anyone predicting where it would appear.
+
+The two patches under it are four lines. `groupByLine` keys on the receipt
+instead of the line, and the refusal stops asserting absence: **"Searched all N
+lines. No single line states it."** True when the fact is absent, true when it is
+split across lines, and weaker than what shipped before. The section header was
+making the same claim, so "WHAT IT NEVER SAYS" became "WHAT NO SINGLE LINE
+SAYS", and the no-document reply was a third copy of it.
+
+**Observed failing against the old renderer first:** 4 fail / 93 pass. 97/97
+after.
+
+**Buying the stronger sentence back is a product decision, not a bug.** It needs
+a reason field on `not_stated` so the reply has something to branch on. It is
+written down in READINESS as explicitly *not* a flag, so the next session does
+not open one.
+
+62 → 82. Two hours after 87 → 62, and by the same day's work.
+
+### What this does not fix
+
+The video does not exist, the landing page does not exist, and no outside person
+has ever used this. Those are the deliverables, and no amount of flag work is a
+substitute for them. The freeze starts here: no further probes until the video
+is shot.
