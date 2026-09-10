@@ -22,10 +22,17 @@ Live: **https://impressive-marten-163.convex.site**
 
 ## Why it can be trusted
 
-The model never writes the answer text. It reads the document and returns **line
-numbers**; the quote you see is pulled out of the source by index. So the system
-cannot show you a sentence that is not in your document — the quote *is* the
-document. That is a structural guarantee, not a prompt instruction.
+The plain sentence above each quote is the model's summary. **The quote is not.**
+The model reads the document and returns a **line number**; the quote you see is
+`slice`d out of that line on the server, by index, after the model is done
+talking. Its proposed clause text is used only to locate the cut — if it is not
+in the line character for character it is discarded and the whole line publishes.
+So the system cannot show you a quote that is not in your document — the quote
+*is* the document. That is a structural guarantee, not a prompt instruction.
+
+It is a guarantee about the quote, and only about the quote. The summary above
+it is model prose, which is why it sits above the receipt rather than instead of
+one.
 
 It can still cite a true line that does not answer the question. That is why
 every citation is visible and one click from its source.

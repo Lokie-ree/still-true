@@ -50,6 +50,16 @@ exactly how a defect fixed in `reply.ts` and alive in `App.tsx` stays
 invisible. **The mode is: compare the two surfaces that are supposed to say the
 same thing.**
 
+**Amended 2026-09-10: there is a fourth, and it is free.** H7 — the README and
+the board both claiming *"the model never writes the answer text"* when
+`extract.ts` forbids the model to copy document text into `answer`, making that
+field the one thing on the page it does write — was found by reading a published
+sentence against the prompt that produces the field it describes. No deploy, no
+mail, no model call. The other three modes compare a rendering to something.
+**This one compares a claim about the pipeline to the pipeline**, and the surface
+it applies to is every sentence in `README.md` and `src/App.tsx` that begins
+"the model" or "the system". Opened and closed the same day; see *Closed*.
+
 **The three flags were not three problems.** M5, M7 and the 09-04 excerpt bug
 were one class — *the receipt published under an answer was not that answer's
 receipt* — walking down a pipeline and being swatted at each station. H5 and M7
@@ -249,6 +259,33 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **H7 (the README and the board claimed the model never writes the answer
+  text)** opened and closed 2026-09-10. `README.md`'s "Why it can be trusted"
+  said *"The model never writes the answer text"* and the `src/App.tsx` footer
+  said *"the model returns a line number and never writes the sentence"*.
+  `extract.ts`'s prompt tells the model *never to copy document text into the
+  `answer` field* — so the plain-English answer **is** model prose, and both
+  sentences were false about it. The guarantee they were reaching for is real
+  and is about the **quote**:
+  `verify()` calls `excerpt(lines[lineNo - 1], claim.support_quote)`, `excerpt`
+  returns `whole.slice(start, end)` of the document line, and a proposed clause
+  not found in that line character for character is discarded so the whole line
+  publishes. Both places now say the summary is the model's and the quote is
+  not.
+  **Found by reading a published sentence against the prompt that produces the
+  field it describes** — a fourth discovery mode, and the cheapest one yet: no
+  deploy, no mail, no model call. The three earlier modes all compare a
+  rendering to something. This one compares a *claim about* the pipeline to the
+  pipeline.
+  **The score line does not move.** It opened and closed inside one pass and
+  never survived a pass boundary, unlike H4 on 09-08. Recorded here anyway
+  because it is the fourth retraction of the same class — *this project
+  published something about itself that its own source contradicts* — and the
+  do-not-re-flag list is the only thing that stops the next session
+  rediscovering it.
+  **Not verified on production**, which cannot be deployed from a Claude
+  session. The check after the next deploy is: load the board, read the footer.
 
 - **H5 (a refusal published a false sentence about the document)** opened and
   closed 2026-09-09. Every `not_stated` printed *"This document does not state

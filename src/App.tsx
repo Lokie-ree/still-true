@@ -333,10 +333,11 @@ export default function App() {
       </ul>
 
       <p className="mt-10 text-xs text-slate-500 dark:text-slate-400">
-        Every quote is a numbered line of the document above it, pulled out by
-        index — the model returns a line number and never writes the sentence,
-        so a quote that is not in the document cannot be shown. This quotes and
-        counts. It does not interpret or advise, and it is not legal advice.
+        The plain sentence above each quote is the model's summary. The quote is
+        not: the model returns a line number, and the sentence is cut out of your
+        document by index on the server. A quote that is not in the document
+        cannot be shown. This quotes and counts. It does not interpret or advise,
+        and it is not legal advice.
       </p>
     </main>
   );
