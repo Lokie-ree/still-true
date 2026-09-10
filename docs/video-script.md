@@ -12,6 +12,15 @@ while it is on screen. No cut between a claim and its evidence, no sped-up
 footage during a timed shot, and the source document visible beside its quote. A
 demo that asks to be trusted is the exact thing this product exists to refuse.
 
+> **Changed 2026-09-10**, after a review that read the source rather than the
+> docs. Five things moved and nothing else: beat A's refusal claim, which
+> contradicted what the board says; beat A's description of the SBC, which was
+> loose about what that document is; one clause in beat B about who wrote which
+> sentence; beat E, rewritten for the panel that is actually judging; and four
+> hazards added to the list of what will go wrong, all of them found in code and
+> none of them previously written down. The evidence for each is in
+> `docs/handoff-2026-09-10.md`.
+
 ---
 
 ## Why this is a rewrite, and what was wrong with the first one
@@ -50,11 +59,13 @@ things nobody else in the field claims.
 ## Before anything is recorded
 
 **1. Deploy `main` to production**, with the board fix merged (the PR that
-imports `refusalLine` and `receiptKey` into `src/App.tsx`). Beat A and beat D
-both put the board on camera. Until that is live the page reads *"WHAT IT NEVER
-SAYS"* and *"This document does not state it"* while the email reads *"no single
-line states it"*, and the video contradicts itself. Randall runs prod deploys;
-they are blocked from a Claude session.
+imports `refusalLine` and `receiptKey` into `src/App.tsx`), the board redesign,
+and the answer-text correction in `README.md` and the `App.tsx` footer. Beat A
+and beat D both put the board on camera. Until that is live the page reads
+*"WHAT IT NEVER SAYS"* and *"This document does not state it"* while the email
+reads *"no single line states it"*, and the video contradicts itself. One
+deploy, not three. Randall runs prod deploys; they are blocked from an agent
+session.
 
 **2. Forward the fixture, and do it days before you record.** This is the fix
 for the contradiction above and it costs one email:
@@ -68,6 +79,9 @@ body:    https://impressive-marten-163.convex.site/watch-test/lease.html
 
 Beat C says the question was asked days ago. Send it days ago and the sentence
 is true. Nothing else in the video depends on when it was sent.
+
+**Note which questions the reply asks** — lease keys or universal keys. Beat C's
+recovery path below depends on knowing it, and it costs one glance.
 
 **3. Freeze `PARSER_VERSION` for the whole session.** A bump between the
 enrolment and the edit makes `attach` re-baseline instead of diff, and the change
@@ -84,6 +98,12 @@ you keep a take. Choosing which take to ship is not faking anything; every claim
 on screen stays checkable. Shooting a take you have not read is the only version
 of this that would be dishonest.
 
+**5. Open the deployed board and look at it.** Confirm the health plan card is
+first and note what it currently refuses. The card order is derived from the
+data — a card hoists itself when any of its findings refuse — and the counts have
+moved on their own twice, 35/12 to 37/10. A claim about what a visitor sees is a
+claim about a rendering, and only looking at it settles that.
+
 ## The order it has to be shot in
 
 Not the order it appears in.
@@ -92,7 +112,9 @@ Not the order it appears in.
 2. **Shoot B** — the live send and the receipt. It is the only beat with a
    stopwatch in it and the one most likely to need takes.
 3. **Shoot A** — the board. It needs nothing live and it is easier once you have
-   watched the reply come back.
+   watched the reply come back. **Read the Livonia card before you shoot it**:
+   beat B's forward re-extracted it, so those receipts are new ones, not the 21
+   that were opened by hand.
 4. **Then** deploy the fixture edit, which is its own PR and marked
    do-not-deploy for exactly this reason.
 5. **Then** run the sweep and shoot C, the change notice.
@@ -107,13 +129,25 @@ read aloud. The health plan card is first and it opens with four refusals.
 
 **Say:**
 
-> This is a real health plan summary. The government publishes it as the model
-> other insurers copy.
+> You can read a document once. You cannot notice what it does not say, because
+> there is nothing there to notice.
 >
-> It does not tell you how to cancel it. Not buried somewhere — it is not in
-> there. Something read every line of it to be able to say that.
+> This is the government's model health plan summary — the form every insurer
+> fills in. No single line of it tells you how to cancel your coverage.
+> Something read every line to be able to say that, and I opened the source PDF
+> and checked it by hand.
 
 Let the four refusals sit on screen while you say it. Do not scroll yet.
+
+**Two things this wording is careful about**, both changed on 09-10. The screen
+says *"no single line states it"*, so the narration says the same thing —
+the earlier draft said *"it is not in there"*, which is the stronger claim
+**H5 exists to stop making**, and it would have contradicted beat D ninety
+seconds later. And the document is CMS's completed sample SBC, not a plan
+anybody is enrolled in; a judge who clicks finds a fictional plan, so "the form
+every insurer fills in" is the version that survives the click. The hand check is
+real: the 09-08 round trip verified all four refusals against sixteen search
+terms.
 
 **Why this is the opening.** Twelve entries under the tag, six on this exact
 stack, and every one of them finds what *is* in a document. Nobody claims the
@@ -151,18 +185,22 @@ Read the late-charge finding aloud, **switch to the lease, and find it** with
 `Ctrl+F`. Do not cut. A judge watching find-in-page land on the exact sentence is
 the most convincing four seconds available to this project.
 
-> I did not write that sentence and neither did the model. The model returns a
-> line *number*. The sentence is pulled out of the document by index, on the
-> server, after the model has finished talking. So it cannot show you a sentence
-> that is not in your document.
+> The plain-English line is the model's summary. The sentence under it is not.
+> The model returns a line *number*. The sentence is pulled out of the document
+> by index, on the server, after the model has finished talking. So it cannot
+> show you a sentence that is not in your document.
 
-**Do not "improve" that wording.** An earlier draft said the quote is the
-sentence that *carries* the answer. On 2026-09-09 production published *"The late
-fee is $50.00"* citing a line reading only `Dollars ($50.00) for that month.` —
-a real sentence from the document, under an answer it does not carry (**H6**).
-What this system proves is that the quote is in your document. That the quote
-*supports* the answer is a model instruction, not a structural property, and the
-narration says only the provable half.
+**Do not "improve" that wording.** It is precise in two directions and both were
+paid for. An earlier draft said the quote is the sentence that *carries* the
+answer. On 2026-09-09 production published *"The late fee is $50.00"* citing a
+line reading only `Dollars ($50.00) for that month.` — a real sentence from the
+document, under an answer it does not carry (**H6**). What this system proves is
+that the quote is in your document. That the quote *supports* the answer is a
+model instruction, not a structural property, and the narration says only the
+provable half. The first sentence is the other direction, added 09-10: the
+`answer` field **is** the model's prose — `extract.ts` explicitly forbids copying
+document text into it — so saying nothing about authorship invites the one
+question a sharp judge will ask. Naming it costs three seconds and closes it.
 
 **Optional, and strong if the timing cooperates:** put the board on half the
 screen during the wait. The lease is a public document, so the forward joins the
@@ -183,6 +221,7 @@ then the inbox thread from days ago.
 > telling you that so the next part means something.
 
 Change **$400 to $600** and **ninety days to thirty**. Publish. Run the sweep.
+Both values were confirmed against the live production page on 09-10.
 
 **Cut to the inbox and wait.** The email arrives unprompted, in the thread that
 asked days ago.
@@ -226,6 +265,9 @@ built and already tested:
 
 > I did not find a document in that message.
 
+It is also free: the no-document branch runs ahead of both spend gates, so this
+take costs no rate-limit token however many times you shoot it.
+
 **Say:**
 
 > When it cannot do the job it says so, and it does not invent a document to
@@ -253,42 +295,91 @@ eight seconds. One sentence that changed, and why, is the whole beat.
 
 ## E — the stack · 2:15–2:30
 
-> Convex holds all of it: the documents and findings, the daily re-check cron,
-> the reactive queries behind that page, and the site itself. AgentMail is the
-> inbox. Firecrawl parses the PDFs.
+Rewritten 2026-09-10. Fourteen of the seventeen judges work at Convex, OpenAI,
+AgentMail or Firecrawl, and the first draft of this beat was a credits roll. It
+costs no new footage to say what the platform actually carried.
+
+> Convex is the whole backend. One deployment holds the schema, the documents
+> and their findings, the daily cron that re-reads them, the reactive queries
+> behind that page, the workpool that retries a failed re-check, the HTTP action
+> the mail webhook posts to, and the site itself. No server, no separate host,
+> no queue. AgentMail is the inbox. Firecrawl parses the PDFs.
 >
 > There is no app. The interface is your mail client. One question, forwarded
 > once, answered with receipts, and watched until it stops being true.
 
 End on the reply, not on a logo.
 
+**The sponsor-specific depth stays out of the video.** Seventeen specialists
+cannot be served in 150 seconds, and every one of them can read. The Firecrawl
+cache and change-tracking findings, the AgentMail component evidence, the Convex
+component evaluation and the schema design that makes a bad answer
+unrepresentable all live in `README.md`, `hackathon.md` and `docs/READINESS.md`.
+They are already written and they are already better than most of what will be
+submitted.
+
 ---
 
 ## The recording checklist
 
-- [ ] Board fix merged and `main` deployed to production
+- [ ] Board fix, board redesign and the answer-text correction merged, and
+      `main` deployed to production as one deploy
 - [ ] The board reads "What no single line says", not "What it never says"
+- [ ] `README.md` and the `App.tsx` footer say the model writes the *answer*,
+      not the quote
 - [ ] The fixture forward sent **days** before recording, not on the day
+- [ ] That thread confirmed `stopped: false` — the 09-08 production STOP stopped
+      8 rows across 5 documents, and a stopped thread is silent in a way that
+      looks exactly like a broken watch
+- [ ] Which checklist the enrolment reply used, written down (beat C recovery)
 - [ ] `PARSER_VERSION` unchanged since that forward, and staying that way
-- [ ] `npm run gate` green and screenshotted before recording
+- [ ] `npm run gate` green — **7 checks**, not 6 — and screenshotted
+- [ ] `scripts/reconcile.sh` green. Beat D points a judge at `READINESS.md`; it
+      should not be drifted when they open it
+- [ ] The health plan card confirmed first on the deployed board, and its
+      current refusal count noted
 - [ ] Every reply read against its source before the take is kept (**H6**)
 - [ ] The fixture-edit PR **not** deployed until A and B are in the can
 - [ ] Sweep trigger ready: `npx convex run watch:sweep --prod`
 - [ ] Screen at a readable size. The quotes are the whole point and they are long
 
-## The three things that will go wrong
+## The things that will go wrong
 
 **The line count moves between takes.** M6: one byte-identical PDF read 171 lines
 one hour and 174 the next. Cut the number from the narration and let the reply
-show whatever it shows.
+show whatever it shows. This is why beat A says "every line" and not a figure.
 
 **An answer out-runs its line.** H6, open, unfixable before this shoot because
 its fix bumps the parser. Read the reply before keeping the take. If it happens
 on a take you like, forward again rather than talking around it.
 
+**You get five forwards, then one every six minutes.** The ingest limiter is a
+token bucket: rate 10 per hour, capacity 5. Reshooting beat B by forwarding again
+is the intended move and it is cheap for the first five. After that a take costs
+a six-minute wait, and the sixth forward in a burst comes back as the rate-limit
+reply — which is correct behaviour and terrible footage. Budget the takes, or
+plan the reshoots around the refill.
+
+**Beat C can produce silence, and it will not tell you why.** The change diff is
+keyed on question key: a question the previous reading never asked is not a
+change. This fixture has classified `lease` twice and `other` twice across four
+readings of near-identical text, and the edit is what forces a re-classify —
+while the page sits unchanged, the sweep takes the early exit and never
+reclassifies. So there is exactly one coin flip, at the worst moment. **If the
+sweep mails nothing: edit again, $600 to $700, publish, sweep again.** The second
+pass diffs against the reading the first pass just published, so it converges.
+
+**Beat B rewrites the card you are about to shoot in A.** Forwarding a URL
+already on the board finds the existing row, replaces every finding from a fresh
+model run, and patches its timestamps. That is what makes the split-screen shot
+work — but the Livonia receipts afterwards are new ones, not the 21 that were
+opened by hand. Read the card between B and A.
+
 **The change notice needs a sweep.** It will not arrive on its own until 11:17
 UTC. Run `watch:sweep` by hand and wait — on development that was 2m17s from edit
-to inbox. The wait is honest footage. Do not fake it with a cut.
+to inbox. The wait is honest footage. Do not fake it with a cut. Note that the
+sweep re-reads **every** url-backed document in the deployment, forwarded ones
+included, not just the fixture.
 
 **Do not reload the board on camera.** Cards that refuse something sort to the
 top once their findings load, so a cold reload shows a brief reorder. Leave the
@@ -330,9 +421,11 @@ Save as `A.mp4`, `B.mp4`, and so on. Redo any shot as often as you like.
 Nobody records a good first take. The third is usually fine.
 
 - **B** — the wait is real, 25 to 30 seconds, and the narration is what fills it.
-  Fluffed a line? Forward again with a slightly different subject and reshoot.
-  Scroll slowly, or better, use `Ctrl+F` to find the quote.
-- **A** — screen and voice only, once you have seen the reply come back.
+  Fluffed a line? Forward again with a slightly different subject and reshoot,
+  inside the five-forward budget above. Scroll slowly, or better, use `Ctrl+F` to
+  find the quote.
+- **A** — screen and voice only, once you have seen the reply come back and read
+  the Livonia card it changed.
 - **C** — the only shot with a real cost, because deploying the edit changes the
   page for good. **Shoot A and B first and confirm they are good.** If C goes
   wrong it can be redone: edit the clause again, $600 → $700, deploy, sweep.

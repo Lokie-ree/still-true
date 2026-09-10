@@ -2280,3 +2280,78 @@ to agree.**
 
 Score unchanged at 67. Nothing new is open; two closures were completed and one
 ordering defect closed unscored.
+
+## 2026-09-10 — the page described a guarantee it did not have
+
+A pre-shoot review read `extract.ts` against the two sentences the project
+publishes about how it works, and they disagreed.
+
+`README.md`: *"The model never writes the answer text."*
+`src/App.tsx` footer: *"the model returns a line number and never writes the
+sentence."*
+
+The prompt in `extract.ts` tells the model **never to copy document text into
+`answer`**. The plain-English answer is therefore the one field on the page that
+is entirely model prose. Both sentences were false about the thing they named.
+
+### The guarantee is real, and it is about the quote
+
+An earlier reading had gone the other way and worried that `excerpt` *weakened*
+the grounding claim, because the model proposes clause text. It does not.
+`verify()` calls `excerpt(lines[lineNo - 1], claim.support_quote)`; `excerpt`
+returns `whole.slice(start, end)` of the document line. The model's string is
+used only to locate the cut, and if it is not present in the line character for
+character it is discarded and the whole line publishes. The model's text never
+reaches a reader.
+
+So *"neither I nor the model wrote that sentence"* is defensible — **about the
+quote, and only about the quote.** Both places now say so:
+
+> The plain sentence above each quote is the model's summary. The quote is not:
+> the model returns a line number, and the sentence is cut out of your document
+> by index on the server. A quote that is not in the document cannot be shown.
+
+That is a weaker sentence than the one it replaces, and it is the one that is
+true. The pattern is now familiar enough to name: **this project's retractions
+are all the same shape.** H5 retracted "this document does not state it." M7
+retracted a receipt printed under the wrong answer. The board retracted both a
+second time because nothing tested the page. H7 retracts a claim about the
+mechanism itself. Four for four, the false version was the stronger one and the
+correction cost a clause.
+
+### A fourth discovery mode, and it is free
+
+`READINESS.md` had three: re-reading code found nothing all week; sending mail
+found five flags; comparing the two renderers found three more in twenty
+minutes. This one is none of those. It compares **a claim about the pipeline to
+the pipeline** — a published sentence beside the prompt that produces the field
+it describes. No deploy, no mail, no model call, and it took one grep.
+
+The surface it applies to is small and enumerable: every sentence in `README.md`
+and `src/App.tsx` that begins *"the model"* or *"the system"*. That is a checkable
+list, and it is worth walking before the submission rather than after.
+
+### Also in this pass
+
+The 09-10 script rewrite lands with it: beat A no longer says *"it is not in
+there"* over a screen reading *"no single line states it"* — the same
+self-contradiction H5 exists to stop making, and it would have contradicted beat
+D ninety seconds later. Beat A now says *"the government's model health plan
+summary — the form every insurer fills in"*, because the SBC is CMS's completed
+sample and a judge who clicks finds a fictional plan. Beat B says the summary is
+the model's and the quote is not, out loud, so the video and the footer agree.
+Beat E names what the platform carried instead of rolling credits.
+
+`docs/shoot-card.md` is new and is the only thing that goes next to the camera:
+order, five hazards found in code rather than in the docs — the classifier
+re-roll that mails nothing and logs nothing, the token bucket at five forwards,
+beat B silently re-extracting the card that was hand-checked 21 of 21 — and one
+rule, which is *read the reply before you keep the take*.
+
+`docs/handoff-2026-09-10.md` carries the rest, including the judge panel
+(fourteen of seventeen work at the four sponsors) and the decided board
+redesign, which is not started.
+
+Score unchanged at 67. H7 opened and closed inside the pass and never survived a
+pass boundary, so it moves no number; it is on the do-not-re-flag list because
+it is the fourth instance of one class.
