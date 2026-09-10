@@ -58,13 +58,17 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-09
+## Status — 2026-09-10
 
 **Live on production and answering real mail.**
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and
-  one refusal.
+  one refusal. The board was designed on 2026-09-10 and is now a pleading page:
+  line numbers in a gutter down the left edge, the quote as the largest text on
+  a card, the model's summary demoted to an annotation above it — and a refusal
+  rendered with an EMPTY gutter, because there is no line to name. No new claim
+  is made in words; the hierarchy stopped contradicting the one already there.
 - **P4 — the watch:** shipped, and the schedule has now run without a hand on it.
   A sweep on development caught both clauses edited on a test fixture, quoted each
   before and after with its line, stamped nothing on the other 22 answered

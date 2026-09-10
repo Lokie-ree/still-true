@@ -2355,3 +2355,74 @@ redesign, which is not started.
 Score unchanged at 67. H7 opened and closed inside the pass and never survived a
 pass boundary, so it moves no number; it is on the do-not-re-flag list because
 it is the fourth instance of one class.
+
+## 2026-09-10 (afternoon) — the board became a pleading page
+
+The page had been a scaffold with real data in it since 09-02, when `index.css`
+recorded a deliberate deferral: *the typeface is the platform's own for now,
+because picking a webfont before the interface is designed would be guessing.*
+That note is now removed, because the guessing is over.
+
+### The hierarchy was arguing against the product
+
+The model's summary was bold. The quote — which is the entire claim, and the
+only text on a card that came out of the document — was small grey italic under
+it. The page led with the one part of a finding the model writes, on a product
+whose argument is that the model does not write the part that matters.
+
+So: **the quote is now the largest text on the card**, set in Newsreader, and
+the summary is an annotation above it in the chrome face. Line numbers moved
+into a real gutter down the left edge, one continuous rule, like a pleading
+page. **A refusal renders with an empty gutter** — no line number, because there
+is no line. That is the thesis stated before anyone reads a word, and it cost no
+new sentence.
+
+The colour decision follows from the same place: **the one accent belongs to
+absence.** "What no single line says" is the only thing on the page with a
+colour on it. Answers get none and earn attention through size instead. Green
+for good and red for bad would have put the differentiator underneath.
+
+Public Sans for chrome, because it is the US Web Design System's face and this
+product quotes government model documents. IBM Plex Mono for line numbers,
+hashes and timestamps, where it is doing an index job rather than signalling
+"technical". Light only — `prefers-color-scheme` meant the shooter's OS theme
+decided what beats A and D of the video looked like, and nothing on this page
+was gaining anything from the dark variant.
+
+### What was not allowed to move
+
+The board is a second renderer, and 09-09 is the reason that sentence is in the
+file header. `refusalLine` and `receiptKey` are still **imported** from
+`reply.ts`; `questionFor` is still imported from `questions.ts`; refusals still
+come first inside a card; refusing documents are still hoisted by CSS `order`
+derived from the data rather than by a hand-picked id; `PublicDocument` is still
+`Omit<Doc<"documents">, "watchError">`. **No new factual claim was added to the
+page.** Every sentence added is a sentence `reconcile.sh` has to keep true, and
+the redesign added none.
+
+### Verified by opening it, which is the whole point
+
+Rendered on `charming-kookabura-768` (**dev**) and read: the SBC card's four
+refusals sit against an empty gutter, the superseded clause on the Northfield
+fixture strikes through in serif with its own line number in the same gutter as
+the current one, and the footer carries the corrected sentence. The first
+alignment attempt opened a *second* gutter inside the first for the superseded
+clause and was fixed to re-enter the page's one gutter. Mobile at 390px holds;
+no console errors; no horizontal overflow.
+
+A dev server already running on this machine was serving the same source against
+**production's** public queries, which incidentally answered a question the
+pre-shoot review had left open: on production the SBC card is first and refuses
+four. That is the board's own data read through a read-only query, not a
+deployment — production is still unchanged and still cannot be deployed from
+here.
+
+### The stagger, and what it is approximating
+
+Cards fade and rise on entry, staggered. They already reorder as findings
+resolve, which is why the script says do not reload on camera; the stagger turns
+that reflow into choreography instead of a flicker. The delay keys off DOM index
+within the two `order` buckets rather than final visual position, so a hoisted
+card can animate a beat out of sequence — imperceptible at six cards and 50ms,
+and marked `ponytail:` with the upgrade path. `prefers-reduced-motion` turns it
+off.
