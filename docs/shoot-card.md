@@ -9,13 +9,23 @@ can put a false claim in this video.
 
 ## Before you hit record
 
+- [ ] **The notice from the cron is in the thread.** If it is not, beat C has no
+      footage — go to *IF THIS HAPPENS*.
+- [ ] **The diff actually fired.** One read-only command, no mail, no model:
+      ```
+      npx convex run --prod --inline-query 'const d=(await ctx.db.query("documents").take(200)).find(x=>x.url?.includes("watch-test")); const f=await ctx.db.query("findings").collect(); return {kind:d.kind, changed:f.filter(x=>x.documentId===d._id&&x.changedAt!=null).length};'
+      ```
+      `changed` must be 2. If it is 0, the classifier re-rolled between readings.
 - [ ] Do Not Disturb on. Slack, Discord, Steam quit.
 - [ ] Three tabs: board, Gmail, Livonia lease. Bookmarks bar hidden. Zoom 125%.
 - [ ] Gmail searched for `still-true` so the list is clean.
 
 ## Order
 
-**B** → read the Livonia card → **A** → deploy the fixture edit → sweep → **C** → **D** → **E**
+**B** → read the Livonia card → **A** → **C** → **D** → **E**
+
+No deploy on shoot day. The fixture edit went out Friday; the cron found it at
+11:17 UTC.
 
 Shoot one throwaway run of all five first. Delete it. That's the plan, not a failure.
 
@@ -51,15 +61,16 @@ Health plan card first, four refusals on screen. Don't scroll.
 
 ## C · the change nobody asked for
 
-Say this **before** you edit:
+**Nothing here is done on camera.** The edit, the deploy and the detection all
+happened yesterday and overnight. You are showing the consequence.
 
-- This page is a fixture I control. I'm about to change it on purpose, and I'm
+Fixture on screen as it now reads. Then cut to the inbox, notice already in it.
+
+- This page is a fixture I control. I changed it yesterday, on purpose, and I'm
   telling you so the next part means something.
-
-Edit **$400 → $600** and **ninety days → thirty**. Publish. Sweep. Cut to inbox. Wait.
-
-- I asked one question about this page. Once. Before I started recording. I
-  didn't ask for this.
+- I asked one question about this page. Once, days ago. Then I went to bed.
+- *(point at the timestamp)* That arrived at 11:17 UTC. I didn't run it. It's a
+  daily job, and it found this while nobody was looking.
 - Two things I'd quoted don't read the same way. It's not telling me the lease
   got worse — it isn't qualified to judge that. It's telling me these aren't the
   words that were there.
@@ -106,7 +117,8 @@ End on the reply. Not a logo.
 | **Answer doesn't match its quote** | H6. Forward again, new take. Don't talk around it. |
 | **Line count differs from last take** | M6, expected. Say no numbers you can't see on screen. |
 | **6th forward comes back a rate-limit reply** | Bucket's empty. 5 per burst, then one every 6 min. Wait or shoot A. |
-| **Sweep mails nothing in C** | Reclassified. Edit again $600 → $700, publish, sweep. It converges. |
+| **Cron mailed nothing overnight** | Reclassified. Off camera: edit $600 → $700, deploy, `watch:recheck` (NOT `sweep`). It converges. |
+| **Not sure the diff will work** | Read it before you shoot — the `kind` check under *Before you hit record*. |
 | **Board reorders on screen** | You reloaded. Leave the tab open. |
 | **Fluffed a line** | Forward again, different subject. Third take is usually the one. |
 

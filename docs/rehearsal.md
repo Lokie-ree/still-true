@@ -19,9 +19,10 @@ Then, on that thread:
       indistinguishable from a broken watch, and the 09-08 production STOP
       stopped 8 rows across 5 documents.
 - [ ] **Write down which questions the reply asked** — L3a/L4a, or U2/U3b.
-      Beat C's edit forces a re-classify, and if it lands on the other checklist
-      the sweep mails nothing and logs nothing. Knowing which checklist you
-      started on is how you recognise that in ten seconds instead of ten minutes.
+      Friday's edits force a re-classify, and if a reading lands on the other
+      checklist the diff finds no prior question to compare and mails nothing,
+      with no error anywhere. Knowing which checklist you started on is how you
+      recognise that in ten seconds instead of ten minutes.
 
 That is the whole night's obligation. Everything else below is practice.
 
@@ -52,6 +53,11 @@ so that if the wording drifts on camera the meaning does not.
 
 ## Friday — the machine, dry
 
+**Friday is the day the fixture changes.** Beat C is no longer shot live; the
+edit, the deploy and the detection all happen today and overnight, and Saturday
+shows the consequence. Reasons are in `video-script.md` under *The change happens
+the day before*.
+
 Morning:
 
 - [ ] `npm run gate` (7 checks) and `scripts/reconcile.sh`. Both green. Beat D
@@ -65,18 +71,49 @@ Morning:
       today, not Saturday. Do not shoot against a page you saw for the first
       time an hour earlier.
 
+Midday — **prove the chain on a clause the video does not use.**
+
+The change is consumable: once a change is detected and published, the new
+reading is the baseline and the next read finds nothing. A rehearsal that moves
+the late charge **spends** the late charge. So:
+
+- [ ] Edit the entry notice, **four hours → six hours**. Leave $400 and ninety
+      alone. Deploy.
+- [ ] Re-check that one document — **never `watch:sweep`**, which re-reads every
+      url-backed document in the deployment including private forwards:
+      ```
+      npx convex run watch:recheck '{"documentId":"<id>","url":"<fixture url>","title":"<title>"}' --prod
+      ```
+- [ ] An email arrives quoting four hours and six hours with their lines. If it
+      does, the whole chain works and you still have a day to fix it if it did
+      not.
+
 Afternoon — **the full dry run.** Screen recorder on, camera off, no mail sent.
 Walk B → A → C → D → E with the tabs, the Ctrl+F, the scroll, the cuts, saying
 every line. Where beat B waits for a reply, sit in silence for twenty seconds
-and keep talking after. Where beat C waits for the sweep, do the same.
+and keep talking after. Beat C no longer waits for anything — it is two tabs and
+a timestamp — so rehearse the cut into the inbox and the point at the clock.
 
 You are rehearsing **the hands and the pauses**, which is where takes actually
 die. Watch it back once at 1.5×. You are looking for two things only: places you
 scrolled when you meant not to, and places you stopped talking.
 
+Evening — **the real edit, then hands off.** Last thing you do on Friday:
+
+- [ ] **$400 → $600** and **ninety days → thirty**. Deploy. Stop touching it.
+- [ ] Do **not** re-check it by hand. The 11:17 UTC cron finding it unprompted is
+      the entire beat; running the check yourself spends the change and leaves
+      you nothing to show.
+
 ---
 
 ## Saturday — shoot
+
+**First, before anything else:** the notice from the overnight cron is in the
+thread, and the `kind` check on the shoot card reports `changed: 2`. If it
+reports 0 the classifier re-rolled between readings — edit again ($600 → $700),
+deploy, run `watch:recheck`, and shoot later. All of that is off camera, which
+is the whole reason it was moved off camera.
 
 Card is next to the camera. Do the throwaway run of all five first and delete
 it, as written. That is the plan, not a warm-up you can skip.
@@ -101,9 +138,10 @@ the reply landing, and you do not need to fake it, because you have already read
 one: the enrolment reply from tonight is sitting in that thread, and it is the
 same shape.
 
-Same logic for `watch:sweep`: it re-reads **every** url-backed document in the
-deployment, private forwards included. Running it to see what happens is a real
-fan-out, not a fixture-only action. Run it when the camera is on.
+`watch:sweep` is now never run by hand at all. It re-reads **every** url-backed
+document in the deployment, private forwards included, and there is no reason to
+take that fan-out when `watch:recheck` does one document down the same
+`readAndPublish` path. The cron is the only thing that sweeps.
 
 ---
 

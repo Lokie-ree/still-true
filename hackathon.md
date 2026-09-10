@@ -2426,3 +2426,54 @@ within the two `order` buckets rather than final visual position, so a hoisted
 card can animate a beat out of sequence — imperceptible at six cards and 50ms,
 and marked `ponytail:` with the upgrade path. `prefers-reduced-motion` turns it
 off.
+
+## 2026-09-10 (evening) — the riskiest thing in the video was a deploy, so it left the video
+
+Beat C had the shooter edit the fixture on camera, publish, and run
+`watch:sweep` by hand, while narrating. Three things wrong with that, and the
+third is the one that mattered.
+
+**`npm run deploy` is not a demo action.** It pushes the functions, builds the
+Vite client and re-uploads the whole static bundle. Running it mid-shoot means a
+slow all-or-nothing operation with dead air over it, and a dirty working tree
+shipping live on camera.
+
+**`watch:sweep` was the wrong entry point and always had been.** `watchable`
+filters on `url !== null`, not on `isPublic`, so a hand-run sweep re-reads every
+url-backed document in the deployment — private forwards included. `watch:recheck`
+already exists, takes one `documentId`, and is exactly what `sweep` enqueues per
+document. **The fix was a function that had been in the file the whole time**,
+which is the second time this week the answer was already in the repo.
+
+### The third one is the argument, not the mechanics
+
+Running the sweep by hand undercuts the sentence the beat exists for. *"I did not
+ask for this"* is weaker when the viewer has just watched you ask for it.
+
+So the change now happens **the day before**, and the daily cron finds it at
+11:17 UTC with nobody watching. *Unprompted* becomes literally true, and the beat
+gains an on-screen timestamp that a viewer can check — which is the only kind of
+claim this video makes. Nothing is faked and nothing is hidden: the narration
+still says out loud, first, that the page was changed on purpose.
+
+**The change is consumable, and that constrains the rehearsal.** Once a change is
+detected and published the new reading is the baseline and the next read finds
+nothing — the same shape as Firecrawl's `changeTracking`, where reading the
+status spends it. A Friday rehearsal that moves the late charge SPENDS the late
+charge. So Friday proves the chain on the entry notice (four hours to six), a
+clause the video never quotes, and leaves $400 and ninety alone.
+
+### What is left to fail, and it is now checkable before a take
+
+The classifier re-roll. Every hash move forces a re-classify, and if two
+consecutive readings land on different checklists the diff finds no prior
+question and mails nothing, with no error anywhere. That has not changed.
+
+What changed is that it is now **readable before the camera is on**, with one
+read-only query that sends no mail and calls no model: the fixture's `kind` and
+the count of findings carrying a `changedAt`. `changed` must be 2. If it is 0 the
+re-roll happened, and the recovery — edit again, deploy, `watch:recheck` — is off
+camera, which is the whole reason it was moved off camera.
+
+`docs/video-script.md`, `docs/shoot-card.md` and `docs/rehearsal.md` all carry
+the new order. Shoot day now contains no deploy at all.

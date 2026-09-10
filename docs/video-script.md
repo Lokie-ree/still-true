@@ -212,22 +212,32 @@ sentence of explanation.
 
 ## C — the change nobody asked for · 1:15–1:55
 
-**On screen:** the fixture lease with the late charge visible, then the edit,
-then the inbox thread from days ago.
+**On screen:** the fixture lease as it now reads, then the inbox thread from days
+ago with the notice already in it.
 
-**Say it before making the edit, not after:**
+**Nothing in this beat is done on camera. Changed 2026-09-10** — the edit, the
+deploy and the detection all happen before the shoot, and the beat is the
+consequence rather than the procedure. See *The change happens the day before*
+below for why that is stronger and not weaker.
 
-> This page is a fixture I control. I am about to change it on purpose, and I am
+**Say the honest line first, exactly as before:**
+
+> This page is a fixture I control. I changed it yesterday, on purpose, and I am
 > telling you that so the next part means something.
 
-Change **$400 to $600** and **ninety days to thirty**. Publish. Run the sweep.
-Both values were confirmed against the live production page on 09-10.
+The change is **$400 to $600** and **ninety days to thirty**. Both values were
+confirmed against the live production page on 09-10.
 
-**Cut to the inbox and wait.** The email arrives unprompted, in the thread that
-asked days ago.
+**Cut to the inbox.** The notice is already there, in the thread that asked days
+ago.
 
-> I asked one question about this page, once, before I started recording. I did
-> not ask for this.
+> I asked one question about this page. Once, days ago. Then I went to bed.
+>
+> That arrived at 11:17 UTC. I did not run it. It is a daily job, and it found
+> this while nobody was looking.
+
+Point at the timestamp while saying it. It is on screen and it is checkable,
+which is the only kind of claim this video makes.
 
 Read the notice on screen. It quotes the old clause and the new one, each with
 its line.
@@ -243,6 +253,43 @@ without saying it:**
 > change is only reported when a hash of the parsed text has moved **and** the
 > exact clause it quoted is gone from the document. Both gates are string
 > comparisons. Neither asks the model a second time.
+
+### The change happens the day before, and that is the point
+
+The earlier version had the shooter edit the fixture on camera, publish, and run
+`watch:sweep` by hand. Three problems, and the third is the real one:
+
+1. **`npm run deploy` rebuilds and re-uploads the entire site and pushes the
+   functions.** That is not an operation to run while talking, and a dirty
+   working tree ships live on camera.
+2. **`watch:sweep` re-reads every url-backed document in the deployment**,
+   private forwards included — `watchable` filters on `url !== null`, not on
+   `isPublic`. It is a real fan-out, not a fixture-only action.
+3. **Running the sweep by hand quietly undercuts the sentence the beat exists
+   for.** "I did not ask for this" is weaker when the viewer has just watched
+   you ask for it. The cron asking instead makes *unprompted* literally true and
+   puts a timestamp on screen that proves it.
+
+So: edit and deploy on Friday, let the 11:17 UTC cron find it Saturday morning,
+shoot Saturday afternoon. Nothing is faked and nothing is hidden — the narration
+says out loud that the change was made deliberately, the day before.
+
+**The change is consumable.** Once a change is detected and published, the new
+reading becomes the baseline and the next read finds nothing. So a rehearsal that
+moves the late charge SPENDS the late charge. Prove the chain on a clause the
+video does not use — the entry notice, four hours to six — and leave $400 and
+ninety alone for the real one.
+
+**If the cron mails nothing**, the recovery is off camera and unchanged in
+substance: edit again, then run the single-document re-check rather than the
+sweep.
+
+```
+npx convex run watch:recheck '{"documentId":"<id>","url":"<fixture url>","title":"<title>"}' --prod
+```
+
+`recheck` is what `sweep` enqueues per document, so it exercises the same
+`readAndPublish` path with none of the fan-out.
 
 The first draft put a measurement in that paragraph — two disagreements in
 forty-seven answers across two runs. It is a real number and it is in the README.
