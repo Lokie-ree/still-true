@@ -2477,3 +2477,76 @@ camera, which is the whole reason it was moved off camera.
 
 `docs/video-script.md`, `docs/shoot-card.md` and `docs/rehearsal.md` all carry
 the new order. Shoot day now contains no deploy at all.
+
+## 2026-09-10 (night) — three things the audit found after the design was called done
+
+Asked whether any stone was left unturned. The honest answer was no, and turning
+them over cost three fixes.
+
+### `npm run gate` and `scripts/reconcile.sh`, actually run
+
+7/7 on production `impressive-marten-163`, read-only: 17 functions and 2 public,
+6 public documents all `isPublic`, 37 answered findings all quoted with a line
+number, last sweep 9.6h ago, no document failing its re-check, 18 threads all
+bare addresses.
+
+Reconcile: **CONFIRMED 74, DRIFTED 1**. The one drift was `README.md` claiming
+**91 tests** against a suite that reports 97. Fixed. That is the fourth time a
+number in the README has drifted and the fourth time the script caught it, which
+is the argument for the script.
+
+### The gutter failed its own accessibility floor
+
+The palette shipped that afternoon put `faint` at **2.9:1** on the card ground,
+and `faint` was carrying the LINE NUMBERS — the single element the whole redesign
+is built around. Below the 4.5 floor for text that size, and worse, it is exactly
+the thin small text that mushes first under video compression.
+
+Measured rather than eyeballed, every token against both grounds. The ramp is now
+ink ~15, muted ~7.5, faint ~4.6, absent ~6.4, in **both** themes, so neither
+reads flatter than the other. `rule` stays at ~1.5 and is exempt: it is a
+hairline, and the line numbers beside it carry the meaning.
+
+**The lesson is not "check contrast".** It is that the token doing the most
+important job in a design is the one most likely to have been chosen for how
+quiet it looked.
+
+### Dark, and the reversal that goes with it
+
+The board ships **dark**. The 09-10 afternoon decision was "light only", on the
+grounds that `prefers-color-scheme` let the shooter's OS decide what the video
+looked like. That reason survives intact — a committed dark theme removes the
+variable just as completely — and Randall's call is that dark reads better on
+camera.
+
+Recorded as a reversal because the concern was real and was overruled: the design
+is a paper exhibit and dark works against that metaphor, and beats B and C cut
+between Gmail's white and the board. Both palettes are defined whole and the
+switch is one attribute in `index.html`, so Friday A/Bs them against the actual
+camera rather than a screenshot. That is the cheap measurement this project keeps
+saying to run first.
+
+Two fixes fell out of rendering it: the serif quote went to weight 500, because a
+400 serif thins out on a dark ground and the quote is supposed to be the heaviest
+thing on the card; and **the gutter rule ran straight through both section
+labels**, invisible on paper and obvious on dark. The labels moved into the
+content column, where they align with everything else and where they should have
+been anyway.
+
+### Also turned over
+
+`docs/video-script.md` still described the old live-deploy beat C in **three**
+sections after beat C itself had been rewritten — the shoot order, the recording
+checklist, and the things-that-will-go-wrong list. Fixed, and `CLAUDE.md` and
+`AGENTS.md` now name all four places a shoot-mechanics change has to reach. This
+is the second-renderer defect again, in prose this time.
+
+`watch:recheck` was recommended as the recovery command without anyone having run
+it. Run on **dev**: `lastCheckedAt` moved to 21:03:41Z, `watchError` null, line
+count unchanged at 94, findings intact. It takes the early exit cleanly on an
+unchanged page. The command form in the shoot card is now proven rather than
+assumed.
+
+**Left open on purpose:** `public/og.jpg` is still a screenshot of the old
+scaffold board, so every link preview shows a page that no longer exists. It is
+Randall's call whether to reshoot it before the submission.

@@ -172,7 +172,10 @@ function Findings({
         {/* First, deliberately. See the note at the top of this file. */}
         {missing.length > 0 && (
           <>
-            <div className="col-span-2">
+            {/* Column two, not spanning: the gutter rule runs the height of the
+                findings block, and a full-width label collides with it. Aligned
+                with the content instead, which is also where it belongs. */}
+            <div className="col-start-2 pl-5">
               <p className={`${label} text-absent`}>What no single line says</p>
             </div>
             {missing.map((f) => (
@@ -193,7 +196,7 @@ function Findings({
 
         {cited.length > 0 && (
           <>
-            <div className="col-span-2">
+            <div className="col-start-2 pl-5">
               {/* No colour. The accent belongs to absence; an answer earns
                   attention through the size of its quote. */}
               <p className={`${label} text-faint`}>What it requires of you</p>
@@ -214,7 +217,7 @@ function Findings({
                 ))}
                 {/* The claim. Largest text on the card, and the only text on it
                     that came out of the document. */}
-                <blockquote className="mt-1.5 font-serif text-[1.2rem] leading-[1.55] text-ink">
+                <blockquote className="mt-1.5 font-serif text-[1.2rem] font-medium leading-[1.55] text-ink">
                   {c.quote}
                 </blockquote>
 
@@ -240,7 +243,7 @@ function Findings({
                       <p className={`${label} text-absent`}>
                         Changed {shortDate(c.changedAt)}
                       </p>
-                      <blockquote className="mt-1 font-serif text-[1.05rem] leading-[1.5] text-faint">
+                      <blockquote className="mt-1 font-serif text-[1.05rem] font-medium leading-[1.5] text-faint">
                         <s>{c.previousQuote}</s>
                       </blockquote>
                     </div>
@@ -276,7 +279,7 @@ function DocumentCard({ d, index }: { d: PublicDocument; index: number }) {
         // corpus grows, lift `refuses` to the parent and delay by real index.
         animationDelay: `${(refuses ? 0 : 0.15) + index * 0.05}s`,
       }}
-      className="card-in rounded-sm border border-rule bg-card p-6 shadow-[0_1px_2px_rgba(34,31,26,0.04)]"
+      className="card-in rounded-sm border border-rule bg-card p-6"
     >
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-[1.05rem] font-semibold leading-snug tracking-[-0.01em]">
@@ -284,7 +287,7 @@ function DocumentCard({ d, index }: { d: PublicDocument; index: number }) {
         </h2>
         <span className={`${label} shrink-0 text-faint`}>{d.kind}</span>
       </div>
-      <p className="mt-1.5 text-[0.78rem] text-muted">
+      <p className="mt-1.5 font-mono text-[11px] leading-5 text-muted">
         {d.url ? (
           <a
             href={d.url}

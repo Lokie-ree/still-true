@@ -109,15 +109,16 @@ claim about a rendering, and only looking at it settles that.
 Not the order it appears in.
 
 1. Deploy, then send the fixture forward (steps 1 and 2 above), days ahead.
-2. **Shoot B** — the live send and the receipt. It is the only beat with a
+2. **The day before the shoot**, deploy the fixture edit and then leave it alone.
+   The 11:17 UTC cron finds it overnight. **No deploy happens on shoot day** —
+   see *The change happens the day before* under beat C.
+3. **Shoot B** — the live send and the receipt. It is the only beat with a
    stopwatch in it and the one most likely to need takes.
-3. **Shoot A** — the board. It needs nothing live and it is easier once you have
+4. **Shoot A** — the board. It needs nothing live and it is easier once you have
    watched the reply come back. **Read the Livonia card before you shoot it**:
    beat B's forward re-extracted it, so those receipts are new ones, not the 21
    that were opened by hand.
-4. **Then** deploy the fixture edit, which is its own PR and marked
-   do-not-deploy for exactly this reason.
-5. **Then** run the sweep and shoot C, the change notice.
+5. **Shoot C** — the change notice that is already sitting in the thread.
 6. Shoot D and E last.
 
 ---
@@ -386,8 +387,13 @@ submitted.
 - [ ] The health plan card confirmed first on the deployed board, and its
       current refusal count noted
 - [ ] Every reply read against its source before the take is kept (**H6**)
-- [ ] The fixture-edit PR **not** deployed until A and B are in the can
-- [ ] Sweep trigger ready: `npx convex run watch:sweep --prod`
+- [ ] The fixture edit deployed **the day before**, and not touched since
+- [ ] The overnight change notice is in the thread, and the diff actually fired:
+      the fixture's `kind` plus its count of findings carrying a `changedAt`,
+      read with one read-only query. **`changed` must be 2.** Sends no mail,
+      calls no model
+- [ ] Recovery command ready if it is 0 — `watch:recheck` on the one document,
+      **never `watch:sweep`**
 - [ ] Screen at a readable size. The quotes are the whole point and they are long
 
 ## The things that will go wrong
@@ -411,10 +417,15 @@ plan the reshoots around the refill.
 keyed on question key: a question the previous reading never asked is not a
 change. This fixture has classified `lease` twice and `other` twice across four
 readings of near-identical text, and the edit is what forces a re-classify —
-while the page sits unchanged, the sweep takes the early exit and never
-reclassifies. So there is exactly one coin flip, at the worst moment. **If the
-sweep mails nothing: edit again, $600 to $700, publish, sweep again.** The second
-pass diffs against the reading the first pass just published, so it converges.
+while the page sits unchanged, a read takes the early exit and never
+reclassifies. So there is exactly one coin flip.
+
+**It is no longer at the worst moment, and that is the point of moving beat C off
+shoot day.** The flip now resolves overnight, and you read the result before the
+camera is on rather than discovering it in a take. **If the cron mailed nothing:
+edit again, $600 to $700, deploy, and run `watch:recheck` on that one document.**
+The second pass diffs against the reading the first pass just published, so it
+converges — and all of it is off camera.
 
 **Beat B rewrites the card you are about to shoot in A.** Forwarding a URL
 already on the board finds the existing row, replaces every finding from a fresh
@@ -422,11 +433,19 @@ model run, and patches its timestamps. That is what makes the split-screen shot
 work — but the Livonia receipts afterwards are new ones, not the 21 that were
 opened by hand. Read the card between B and A.
 
-**The change notice needs a sweep.** It will not arrive on its own until 11:17
-UTC. Run `watch:sweep` by hand and wait — on development that was 2m17s from edit
-to inbox. The wait is honest footage. Do not fake it with a cut. Note that the
-sweep re-reads **every** url-backed document in the deployment, forwarded ones
-included, not just the fixture.
+**The change notice arrives at 11:17 UTC and not before**, which is exactly why
+the edit goes out the day before. Nothing is run by hand on shoot day and there
+is no wait to film — the notice is in the thread when you sit down.
+
+**Two notices will be in that thread, not one.** Friday's proving run on the
+entry notice mails into the same thread as Saturday's cron run on the late
+charge. That is honest and it is arguably better footage — it happened twice,
+unprompted, on a schedule — but **know which one you are pointing at** before the
+take, and read the timestamps.
+
+**`watch:sweep` is never run by hand.** It re-reads every url-backed document in
+the deployment, forwarded ones included. `watch:recheck` takes one `documentId`
+and is what the sweep enqueues per document anyway.
 
 **Do not reload the board on camera.** Cards that refuse something sort to the
 top once their findings load, so a cold reload shows a brief reorder. Leave the

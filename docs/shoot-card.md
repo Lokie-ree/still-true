@@ -117,6 +117,7 @@ End on the reply. Not a logo.
 | **Answer doesn't match its quote** | H6. Forward again, new take. Don't talk around it. |
 | **Line count differs from last take** | M6, expected. Say no numbers you can't see on screen. |
 | **6th forward comes back a rate-limit reply** | Bucket's empty. 5 per burst, then one every 6 min. Wait or shoot A. |
+| **Two change notices in the thread** | Expected. Friday's proving run (entry notice) + Saturday's cron (late charge). Check the timestamp before you point. |
 | **Cron mailed nothing overnight** | Reclassified. Off camera: edit $600 → $700, deploy, `watch:recheck` (NOT `sweep`). It converges. |
 | **Not sure the diff will work** | Read it before you shoot — the `kind` check under *Before you hit record*. |
 | **Board reorders on screen** | You reloaded. Leave the tab open. |
