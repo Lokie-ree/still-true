@@ -2819,3 +2819,77 @@ diff will not see.
 **The step that found it had been argued about twice for being redundant.** It
 ran once, on production, and it turned an empty inbox at six tomorrow morning
 into an afternoon with time in it.
+
+## 2026-09-11 (evening) — the sweep has been apologising to Firecrawl instead of pacing itself
+
+Randall opened the Convex logs. **Eleven `Firecrawl 429` failures in 42 seconds**
+across the 11:17 UTC sweep, and the question that came with them was the right
+one: is this Firecrawl's problem or ours?
+
+Both, and the half that is ours is the half that matters.
+
+The limit is Firecrawl's and it is per minute. What turns a transient limit into
+a document carrying a `watchError` for a day is the retry schedule:
+
+```
+maxParallelism: 2
+defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 10_000, base: 2 }
+```
+
+`maxParallelism` caps **concurrency, not rate.** Two at a time still puts the
+whole corpus through in seconds, and the corpus is 14 url-backed documents now —
+three of them PDFs, which cost Firecrawl more than one request each. Then all
+three attempts land at 0s, 10s and 30s: **inside the same sixty-second window
+that is already exhausted.** Firecrawl said `retry after 40s, resets at
+11:18:07`. We came back at 10s and at 30s, and spent the document's last two
+attempts on a limit that would have cleared by itself.
+
+Backoff is now 60s — attempts at 0s, 60s, 120s, each in a minute Firecrawl has
+reset. One constant. A daily job has all the time in the world; what it cannot
+afford is arriving three times during the one minute it is not welcome.
+
+### The comment above the config had already expired
+
+> *"two at a time finishes a six-document corpus in well under a minute"*
+
+Written when the corpus **was** six. It is fourteen. Nobody re-derived the sizing
+when documents were added, because adding a document is not a change to
+`watch.ts` and nothing connects the two. That is the second time this week a
+sentence in this repository stayed technically about the right subject while the
+world it described moved out from under it — the first was the rehearsal step
+that named a clause the checklist no longer quoted.
+
+**A comment that states a bound should name what it is bound to.** That one
+should have read "scales with the corpus; re-derive when it grows", and now it
+does.
+
+### What is NOT fixed, and it is filed as M10 rather than claimed
+
+The backoff makes the retries polite. It does not make the sweep polite. The
+fan-out still fires everything as fast as it can, and a big enough corpus will
+exhaust the limit on **first** attempts, where no backoff helps at all. The real
+fix is a rate limiter in front of Firecrawl — and this deployment already
+installs `@convex-dev/rate-limiter` for the mail path, so it is a component to
+reuse rather than a dependency to add.
+
+Its first step is free and nobody has taken it: **read the actual per-minute
+limit off the Firecrawl plan.** The two 429 bodies report `Consumed (req/min):
+35` and `Consumed (req/min): 11` in the same minute, which means the number
+cannot be inferred from the errors — and sizing a limiter by guessing is how you
+get a sweep that is slow AND still fails.
+
+M10 is scored 5: every failure is recorded on the row, surfaced by the gate, and
+cleared by the next good read. Nothing published is wrong. What is at risk is the
+promise the watch makes on a day nobody is looking — which is the only promise
+this product has.
+
+### The two stale rows
+
+Cleared by re-checking each one. Both probe pages are static and unchanged since
+09-10, so each re-check hash-matched, took the early exit, called no model, sent
+no mail, and `watch.checked` wiped the `watchError`. The gate reads 7/7 again.
+
+**That path is the one M3 bought.** The failures were visible on the row, in the
+gate, and in the logs, on a deployment that retains no failure log for long — and
+a document that is failing is now a thing you can see rather than a thing you
+find out about when somebody asks why they never got told.

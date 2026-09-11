@@ -135,7 +135,7 @@ now caught this sentence drifting three times.
 npm install
 npm run dev        # convex dev + vite
 npm run lint       # typecheck + eslint
-npm test           # 97 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword, the link unwrapper, the sender grammar
+npm test           # 98 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword, the link unwrapper, the sender grammar
 npm run gate       # lint + test, then seven read-only checks against production
 npm run deploy     # build, push functions, upload static files
 

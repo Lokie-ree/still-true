@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-11 12:54 UTC` by `bash scripts/reconcile.sh`, at commit `9ba2872`.
+Generated `2026-09-11 18:43 UTC` by `bash scripts/reconcile.sh`, at commit `188eafa`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -20,25 +20,28 @@ What this cannot do, stated so a reader can discount it:
 
 | verdict | count |
 |---|---|
-| CONFIRMED | 76 |
-| DRIFTED | 1 |
-| UNVERIFIABLE | 12 |
+| CONFIRMED | 75 |
+| DRIFTED | 0 |
+| UNVERIFIABLE | 14 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
-- **production claim: no document is failing its re-check**
-  - ran: `node scripts/gate.mjs`
-  - got: 2 of 14 documents failing their re-check:
-
+_Nothing._
 
 ## UNVERIFIABLE — no command run here can settle it
 
+- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
+  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in docs/transcript-sbc.md → https://www.google.com/url?q=https://www.cms.gov/cciio/.../english-sample-completed-sbc-accessible-format-012825.pdf&source=gmail&ust=...&sa=E**
   - ran: `nothing that can settle it`
   - why: the URL is elided in the prose (contains an ellipsis), so it cannot be fetched as written
 - **link in hackathon.md → http://127.0.0.1:3210**
   - ran: `nothing that can settle it`
   - why: an illustrative address, not a live resource. Deliberately not fetched; whether it is 'correct' is not a question a request can answer.
+- **link in hackathon.md → https://www.att.com/howtocancel**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
+  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in hackathon.md → https://www.google.com/url?q=https://www.spotify.com/us/legal/end-user-agreement/&source=gmail&ust=…**
   - ran: `nothing that can settle it`
   - why: the URL is elided in the prose (contains an ellipsis), so it cannot be fetched as written
@@ -53,13 +56,13 @@ What this cannot do, stated so a reader can discount it:
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
 - **hackathon.md:1864 cites `mail.ts:575`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L894, 319 lines from the cited L575 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+  - why: `.take(100)` is at L933, 358 lines from the cited L575 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
 - **hackathon.md:1865 cites `mail.ts:222`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L894, 672 lines from the cited L222 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+  - why: `.take(100)` is at L933, 711 lines from the cited L222 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
 - **hackathon.md:1866 cites `mail.ts:689`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L894, 205 lines from the cited L689 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+  - why: `.take(100)` is at L933, 244 lines from the cited L689 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
 - **hackathon.md:1887 cites `mail.ts:289`**
   - ran: `sed -n '289p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
@@ -87,7 +90,10 @@ What this cannot do, stated so a reader can discount it:
   - got: 37 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 1.6h ago, 6 documents stamped
+  - got: last sweep 7.4h ago, 6 documents stamped
+- **production claim: no document is failing its re-check**
+  - ran: `node scripts/gate.mjs`
+  - got: 14 documents, none carrying a watch error
 - **production claim: every sender identity is a bare address**
   - ran: `node scripts/gate.mjs`
   - got: 18 threads, 1 distinct senders, all bare addresses
@@ -163,9 +169,6 @@ What this cannot do, stated so a reader can discount it:
 - **link in docs/ASSESSMENT.md → READINESS.md**
   - ran: `test -e docs/READINESS.md`
   - got: docs/READINESS.md exists
-- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
-  - got: HTTP 200
 - **link in docs/READINESS.md → https://www.paypal.com/us/legalhub/useragreement-full**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/legalhub/useragreement-full'`
   - got: HTTP 200
@@ -211,9 +214,6 @@ What this cannot do, stated so a reader can discount it:
 - **link in hackathon.md → https://vibeapps.dev/s/still-true**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://vibeapps.dev/s/still-true'`
   - got: HTTP 200
-- **link in hackathon.md → https://www.att.com/howtocancel**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
-  - got: HTTP 200
 - **link in hackathon.md → https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US'`
   - got: HTTP 200
@@ -253,18 +253,18 @@ What this cannot do, stated so a reader can discount it:
 - **docs/ASSESSMENT.md carries a superseded/archived banner**
   - ran: `git log -1 --format=%cI -- docs/ASSESSMENT.md`
   - got: banner asserts 2026-09-02; git says last touched 2026-09-05. Label is dated, not vibes.
-- **docs/READINESS.md:211 cites `convex/mail.ts:769`**
+- **docs/READINESS.md:222 cites `convex/mail.ts:808`**
   - ran: `grep -nF 'by_url' convex/mail.ts`
-  - got: `by_url` (rarest token, 1 occurrence(s)) is at L769, 0 line(s) from the cited L769 — the citation points at the right code
-- **docs/READINESS.md:221 cites `convex/documents.ts:28`**
+  - got: `by_url` (rarest token, 1 occurrence(s)) is at L808, 0 line(s) from the cited L808 — the citation points at the right code
+- **docs/READINESS.md:272 cites `convex/documents.ts:28`**
   - ran: `grep -nF 'recent' convex/documents.ts`
   - got: `recent` (rarest token, 2 occurrence(s)) is at L23, 5 line(s) from the cited L28 — the citation points at the right code
-- **docs/READINESS.md:224 cites `convex/mail.ts:326`**
+- **docs/READINESS.md:275 cites `convex/mail.ts:326`**
   - ran: `grep -nF 'console.error' convex/mail.ts`
   - got: `console.error` (rarest token, 1 occurrence(s)) is at L326, 0 line(s) from the cited L326 — the citation points at the right code
-- **docs/READINESS.md:227 cites `convex/mail.ts:894`**
+- **docs/READINESS.md:278 cites `convex/mail.ts:933`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L894, 0 line(s) from the cited L894 — the citation points at the right code
+  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L933, 0 line(s) from the cited L933 — the citation points at the right code
 - **hackathon.md is reachable**
   - ran: `grep -l '(hackathon.md)' README.md AGENTS.md CLAUDE.md hackathon.md docs/ASSESSMENT.md docs/probe.md docs/probe-universal.md docs/probe-v3.md docs/READINESS.md docs/round-trip.md docs/transcript-sbc.md`
   - got: at least one doc links to it
@@ -298,7 +298,7 @@ What this cannot do, stated so a reader can discount it:
 - **CLAUDE.md says "seven read-only checks"**
   - ran: `grep -c '^check(' scripts/gate.mjs`
   - got: gate.mjs defines 7
-- **README.md says "97 tests"**
+- **README.md says "98 tests"**
   - ran: `npm test`
-  - got: the suite reports 97
+  - got: the suite reports 98
 
