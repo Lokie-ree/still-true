@@ -16,7 +16,7 @@ import { classify, extract } from "./extract";
 import { documentUrl, isStop } from "./link";
 import { senderAddress } from "./sender";
 import { fingerprint, PARSER_VERSION, toLines } from "./lines";
-import { CHECKLISTS } from "./questions";
+import { CHECKLISTS, type DocumentKind } from "./questions";
 import {
   changeBody,
   failureBody,
@@ -612,12 +612,25 @@ export const failed = internalMutation({
 // promised to.
 // What this document read as, last time it was read properly. Null when the row
 // predates the watch, which every caller treats as "read it again".
-export const hashOf = internalQuery({
+// What the last reading of this document settled: the hash it produced, and the
+// checklist its answers were given against. Both belong to that one reading and
+// both are needed on the same path, so they travel together rather than as two
+// queries.
+//
+// This was `hashOf` until H8, 2026-09-11.
+export const priorReading = internalQuery({
   args: { documentId: v.id("documents") },
-  returns: v.union(v.string(), v.null()),
+  returns: v.union(
+    v.object({
+      contentHash: v.union(v.string(), v.null()),
+      kind: documentKind,
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     const document = await ctx.db.get("documents", args.documentId);
-    return document?.contentHash ?? null;
+    if (document === null) return null;
+    return { contentHash: document.contentHash ?? null, kind: document.kind };
   },
 });
 
@@ -671,15 +684,19 @@ export async function readAndPublish(
   //
   // A first reading has no stored hash to match, so this cannot fire on the
   // mail path however this document was read before.
+  let priorKind: DocumentKind | null = null;
   if (args.recheckOf !== null) {
-    const known = await ctx.runQuery(internal.mail.hashOf, {
+    const prior = await ctx.runQuery(internal.mail.priorReading, {
       documentId: args.recheckOf,
     });
-    if (known !== null && known === contentHash) {
-      await ctx.runMutation(internal.mail.checked, {
-        documentId: args.recheckOf,
-      });
-      return null;
+    if (prior !== null) {
+      priorKind = prior.kind;
+      if (prior.contentHash !== null && prior.contentHash === contentHash) {
+        await ctx.runMutation(internal.mail.checked, {
+          documentId: args.recheckOf,
+        });
+        return null;
+      }
     }
   }
 
@@ -687,7 +704,29 @@ export async function readAndPublish(
   // parsed markdown does not go in the database and the PDF never touches this
   // system at all. So classification and extraction both happen now, while the
   // lines exist, and what survives is the citation into them.
-  const kind = await classify(args.title, lines);
+  // H8, 2026-09-11. A re-check answers the checklist this document was FIRST
+  // answered against, and never re-classifies.
+  //
+  // `classify` is a model call and it is not deterministic. On production the
+  // video fixture read as `other` at 11:18 UTC and as `lease` at 15:29, with no
+  // word of it changed but one. That is not a cosmetic wobble: `diff` matches a
+  // new finding to the old one by `questionKey`, and a question that was never
+  // asked before is deliberately not a change. Cross a checklist boundary and
+  // EVERY key is new, so every change is skipped, the findings are quietly
+  // replaced with a different checklist's answers, and the watch on that
+  // document ends — with no error, no `watchError`, and no notice to the person
+  // who was promised it would keep watching.
+  //
+  // A lease does not stop being a lease between two readings. The first reading
+  // is the one a reply was built on and a sender was told about, so it is the
+  // one that stands.
+  //
+  // ponytail: this also makes a misclassification at INGEST permanent for that
+  // document — the way back is deleting the row and forwarding it again, which
+  // is a deliberate act rather than a coin flip on a Tuesday. Re-classifying
+  // when `kind` is genuinely wrong wants to be its own command, not a side
+  // effect of the watch.
+  const kind = priorKind ?? (await classify(args.title, lines));
   const findings = await extract(lines, CHECKLISTS[kind]);
 
   await ctx.runMutation(internal.mail.attach, {

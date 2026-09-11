@@ -2733,3 +2733,89 @@ the plan is not what the score measures. The lesson is the same one this log kee
 recording from a different angle — **a claim about what production will do is
 worth nothing until something has read production** — and this time the reading
 cost one read-only query.
+
+## 2026-09-11 (afternoon) — the rehearsal step that nearly got deleted found the worst flag of the week
+
+The proving run ran at 15:29 UTC. The scrape worked, the edit was there, the
+document re-read at 94 lines with no error — and no mail arrived.
+
+**The classifier had re-rolled.** `kind` went `other` → `lease` between two
+readings of the same page, with one word of it changed. Extraction then answered
+the **lease** checklist, so the new findings were `L1 L2 L3a L3b L4a L4b L5`
+where the prior ones were `U1a … U5b`. `diff` matches on `questionKey`, and *a
+question the previous reading never asked is a first answer, not a change* — a
+rule that is right on its own and catastrophic across a checklist boundary,
+where every key is new at once. Every change skipped. `[]`. No mail.
+
+### Why this is H8 and not a shoot-day annoyance
+
+The fixture's late charge had not moved, so nothing was lost here. But work the
+mechanism through on a document that *did* change:
+
+1. Somebody forwards a lease. They are told what it requires and that it will be
+   watched.
+2. Months later the landlord rewrites the late-fee clause, and the same run
+   happens to classify the document as `other`.
+3. The findings are replaced with the universal checklist's answers. `diff`
+   reports nothing. **No notice is sent.**
+4. The next reading compares against that new baseline and finds nothing either.
+   The watch is over. There is no error, no `watchError`, nothing on the board,
+   and the sender is still holding a reply that promised otherwise.
+
+Silent, permanent, and invisible to everything this project built to catch
+exactly that class. `change.diff` is not what needs fixing — it cannot tell "the
+classifier re-rolled" from "this is a new question", and a heuristic that tried
+would be the fourth shell-page detector. The fix is upstream: **don't cross the
+boundary.**
+
+### The fix
+
+On a re-check, the checklist is the one the document was FIRST answered against.
+`hashOf` became `priorReading` and returns the stored `kind` alongside the hash —
+the same query, already called on that exact path, so the pin costs nothing and
+removes a model call from every document on every sweep. `classify` now runs on
+first readings only.
+
+A lease does not stop being a lease between two readings. The first reading is
+the one a reply was built on and a sender was told about, so it is the one that
+stands. Marked `ponytail:` where it makes an ingest misclassification permanent —
+the way back is deleting the row and forwarding again, which should be a
+deliberate act rather than a coin flip on a Tuesday.
+
+The test lives in `change.test.ts` rather than next to the fix, because the fix
+is one `??` and the thing worth guarding is the consequence: a whole checklist
+changing hides a real change. It asserts the silence, then asserts that the same
+reading with the key pinned reports one `moved`.
+
+### Three audits read this line
+
+`mail.ts` has been read end to end by two audits and one code review since 09-04.
+All three read `const kind = await classify(args.title, lines)` and none of them
+flagged it, and they were not being careless: **nothing is wrong with that
+line.** It is wrong only in relation to a `questionKey` comparison in a different
+file that it does not import and that runs a day later, on the one path — the
+re-check — that no test exercises end to end. This is the fifth thing this week
+found by using the product and the fifth not found by reading it.
+
+### What it cost, and the reversal it forced
+
+Twice today the shoot plan named a proving clause that would have proved nothing.
+This morning: the entry notice, which the *universal* checklist does not quote.
+Midday: the modification clause, correct for `other` and mooted by the re-roll.
+Both corrections were right about the clause and wrong about the same
+assumption — **that the checklist holds still.** It did not, and that was the
+finding.
+
+With the checklist pinned the fixture is a `lease`, and the plan lands back
+where it started: the proving run is the **entry notice** (line 127, `four (4)`
+→ `six (6)`, quoted by L2), and the video's two edits are the script's original
+pair — **$400 → $600** (line 72, L3a) and **ninety → thirty** (line 158, L4a),
+two findings on two distinct lines, which is what beat C's *"two things I had
+quoted"* has claimed all along. Each string was checked to occur once in the
+file, to sit on one source line, and to be inside the quote the finding actually
+published — an excerpt that stops short of the words you edit is an edit the
+diff will not see.
+
+**The step that found it had been argued about twice for being redundant.** It
+ran once, on production, and it turned an empty inbox at six tomorrow morning
+into an afternoon with time in it.

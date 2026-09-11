@@ -146,3 +146,39 @@ void test("a question the previous reading never asked is a first answer, not a 
   // document changed for a question nobody had asked of it before.
   assert.deepEqual(diff([answered("L1", "a", "q")], [answered("T1", "b", "r")], NOW), []);
 });
+
+// H8, and this is the test that says why `readAndPublish` pins the checklist.
+//
+// The rule above — a question nobody asked before is a first answer — is right
+// on its own and wrong as a whole. Cross a checklist boundary and EVERY key is
+// new at once, so a document whose late-fee clause was rewritten in the same
+// reading reports nothing at all. The diff is not what needs fixing: it cannot
+// tell "the classifier re-rolled" from "this is a new question", and it should
+// not try. What needs fixing is upstream, so the boundary is never crossed on a
+// re-check.
+//
+// Measured on production 2026-09-11: the video fixture read as `other` at 11:18
+// UTC and `lease` at 15:29 with one word of it changed, and a re-check that had
+// genuinely moved the $400 late charge would have mailed nobody.
+void test("a whole checklist changing hides a real change, which is why the checklist is pinned", () => {
+  const was = [
+    // U2 quoted the late charge, and the clause is now gone from the document:
+    // NOW carries "$50.00", not "$400.00".
+    answered("U2", "A late payment carries $400.", "a late charge of Four Hundred and 00/100 Dollars ($400.00)", 21),
+  ];
+  // The same reading, answered against the lease checklist instead.
+  const nowKeyed = [
+    answered("L3a", "A late payment carries $600.", "a late charge of Six Hundred and 00/100 Dollars ($600.00)", 21),
+  ];
+
+  // Silence, even though the quoted clause really did move. This is the bug
+  // seen from below.
+  assert.deepEqual(diff(was, nowKeyed, NOW), []);
+
+  // Pin the checklist and the same reading reports it.
+  const sameKey = [
+    answered("U2", "A late payment carries $600.", "a late charge of Six Hundred and 00/100 Dollars ($600.00)", 21),
+  ];
+  assert.equal(diff(was, sameKey, NOW).length, 1);
+  assert.equal(diff(was, sameKey, NOW)[0].kind, "moved");
+});

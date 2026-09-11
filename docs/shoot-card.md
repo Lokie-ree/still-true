@@ -15,11 +15,11 @@ can put a false claim in this video.
       ```
       npx convex run --prod --inline-query 'const d=(await ctx.db.query("documents").take(200)).find(x=>x.url?.includes("watch-test")); const f=await ctx.db.query("findings").collect(); return {kind:d.kind, changed:f.filter(x=>x.documentId===d._id&&x.changedAt!=null).map(x=>x.questionKey)};'
       ```
-      `kind` must be `"other"`. `changed` must contain **`U2`** — the late
-      charge, the clause beat C points at. `U4` should be there too, and `U5a`
-      from Friday's proving run. **The count is not the check.** If `kind` came
-      back `"lease"` the classifier re-rolled and nothing was reported: recovery
-      below.
+      `kind` must be `"lease"`. `changed` must contain **`L3a`** — the late
+      charge, the clause beat C points at. `L4a` should be there too, and `L2`
+      from Friday's proving run. **The count is not the check.** Any other
+      `kind` means the H8 pin is not deployed, the classifier re-rolled, and
+      nothing was reported: recovery below.
 - [ ] Do Not Disturb on. Slack, Discord, Steam quit.
 - [ ] Three tabs: board, Gmail, Livonia lease. Bookmarks bar hidden. Zoom 125%.
 - [ ] Gmail searched for `still-true` so the list is clean.
@@ -121,8 +121,8 @@ End on the reply. Not a logo.
 | **Answer doesn't match its quote** | H6. Forward again, new take. Don't talk around it. |
 | **Line count differs from last take** | M6, expected. Say no numbers you can't see on screen. |
 | **6th forward comes back a rate-limit reply** | Bucket's empty. 5 per burst, then one every 6 min. Wait or shoot A. |
-| **Two change notices in the thread** | Expected. Friday's proving run (the modification clause, U5a) + Saturday's cron (late charge and cure period). Check the timestamp before you point. |
-| **Cron mailed nothing overnight** | Reclassified — `kind` came back `lease`, so no prior question matched. Off camera: edit $600 → $700, deploy, `watch:recheck` (NOT `sweep`). It converges. |
+| **Two change notices in the thread** | Expected. Friday's proving run (entry notice, L2) + Saturday's cron (late charge L3a and termination notice L4a). Check the timestamp before you point. |
+| **Cron mailed nothing overnight** | Reclassified — `kind` is not `lease`, so no prior question matched (H8). Off camera: edit $600 → $700, deploy, `bash scripts/recheck-fixture.sh` (NOT `sweep`). It converges. |
 | **Not sure the diff will work** | Read it before you shoot — the `kind` check under *Before you hit record*. |
 | **Board reorders on screen** | You reloaded. Leave the tab open. |
 | **Fluffed a line** | Forward again, different subject. Third take is usually the one. |
