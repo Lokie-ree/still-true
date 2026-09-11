@@ -4,14 +4,16 @@ Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
 opened the same day by the probe-v4 playtest, which is not an audit either —
 it is the product being used; **H5 and M7 closed the same evening**, together,
 by an invariant rather than by two patches — and **H6 opened the same evening**,
-by the A5 check written to confirm that fix on production. Score **67/100**:
-`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67** (09-03, 09-05,
+by the A5 check written to confirm that fix on production. **M10 opened 2026-09-11**, and it is the only flag today that is not also closed
+today. Score **62/100**:
+`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 1×3(L3,L4,L5)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
-then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`.
+then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
+where H8, M9 and L6 all opened and closed inside one day and move nothing.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -224,6 +226,46 @@ Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
 `j57fyw7wd…`), 418 lines each, created 16 minutes apart.
 
 Fix: dedupe attachments on `contentHash`, which is already computed.
+
+### M10 — the sweep's retries arrive during the minute they are not welcome (medium)
+
+`convex/watch.ts`, the `Workpool` retry behaviour. Opened 2026-09-11 by reading
+the deployment's own logs after the 11:17 UTC sweep.
+
+**11 `Firecrawl 429` failures in 42 seconds**, and two documents —
+`probe-v4/fee-schedule.html` and `probe-v4/injection.html` — exhausted all three
+attempts and carried a `watchError` for a day. Twelve of fourteen survived, so
+nothing on the board was wrong; the flag is that **which two fail is a coin
+toss**, and tomorrow it can be any document, including one a stranger forwarded.
+
+**The limit is Firecrawl's. The amplification is ours.** `maxParallelism: 2`
+caps concurrency, not rate: two at a time still puts 14 documents — 3 of them
+PDFs, which cost more than one request each — through in seconds. Then
+`initialBackoffMs: 10_000, base: 2` schedules all three attempts at 0s, 10s and
+30s, inside the same 60-second window that is already exhausted. Firecrawl
+replied `retry after 40s, resets at 11:18:07`; we came back at 10s and 30s.
+
+**Mitigated the same day, not closed.** The backoff is now 60s — attempts at 0s,
+60s and 120s, each in a window Firecrawl has reset. That is one constant and it
+removes the self-inflicted half. It does not remove the fan-out: the sweep still
+fires the whole corpus as fast as it can, and a corpus big enough exhausts the
+limit on **first** attempts, where no backoff helps.
+
+**The fix is a rate limiter, and this deployment already installs one.**
+`@convex-dev/rate-limiter` gates the mail path; the same component can gate
+Firecrawl calls to N per minute so the sweep paces itself instead of apologising
+afterwards. Sizing it needs the real per-minute limit, which nobody has read off
+the plan: the 429 bodies report `Consumed (req/min): 35` and
+`Consumed (req/min): 11` in the same minute, so the number is not known from
+here. **Reading it is step one and it is free.**
+
+**Scored 5, not 15.** Every failure is recorded on the row (M3's fix), surfaced
+by `npm run gate`, and cleared by the next successful read. No answer is wrong
+and no quote is stale. What is at risk is the promise the watch makes, on a day
+nobody is looking.
+
+**Not scheduled before the video.** The backoff ships tonight only because it is
+one constant in a deploy that is happening anyway. The limiter waits.
 
 ### Low
 
@@ -702,7 +744,13 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M8 → (measure H6 again) → M2 → M6 → (L3, L4, L5).** M5, H5 and M7 are closed.
+**M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L5).** M5, H5, M7, H8, M9
+and L6 are closed.
+
+**M10 sits behind the H6 measurement and ahead of M2** because its first step is
+free and nobody has taken it: read the actual Firecrawl per-minute limit off the
+plan. Every sizing decision for the limiter depends on a number this project has
+only ever seen quoted back to it inside an error message.
 
 **M8 moved to the front on 2026-09-09 night and H6 is why.** It was parked
 behind M2 that afternoon on the grounds that its first step is a measurement.

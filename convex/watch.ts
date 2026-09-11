@@ -30,9 +30,34 @@ import { readAndPublish } from "./mail";
 // that fires every document at once turns a rate limit into a wall of failures
 // that all retry together; two at a time finishes a six-document corpus in
 // well under a minute and never looks like a stampede to anybody downstream.
+//
+// **That sentence is dated, and 2026-09-11 is the day it stopped being true.**
+// The corpus is 14 url-backed documents now, three of them PDFs that cost
+// Firecrawl more than one request each, and the 11:17 UTC sweep produced 11
+// `Firecrawl 429` failures in 42 seconds. Two documents exhausted their retries
+// and carried a `watchError` for a day.
+//
+// `maxParallelism` caps CONCURRENCY, not RATE: two at a time still puts the
+// whole corpus through in seconds. The retry schedule is what turns a transient
+// per-minute limit into a permanent failure — at 10s and base 2, all three
+// attempts land at 0s, 10s and 30s, inside the same 60-second window that is
+// already exhausted. Firecrawl said `retry after 40s, resets at 11:18:07` and
+// we came back at 10s and 30s.
+//
+// So the backoff is longer than the window it is waiting out: attempts at 0s,
+// 60s and 120s, each in a minute Firecrawl has reset. A daily job has all the
+// time in the world; the thing it cannot afford is arriving three times during
+// the one minute it is not welcome.
+//
+// ponytail: this makes the retries polite, not the sweep. The fan-out still
+// grows with the corpus and a big enough one will exhaust the limit on first
+// attempts alone. The fix for that is the rate limiter this deployment already
+// installs for mail (`@convex-dev/rate-limiter`), gating Firecrawl calls to N
+// per minute so the sweep paces itself instead of apologising afterwards. See
+// **M10** in `docs/READINESS.md`; it is not a night-before-the-video change.
 const pool = new Workpool(components.watchPool, {
   maxParallelism: 2,
-  defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 10_000, base: 2 },
+  defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 60_000, base: 2 },
   retryActionsByDefault: true,
 });
 
