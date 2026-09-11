@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-10 20:54 UTC` by `bash scripts/reconcile.sh`, at commit `b4e7269`.
+Generated `2026-09-11 01:06 UTC` by `bash scripts/reconcile.sh`, at commit `99f55d2`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -20,16 +20,13 @@ What this cannot do, stated so a reader can discount it:
 
 | verdict | count |
 |---|---|
-| CONFIRMED | 74 |
-| DRIFTED | 1 |
+| CONFIRMED | 75 |
+| DRIFTED | 0 |
 | UNVERIFIABLE | 12 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
-- **README.md says "91 tests"**
-  - ran: `npm test`
-  - got: the suite reports 97 tests, not 91
-
+_Nothing._
 
 ## UNVERIFIABLE — no command run here can settle it
 
@@ -87,7 +84,7 @@ What this cannot do, stated so a reader can discount it:
   - got: 37 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 9.6h ago, 6 documents stamped
+  - got: last sweep 13.8h ago, 6 documents stamped
 - **production claim: no document is failing its re-check**
   - ran: `node scripts/gate.mjs`
   - got: 14 documents, none carrying a watch error
@@ -295,4 +292,7 @@ What this cannot do, stated so a reader can discount it:
 - **CLAUDE.md says "seven read-only checks"**
   - ran: `grep -c '^check(' scripts/gate.mjs`
   - got: gate.mjs defines 7
+- **README.md says "97 tests"**
+  - ran: `npm test`
+  - got: the suite reports 97
 
