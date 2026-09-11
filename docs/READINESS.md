@@ -219,7 +219,7 @@ would mean finding what actually varies first.
 
 ### M2 — attachment documents never dedupe (medium)
 
-`convex/mail.ts:769`. `attach` skips the `by_url` lookup when `url === null`,
+`convex/mail.ts:808`. `attach` skips the `by_url` lookup when `url === null`,
 which is every forwarded attachment.
 
 Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
@@ -275,7 +275,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
 - **L4** `convex/mail.ts:326` — an unrecognized payload is dropped with
   `console.error` and no record, which is invisible in a deployment that
   retains no failure logs.
-- **L5** `convex/mail.ts:894` — `attach` notifies at most `.take(100)` threads.
+- **L5** `convex/mail.ts:933` — `attach` notifies at most `.take(100)` threads.
   Subscriber 101 is silently never told the clause moved, which is the one
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
