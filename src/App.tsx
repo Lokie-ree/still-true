@@ -94,7 +94,13 @@ function groupByReceipt(answered: Answered[], kind: DocumentKind): Cited[] {
       seen.previousLineNo = f.previousLineNo;
     }
   }
-  return [...byReceipt.values()];
+  // By line number, because the card presents itself as a document. The map's
+  // own order is `findingsFor`'s, which is creation order — the same defect
+  // this file's header records at the page level, one level down: PayPal read
+  // 1071, 1077, 373 on production on 2026-09-11. An exhibit whose gutter counts
+  // backwards is asking the reader to trust the numbers and ignore them at the
+  // same time.
+  return [...byReceipt.values()].sort((a, b) => a.lineNo - b.lineNo);
 }
 
 // Docket stamp: mono, small, wide. Mono is doing an index job here rather than
@@ -163,12 +169,27 @@ function Findings({
     // The gutter rule is one absolutely positioned line rather than a border on
     // each cell, so it stays continuous across the row gaps — a margin down the
     // page, not a stack of ticks.
-    <div className="relative mt-5 border-t border-rule pt-5">
+    //
+    // `overflow-wrap: anywhere` is set once here and inherited by every quote,
+    // answer and refusal below it, because document text is not ours to make
+    // wrappable: a clause that quotes a URL arrives with an 80-character token in
+    // it, and on 2026-09-11 the PayPal card's column sized itself to that token
+    // — 539px of content in a 315px track — pushing the quote, the largest text
+    // on the page, off the right edge of a phone. Every sibling line in the
+    // column then laid out at the expanded width, so one URL broke the card.
+    // `anywhere` rather than `break-word` because only `anywhere` also shrinks
+    // the MIN-CONTENT width, which is what the track was sizing against.
+    <div className="relative mt-5 border-t border-rule pt-5 [overflow-wrap:anywhere]">
       <div
         aria-hidden
         className="absolute bottom-0 left-14 top-5 w-px bg-rule"
       />
-      <div className="grid grid-cols-[3.5rem_1fr] gap-y-6">
+      {/* `minmax(0,1fr)`, not `1fr`: a grid track's automatic minimum is its
+          content's min-content size, so the column can be widened from inside by
+          anything that will not break. The wrap rule above fixes today's text;
+          this is what keeps the geometry of the page independent of what a
+          stranger forwards. */}
+      <div className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-y-6">
         {/* First, deliberately. See the note at the top of this file. */}
         {missing.length > 0 && (
           <>
@@ -235,7 +256,7 @@ function Findings({
                   // (3.5rem) and padding (1.25rem) so this block re-enters the
                   // page's one gutter rather than opening a second one inside
                   // it. Same geometry as `Row`, deliberately.
-                  <div className="-ml-[4.75rem] mt-3 grid grid-cols-[3.5rem_1fr]">
+                  <div className="-ml-[4.75rem] mt-3 grid grid-cols-[3.5rem_minmax(0,1fr)]">
                     <div className="pr-4 pt-1 text-right font-mono text-[11px] leading-5 text-faint tabular-nums">
                       {c.previousLineNo}
                     </div>

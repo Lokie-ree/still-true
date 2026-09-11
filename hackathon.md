@@ -2550,3 +2550,101 @@ assumed.
 **Left open on purpose:** `public/og.jpg` is still a screenshot of the old
 scaffold board, so every link preview shows a page that no longer exists. It is
 Randall's call whether to reshoot it before the submission.
+
+## 2026-09-11 — the board was read on a phone, and one URL had been breaking it since 09-04
+
+Randall opened the deployed board on his own phone. Three screenshots, two
+defects, and the first one had been called green in this log eighteen hours
+earlier.
+
+**What it looked like.** The whole page rendered at roughly 57% of the viewport
+width — hero included, above any card, so not content-dependent — and on the
+PayPal card the answer, the refusal line and the serif quote all ran past the
+card's right border and clipped at the screen edge. Two symptoms that looked
+like two bugs: a container sized against something other than the viewport, and
+a wrapping failure on one card.
+
+**They were one bug.** Measured on production before touching anything, with the
+page's own `main` forced to 412px:
+
+```
+PayPal   findings grid: content 539px in a 315px track  (+224 spill)
+the other five cards:   315 in 315                       (0)
+```
+
+Nothing on the page is sized against a fixed width. `max-w-2xl` is inert below
+672px and was never the cause. One card overflowed the document, mobile Chrome
+shrank the whole document to fit its scroll width, and *that* is what shrank the
+hero. Fix the spill and the 57% goes with it — no breakpoint, no media query.
+
+**What spills is a URL, and it is a URL because this product quotes documents.**
+PayPal's line 74 clause quotes its own policy page:
+
+```
+(https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US)
+```
+
+80 characters with no break opportunity. A grid track's automatic minimum is its
+content's min-content width, so that token set the column's width, the column
+grew past the card, and **every sibling line in the column then laid out at the
+expanded width** — which is why the answer and the refusal spilled too, though
+neither contains anything unbreakable. The document-header links never showed it
+because they carry `break-all` and the quote did not.
+
+Two lines of CSS, both on the container rather than on each element:
+`[overflow-wrap:anywhere]` on the findings block, inherited by every quote,
+answer and refusal under it; and `minmax(0,1fr)` for the content track in both
+grids, so the column cannot be widened from inside by anything that will not
+break. `anywhere` rather than `break-word` deliberately — only `anywhere` also
+shrinks the min-content width, which is the number the track was sizing against.
+
+### The gutter counted backwards
+
+Second defect, same shots, different cause: PayPal's line numbers read **1071,
+1077, 373, 72, 74, 452, 752**. `groupByReceipt` returned the map in insertion
+order, which is `findingsFor`'s order, which is creation order. This is the
+**page-level ordering defect of 09-06 one level down** — the same accident of
+seeding time, inside a card instead of across them. An exhibit that presents
+itself as a document, with a pleading-page gutter down its left edge, was asking
+the reader to trust the numbers and ignore them at the same time. Sorted by
+`lineNo`.
+
+### The claim this reverses, and why it was wrong
+
+The 09-10 afternoon entry says, of the redesign: *"Mobile at 390px holds; no
+console errors; no horizontal overflow."* That was false when it was written.
+PayPal was enrolled on **09-04**, its quotes have not changed since (all eight
+findings re-verified 09-11 11:17 UTC with `changedAt` null), and the overflow
+was therefore present the entire time the redesign was being called done.
+
+The check was run. It found nothing because **the defect was in the sixth
+card**, and a narrow viewport check that does not scroll is a check of the first
+screen. That is the identical shape as the 09-06 finding, where the
+differentiator sat in the fourth card below the fold — *this page's failures
+keep being below the fold, and the checks keep being of the top of it.*
+
+So the rule that comes out of this is not "test mobile." It is:
+**a check of a rendering has to visit every row of it**, and the cheapest way to
+make that non-optional is to ask the DOM rather than the eye:
+
+```js
+[...document.querySelectorAll('*')].filter(e => e.scrollWidth > e.clientWidth + 1)
+```
+
+Two elements before, zero after. Randall's snippet, and it is worth more than
+the screenshots because it does not depend on which card happened to be on
+screen.
+
+### Not touched
+
+`PARSER_VERSION` (still 2, freeze intact), no Convex function, no query, no
+copy. Every 09-10 invariant holds: `refusalLine`, `receiptKey` and `questionFor`
+are still imported, refusals still first, refusing documents still hoisted by
+data-derived `order`, no new factual claim on the page. This rides the same
+deploy as everything else queued for today.
+
+**The dark theme is not half-landed**, which was the reading from the phone. It
+is the 09-10 evening reversal shipping as decided: `data-theme="dark"` is
+hard-coded in `index.html` and the paper palette is kept whole in `index.css`
+behind `[data-theme="light"]`. §9 of the handoff still said "light only" and has
+been corrected.

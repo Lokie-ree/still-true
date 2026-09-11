@@ -67,6 +67,15 @@ closed together, behind a property test over the rendered reply rather than two
 more patches. M8 is what is left of that day, and it is a parser flag rather
 than a receipt one.
 
+**Amended 2026-09-11: M9 and L6, opened and closed the same morning, by opening
+the deployed board on a phone.** Not a new discovery mode — it is the 09-09 one,
+*open the public page and read it* — but run on real hardware and, decisively,
+run on **every card** rather than the first screen. The 09-10 redesign ran the
+same check at 390px and recorded *"no horizontal overflow"*; the overflow was in
+the sixth card. Both flags are in *Closed* and the score line does not move. The
+lesson is larger than either of them: **this page's failures keep being below the
+fold, and its checks keep being of the top of it.**
+
 **H6 is open, and it is the first flag to reach the central claim rather than
 the wording around it.** M2, M6, M8 and the lows are known and parked — do not
 fix one unasked: read the fix order at the bottom and ask.
@@ -259,6 +268,48 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **M9 (one quoted URL pushed the board off the right edge of a phone)** opened
+  and closed 2026-09-11. PayPal's line-74 clause quotes
+  `(https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US)`
+  — 80 characters with no break opportunity. A grid track's automatic minimum is
+  its content's min-content width, so that one token sized the finding column:
+  **539px of content in a 315px track** with `main` at 412px, measured on
+  production before anything was touched. The column grew past the card and every
+  sibling line in it then laid out at the expanded width, so the answer and the
+  refusal spilled too, though neither contains anything unbreakable. **The quote
+  is what ran off screen** — the largest text on the card and the entire claim of
+  the product.
+  The second symptom, the whole page rendering at ~57% of the viewport including
+  the hero, was **the same defect**: one card overflowed the document and mobile
+  Chrome shrank the document to its scroll width. Nothing is sized against a
+  fixed width; `max-w-2xl` is inert below 672px. Fixed with
+  `[overflow-wrap:anywhere]` on the findings block and `minmax(0,1fr)` on both
+  content tracks in `src/App.tsx` — no breakpoint, no media query, no Convex
+  function touched.
+  **This reverses a claim in `hackathon.md`**: the 09-10 redesign entry says
+  *"Mobile at 390px holds; no horizontal overflow."* PayPal was enrolled 09-04
+  and its quotes have not moved since, so the overflow was present the whole
+  time. The check was run and found nothing because **the defect was in the sixth
+  card** — the same shape as the 09-06 page-order finding, where the
+  differentiator sat in the fourth card below the fold. The rule is not "test
+  mobile"; it is that a check of a rendering has to visit every row of it, and
+  `[...document.querySelectorAll('*')].filter(e => e.scrollWidth > e.clientWidth + 1)`
+  is how you stop that depending on which card was on screen. Two elements
+  before, zero after.
+  **The score line does not move**: opened and closed inside one pass, like H7.
+  Recorded because the do-not-re-flag list is what stops the next session
+  rediscovering it — and because `overflow-wrap` is now load-bearing on every
+  quote this product will ever publish.
+
+- **L6 (the gutter counted backwards inside a card)** opened and closed
+  2026-09-11. PayPal's line numbers read **1071, 1077, 373, 72, 74, 452, 752**.
+  `groupByReceipt` returned its map in insertion order, which is `findingsFor`'s
+  order, which is `_creationTime`. This is the 09-06 page-level ordering defect
+  one level down — the same accident of seeding time, inside a card instead of
+  across them — on a page whose layout asserts it is a document. Sorted by
+  `lineNo`. Refusals are deliberately still first and still unsorted: they have
+  no line.
 
 - **H7 (the README and the board claimed the model never writes the answer
   text)** opened and closed 2026-09-10. `README.md`'s "Why it can be trusted"
