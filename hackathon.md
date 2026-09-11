@@ -2648,3 +2648,88 @@ is the 09-10 evening reversal shipping as decided: `data-theme="dark"` is
 hard-coded in `index.html` and the paper palette is kept whole in `index.css`
 behind `[data-theme="light"]`. §9 of the handoff still said "light only" and has
 been corrected.
+
+## 2026-09-11 (midday) — the rehearsal step that would have proved nothing, and the count that could not be right
+
+Three findings against the shoot plan, none of them against the code. All three
+came from reading production's `findings` table against `docs/rehearsal.md`,
+which nobody had done since the fixture was enrolled.
+
+### 1. The proving run was pointed at a clause nothing quotes
+
+Friday midday was *"edit the entry notice, four hours → six hours"* on a clause
+the video does not use — correct instinct, wrong clause. `change.diff` reports a
+change only when a **prior finding's quote** is gone from the text. The fixture
+classified as `other`, so it is on the universal checklist, and its eight
+findings quote lines 17, 21, 63, 63, 80 and 85: rent, late charge, termination
+notice twice, default cure, modification clause. **Nothing quotes the entry
+notice.**
+
+Editing it moves the hash, re-runs extraction, finds every prior quote present,
+returns `[]` and sends no mail. And silence is precisely the symptom of the
+failure the step exists to rule out, so the cost was not a wasted edit — it was
+an afternoon before the shoot spent debugging a system that was working.
+
+Moved to the modification clause at line 206, `No modification` → `No amendment`.
+One finding (U5a), one line, and the string occurs once in the file.
+
+### 2. The proving run is not a rehearsal, it is the only production run
+
+**No finding on production carries a `changedAt` stamp.** Not one, across 14
+documents and ten days. The moved-clause path — old quote struck through, new one
+published, notice in the thread — has only ever run on **dev**. Beat C is about a
+path that has never executed on the deployment the video is shot against.
+
+Recorded as a fact, not a flag: the path is covered by `change.test.ts`, it ran
+on dev on 09-10, and nothing suggests it is broken. But "it has never run here"
+and "it works here" are different sentences, and this project has a rule about
+which one it is allowed to say. Friday's proving run converts one into the other.
+
+(The stamp is only written for a `moved` change. A `gone` change — the clause
+vanished and the question now refuses — publishes a `not_stated` finding, which
+carries no stamp, so the absence of stamps does not prove the absence of
+notices. It does prove no clause has ever been reported *moved* here.)
+
+### 3. `changed` must be 2 was wrong in three different ways
+
+The shoot card's pre-roll check counted findings carrying a `changedAt` and
+asserted 2. It could not have been 2:
+
+1. **The scripted edit moved three.** U3a and U3b both quote line 63 — the same
+   sentence sliced at two lengths — and both contain `ninety (90) days`.
+2. **A stamp survives later readings** (`mail.ts`, the `prior?.changedAt ?? null`
+   carry-forward), so Friday's proving run adds one permanently and Saturday
+   reads four.
+3. **The count only counts `moved`.** Extraction drift can bring a changed clause
+   back as `not_stated`; that is a `gone` change — mailed, shown in the notice,
+   never stamped, never counted.
+
+So no number is right, and writing `3` would have been the same defect a day
+later. The check now returns the **question keys** and the card asserts the
+invariant that actually matters: `kind` is still `"other"` and `U2` is in the
+list. If `kind` re-rolled to `lease`, the prior U-questions have no counterpart,
+`diff` skips all of them, and nothing is reported — that is the single real
+failure mode, and it is the one the old `changed: 0` was reaching for.
+
+Proven on production before being written down, read-only:
+
+```
+$ npx convex run --prod --inline-query '...'
+{ "changed": [], "kind": "other" }
+```
+
+### The second edit moved, so the narration did not
+
+`ninety days → thirty` became **`seven (7) days → ten (10) days`** (line 194,
+the default cure period, quoted once by U4). Same shape of edit, same beat, but
+two findings on two distinct lines instead of three findings with line 63 printed
+twice — in the beat that asks a viewer to trust line numbers. Beat C's *"two
+things I had quoted no longer read the same way"* is now true as written, in all
+four places the sentence and its mechanics live.
+
+**Not scored in `READINESS.md`.** Nothing here is a defect in the product: the
+diff behaved exactly as designed and as tested. It is a defect in the *plan*, and
+the plan is not what the score measures. The lesson is the same one this log keeps
+recording from a different angle — **a claim about what production will do is
+worth nothing until something has read production** — and this time the reading
+cost one read-only query.

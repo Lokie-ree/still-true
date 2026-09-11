@@ -75,18 +75,40 @@ Midday — **prove the chain on a clause the video does not use.**
 
 The change is consumable: once a change is detected and published, the new
 reading is the baseline and the next read finds nothing. A rehearsal that moves
-the late charge **spends** the late charge. So:
+the late charge **spends** the late charge. So it has to be a different clause —
+but **it has to be a clause something actually quotes.**
 
-- [ ] Edit the entry notice, **four hours → six hours**. Leave $400 and ninety
-      alone. Deploy.
+**Corrected 2026-09-11. This step used to say "edit the entry notice, four hours
+→ six hours", and it would have mailed nothing.** A change is only reported when
+a prior finding's quote is gone from the text. The fixture classified as `other`,
+so it is on the universal checklist, and the eight findings on it quote lines 17,
+21, 63, 63, 80 and 85 — rent, the late charge, the termination notice twice, the
+default cure and the modification clause. **Nothing quotes the entry notice.**
+Editing it moves the hash, re-extraction runs, every prior quote is still there,
+`diff` returns `[]`, and no mail is sent. Silence is also the symptom of the
+failure this step exists to rule out, so it would have cost the afternoon before
+the shoot debugging a system that was working.
+
+- [ ] Edit **line 206** of `public/watch-test/lease.html`: `No modification` →
+      `No amendment`. That is the whole edit. The string occurs once in the file
+      and sits on one source line. Leave $400 and seven (7) days alone — they are
+      the video's. Deploy.
 - [ ] Re-check that one document — **never `watch:sweep`**, which re-reads every
-      url-backed document in the deployment including private forwards:
+      url-backed document in the deployment including private forwards. Values
+      read from production 2026-09-11:
       ```
-      npx convex run watch:recheck '{"documentId":"<id>","url":"<fixture url>","title":"<title>"}' --prod
+      npx convex run watch:recheck '{"documentId":"jh7cnrw0gq81wxgfke2d8xk3x58e3vfk","url":"https://impressive-marten-163.convex.site/watch-test/lease.html","title":"Lease they sent over — what am I agreeing to?"}' --prod
       ```
-- [ ] An email arrives quoting four hours and six hours with their lines. If it
-      does, the whole chain works and you still have a day to fix it if it did
-      not.
+- [ ] An email arrives quoting the old modification sentence and the new one,
+      with their lines. **U5a is the question it answers.** If it does, the whole
+      chain works on production for the first time and you still have a day to
+      fix it if it did not.
+
+**That last sentence is not a figure of speech.** As of this morning no finding
+on production carries a change stamp at all: the moved-clause path — old quote
+struck through, new one published, notice in the thread — has only ever run on
+dev. Tonight is the only slot to prove it on the deployment the video is shot
+against.
 
 Afternoon — **the full dry run.** Screen recorder on, camera off, no mail sent.
 Walk B → A → C → D → E with the tabs, the Ctrl+F, the scroll, the cuts, saying
@@ -98,22 +120,44 @@ You are rehearsing **the hands and the pauses**, which is where takes actually
 die. Watch it back once at 1.5×. You are looking for two things only: places you
 scrolled when you meant not to, and places you stopped talking.
 
-Evening — **the real edit, then hands off.** Last thing you do on Friday:
+Evening — **the real edit, then hands off.** Last thing you do on Friday. Two
+find-and-replaces in `public/watch-test/lease.html`, each unique in the file and
+each on a single source line:
 
-- [ ] **$400 → $600** and **ninety days → thirty**. Deploy. Stop touching it.
+- [ ] **line 72** — `Four Hundred and 00/100 Dollars ($400.00)` →
+      `Six Hundred and 00/100 Dollars ($600.00)`
+- [ ] **line 194** — `seven (7) days` → `ten (10) days`
+- [ ] Deploy. Stop touching it.
 - [ ] Do **not** re-check it by hand. The 11:17 UTC cron finding it unprompted is
       the entire beat; running the check yourself spends the change and leaves
       you nothing to show.
+
+**The second edit was `ninety days → thirty` until 2026-09-11, and it moved for a
+reason worth knowing on camera.** Two questions quote line 63 — U3a and U3b, the
+same sentence sliced at two different lengths — so that edit changes *three*
+findings and puts line 63 on screen twice in one notice, in the beat where you
+are asking a viewer to trust line numbers. The default-cure clause at line 80 is
+quoted once, by U4. Two edits, two findings, two distinct lines, and beat C's
+"two things I had quoted" stays true as written.
 
 ---
 
 ## Saturday — shoot
 
 **First, before anything else:** the notice from the overnight cron is in the
-thread, and the `kind` check on the shoot card reports `changed: 2`. If it
-reports 0 the classifier re-rolled between readings — edit again ($600 → $700),
-deploy, run `watch:recheck`, and shoot later. All of that is off camera, which
-is the whole reason it was moved off camera.
+thread, and the `kind` check on the shoot card reports `kind: "other"` with
+**`U2` and `U4` in `changed`**. `U5a` will be in that list too, carried over from
+Friday's proving run — a change stamp survives later readings, and that is
+correct, not a leak. If `kind` came back `lease`, the classifier re-rolled: the
+prior U-questions have no counterpart on the L-checklist, `diff` skips all of
+them and reports nothing. Then edit again ($600 → $700), deploy, run
+`watch:recheck`, and shoot later. All of that is off camera, which is the whole
+reason it was moved off camera.
+
+**Do not expect a number.** The old card said `changed` must be 2 and no number
+is right: drift can bring a moved clause back as `not_stated`, which is reported
+in the mail as a removal and never stamped. The question is whether `U2` moved,
+not how many did.
 
 Card is next to the camera. Do the throwaway run of all five first and delete
 it, as written. That is the plan, not a warm-up you can skip.
