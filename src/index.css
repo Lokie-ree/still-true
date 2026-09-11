@@ -1,24 +1,103 @@
 @import "tailwindcss";
 
+/* A legal exhibit, not a SaaS page.
+ *
+ * The hierarchy here is the argument. Until 2026-09-10 the model's summary was
+ * the bold text and the quote — which is the entire claim — was small grey
+ * italic, so the page led with the one part of a finding the model wrote. The
+ * quote is now the largest text on a card and the summary is an annotation
+ * above it.
+ *
+ * The gutter is the other half of it. Line numbers run down the left edge like
+ * a pleading page, and a REFUSAL RENDERS WITH AN EMPTY GUTTER — no line number,
+ * because there is no line. That states the thesis before anyone reads a word.
+ *
+ * ONE THEME AT A TIME, hard-coded, never `prefers-color-scheme`. The shooter's
+ * OS setting must not decide what beats A and D look like. Dark ships because
+ * it is what the video wants; the light palette is kept whole below, and
+ * switching is one word in `index.html` — `data-theme="light"`. Shoot day can
+ * A/B them against the real camera instead of arguing from a screenshot.
+ */
 @theme {
-  --color-light: #ffffff;
-  --color-dark: #171717;
+  /* DARK — shipped. Warm near-black, not blue-black: this is still ink and
+     paper, read at night. One accent, and it belongs to ABSENCE — answers get
+     no colour and earn attention through size instead. That inverts
+     green-is-good and puts the differentiator on top visually. */
+  --color-paper: #17140f;
+  --color-card: #201c16;
+  --color-ink: #f4efe5;
+  --color-muted: #b5ac9a;
+  --color-faint: #8d8471;
+  --color-rule: #423b30;
+  --color-absent: #e08a4e;
+
+  /* Newsreader for anything that came out of a document. Public Sans for
+     chrome — it is the US Web Design System's face, which is quietly right for
+     a product that quotes government model documents. Mono is doing a real job
+     (line numbers, hashes, timestamps), not signalling "technical". */
+  --font-serif: "Newsreader", ui-serif, Georgia, Cambria, serif;
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* The scaffold declared two near-identical media queries whose only real
-   content was its default font stack. One rule with a dark-mode override does
-   the same job. The typeface is deliberately the platform's own for now — the
-   interface is designed in P3, and picking a webfont before then would be
-   guessing. */
+/* Every text token is measured against BOTH grounds, because a card sits on the
+   page and the two are half a step apart. Ratios on the card, the worse of the
+   two:
+
+     token    dark    light
+     ink      14.8    16.2
+     muted     7.5     7.5
+     faint     4.6     4.8
+     absent    6.4     6.8
+
+   All above 4.5, which is the floor for text this small, and the two themes
+   step identically so neither reads flatter than the other. `rule` is ~1.5 and
+   exempt: it is a hairline, and the line numbers beside it carry the meaning.
+
+   The first palette had `faint` at 2.9 and it was carrying the LINE NUMBERS —
+   both an accessibility failure and the text most likely to mush in a
+   compressed video. Three steps, and the bottom one still passes. A fourth step
+   has to come out of the top, never the bottom. */
+:root[data-theme="light"] {
+  --color-paper: #faf7f1;
+  --color-card: #fffdf8;
+  --color-ink: #221f1a;
+  --color-muted: #5a5348;
+  --color-faint: #78705f;
+  --color-rule: #dcd3c2;
+  --color-absent: #9a3d16;
+}
+
 body {
-  color: var(--color-dark);
-  background: var(--color-light);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font-family: var(--font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    color: var(--color-light);
-    background: var(--color-dark);
+/* Light text on a dark ground is already optically thinner than the reverse, so
+   no `-webkit-font-smoothing: antialiased` — it would thin the serif further on
+   exactly the theme that can least afford it. */
+
+/* Cards already reorder as findings resolve, which is why the script says do
+   not reload on camera. A stagger turns that reflow into choreography.
+   Delay is set per card in App.tsx. */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card-in {
+  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-in {
+    animation: none;
   }
 }

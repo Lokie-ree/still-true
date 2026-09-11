@@ -65,3 +65,24 @@ in one of those files false?** If yes, the fix belongs in this PR.
 This rule exists because the README spent three days claiming the watch was not
 built, on a repository whose whole premise is that a claim without a current
 receipt is not worth reading.
+
+## The shoot, until it is shot
+
+Four files, and they are not interchangeable:
+
+- **`docs/shoot-card.md`** — the only thing that goes next to the camera. Order,
+  the lines, one rule, and an `IF THIS HAPPENS` table. Keep it scannable; detail
+  belongs elsewhere.
+- **`docs/video-script.md`** — the full script and the reasoning behind each
+  beat. **It has four sections that describe shoot mechanics** (the shoot order,
+  beat C, the recording checklist, the things that will go wrong). A change to
+  how a beat is shot has to reach all four; fixing one and leaving the others is
+  the same second-renderer defect this project has logged twice.
+- **`docs/rehearsal.md`** — the dated 09-10 to 09-12 schedule.
+- **`docs/handoff-2026-09-10.md`** — the pre-shoot review, its §9 status block,
+  and what only Randall can close.
+
+**No deploy happens on shoot day.** The fixture edit goes out the day before and
+the 11:17 UTC cron finds it; `watch:sweep` is never run by hand, because
+`watch:recheck` takes one `documentId` and the sweep fans out over private
+forwards.

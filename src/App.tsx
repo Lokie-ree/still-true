@@ -30,6 +30,13 @@ import { receiptKey, refusalLine } from "../convex/reply";
 // key are now IMPORTED from `reply.ts` rather than restated here — a fix to
 // either reaches both renderers, and `reply.test.ts`'s class guard covers this
 // page through them.
+//
+// **The layout is the argument, since 2026-09-10.** Findings render as a
+// pleading page: one gutter of line numbers down the left edge, the quote as
+// the largest text on the card, the model's summary demoted to an annotation
+// above it. A refusal occupies a row with an EMPTY GUTTER — there is no line
+// number because there is no line. Nothing new is asserted in words; the
+// hierarchy just stopped contradicting the claim.
 
 // The address is the interface. This page went live for a day without it
 // anywhere on the screen — a landing page for an email product that never said
@@ -90,8 +97,9 @@ function groupByReceipt(answered: Answered[], kind: DocumentKind): Cited[] {
   return [...byReceipt.values()];
 }
 
-const label = "text-[11px] font-semibold uppercase tracking-[0.09em]";
-const rule = "border-slate-200 dark:border-slate-700";
+// Docket stamp: mono, small, wide. Mono is doing an index job here rather than
+// signalling "technical".
+const label = "font-mono text-[10px] font-medium uppercase tracking-[0.14em]";
 
 // UTC, and with the time, for the same reason reply.ts stamps receipts in UTC:
 // a timestamp whose value depends on which machine rendered it is not evidence.
@@ -117,6 +125,25 @@ const shortDate = (at: number) =>
     timeZone: "UTC",
   });
 
+// One row of the pleading page. `line` is undefined for a refusal, and that is
+// the whole point: the gutter renders empty because there is no line to name.
+function Row({
+  line,
+  children,
+}: {
+  line?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <div className="pt-[0.2rem] pr-4 text-right font-mono text-[11px] leading-5 text-faint tabular-nums">
+        {line}
+      </div>
+      <div className="pl-5">{children}</div>
+    </>
+  );
+}
+
 function Findings({
   findings,
   kind,
@@ -133,92 +160,105 @@ function Findings({
   const missing = findings.filter((f) => f.verdict === "not_stated");
 
   return (
-    <div className={`mt-4 space-y-5 border-t pt-4 ${rule}`}>
-      {/* First, deliberately. See the note at the top of this file. */}
-      {missing.length > 0 && (
-        <div>
-          <p className={`${label} mb-2 text-amber-700 dark:text-amber-500`}>
-            What no single line says
-          </p>
-          <div className="space-y-2">
+    // The gutter rule is one absolutely positioned line rather than a border on
+    // each cell, so it stays continuous across the row gaps — a margin down the
+    // page, not a stack of ticks.
+    <div className="relative mt-5 border-t border-rule pt-5">
+      <div
+        aria-hidden
+        className="absolute bottom-0 left-14 top-5 w-px bg-rule"
+      />
+      <div className="grid grid-cols-[3.5rem_1fr] gap-y-6">
+        {/* First, deliberately. See the note at the top of this file. */}
+        {missing.length > 0 && (
+          <>
+            {/* Column two, not spanning: the gutter rule runs the height of the
+                findings block, and a full-width label collides with it. Aligned
+                with the content instead, which is also where it belongs. */}
+            <div className="col-start-2 pl-5">
+              <p className={`${label} text-absent`}>What no single line says</p>
+            </div>
             {missing.map((f) => (
-              <div key={f._id}>
-                <p className="text-sm font-medium">
+              <Row key={f._id}>
+                <p className="text-[0.95rem] font-medium leading-snug text-ink">
                   {questionFor(kind, f.questionKey)}
                 </p>
                 {/* Word for word what the reply sends, because it is the same
                     function. A refusal is a search result, not a verdict, and
-                    it claims only what was done. */}
-                <p className="text-sm italic text-slate-500 dark:text-slate-400">
+                    it claims only what was done — so it is set like one. */}
+                <p className="mt-1 font-mono text-[0.72rem] leading-5 text-muted">
                   {refusalLine(f.linesSearched)}
                 </p>
-              </div>
+              </Row>
             ))}
-          </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {cited.length > 0 && (
-        <div>
-          <p className={`${label} mb-2 text-emerald-700 dark:text-emerald-500`}>
-            What it requires of you
-          </p>
-          <div className="space-y-4">
+        {cited.length > 0 && (
+          <>
+            <div className="col-start-2 pl-5">
+              {/* No colour. The accent belongs to absence; an answer earns
+                  attention through the size of its quote. */}
+              <p className={`${label} text-faint`}>What it requires of you</p>
+            </div>
             {cited.map((c) => (
-              <div key={`${c.lineNo}:${c.quote}`}>
+              <Row key={`${c.lineNo}:${c.quote}`} line={c.lineNo}>
                 {c.questions.map((q) => (
-                  <p
-                    key={q}
-                    className="text-xs text-slate-500 dark:text-slate-400"
-                  >
+                  <p key={q} className="text-[0.78rem] leading-5 text-faint">
                     {q}
                   </p>
                 ))}
+                {/* The model's summary, and it is the only part of a finding
+                    the model writes. Demoted to an annotation on purpose. */}
                 {c.answers.map((a) => (
-                  <p key={a} className="text-sm font-medium">
+                  <p key={a} className="text-[0.9rem] leading-6 text-muted">
                     {a}
                   </p>
                 ))}
-                <blockquote
-                  className={`mt-1 border-l-2 pl-3 text-sm italic text-slate-600 dark:text-slate-300 ${rule}`}
-                >
+                {/* The claim. Largest text on the card, and the only text on it
+                    that came out of the document. */}
+                <blockquote className="mt-1.5 font-serif text-[1.2rem] font-medium leading-[1.55] text-ink">
                   {c.quote}
                 </blockquote>
-                <p className="mt-1 pl-3 font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                  line {c.lineNo}
-                </p>
 
                 {/* What it used to say. Stamped only when the document's stored
                     hash moved AND the old clause is gone from the text — never
                     from two model runs disagreeing. Struck through rather than
                     described, for the same reason the new one is quoted: a
                     change notice without both receipts is only an assertion
-                    that something happened. */}
+                    that something happened.
+
+                    It keeps its own line number, in the gutter, because the
+                    superseded clause was a line of the document too. */}
                 {c.changedAt !== null && c.previousQuote !== undefined && (
-                  <div className="mt-2">
-                    <p
-                      className={`${label} mb-1 text-amber-700 dark:text-amber-500`}
-                    >
-                      Changed {shortDate(c.changedAt)}
-                    </p>
-                    <blockquote className="border-l-2 border-amber-300 pl-3 text-sm italic text-slate-400 dark:border-amber-700 dark:text-slate-500">
-                      <s>{c.previousQuote}</s>
-                    </blockquote>
-                    <p className="mt-1 pl-3 font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                      was line {c.previousLineNo}
-                    </p>
+                  // The negative margin unwinds the parent Row's own gutter
+                  // (3.5rem) and padding (1.25rem) so this block re-enters the
+                  // page's one gutter rather than opening a second one inside
+                  // it. Same geometry as `Row`, deliberately.
+                  <div className="-ml-[4.75rem] mt-3 grid grid-cols-[3.5rem_1fr]">
+                    <div className="pr-4 pt-1 text-right font-mono text-[11px] leading-5 text-faint tabular-nums">
+                      {c.previousLineNo}
+                    </div>
+                    <div className="pl-5">
+                      <p className={`${label} text-absent`}>
+                        Changed {shortDate(c.changedAt)}
+                      </p>
+                      <blockquote className="mt-1 font-serif text-[1.05rem] font-medium leading-[1.5] text-faint">
+                        <s>{c.previousQuote}</s>
+                      </blockquote>
+                    </div>
                   </div>
                 )}
-              </div>
+              </Row>
             ))}
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function DocumentCard({ d }: { d: PublicDocument }) {
+function DocumentCard({ d, index }: { d: PublicDocument; index: number }) {
   const findings = useQuery(api.documents.findingsFor, { documentId: d._id });
   const refuses = (findings ?? []).some((f) => f.verdict === "not_stated");
 
@@ -231,33 +271,41 @@ function DocumentCard({ d }: { d: PublicDocument }) {
     // Ordered by the data, not by a hand-picked id: seeding a seventh document
     // must not silently put grounding back on the first screen.
     <li
-      style={{ order: refuses ? 0 : 1 }}
-      className={`rounded border p-5 ${rule}`}
+      style={{
+        order: refuses ? 0 : 1,
+        // ponytail: the stagger keys off DOM index within the two `order`
+        // buckets, not final visual position, so a hoisted card can animate a
+        // beat out of sequence. Imperceptible at six cards and 50ms; if the
+        // corpus grows, lift `refuses` to the parent and delay by real index.
+        animationDelay: `${(refuses ? 0 : 0.15) + index * 0.05}s`,
+      }}
+      className="card-in rounded-sm border border-rule bg-card p-6"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-semibold">{d.title}</h2>
-        <span className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          {d.kind}
-        </span>
+        <h2 className="text-[1.05rem] font-semibold leading-snug tracking-[-0.01em]">
+          {d.title}
+        </h2>
+        <span className={`${label} shrink-0 text-faint`}>{d.kind}</span>
       </div>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mt-1.5 font-mono text-[11px] leading-5 text-muted">
         {d.url ? (
-          <a href={d.url} className="underline break-all">
+          <a
+            href={d.url}
+            className="break-all underline decoration-rule underline-offset-2 hover:decoration-muted"
+          >
             {d.url}
           </a>
         ) : (
           "emailed attachment"
         )}
       </p>
-      <p className="mt-1 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+      <p className="mt-1 font-mono text-[11px] text-faint">
         {d.lineCount.toLocaleString()} lines · read {shortDate(d.fetchedAt)}
         {/* The watch's normal day, said out loud. "Checked and unchanged" is
             what happens on almost every document on almost every run, and a
             system that only speaks when something moves is indistinguishable
             from one that stopped running. */}
-        {d.lastCheckedAt !== null && (
-          <> · re-checked {stamp(d.lastCheckedAt)}</>
-        )}
+        {d.lastCheckedAt !== null && <> · re-checked {stamp(d.lastCheckedAt)}</>}
       </p>
       {findings !== undefined && <Findings findings={findings} kind={d.kind} />}
     </li>
@@ -279,41 +327,43 @@ export default function App() {
   );
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">still-true</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Forward a lease, a terms-of-service update, an insurance renewal. It
-        replies with what that document requires of you — every claim quoted
-        from your own text with the line it came from — and says plainly where
-        no single line answers the question. Then it re-reads the page daily and
-        tells you when a clause changes.
+    <main className="mx-auto max-w-2xl px-6 py-12">
+      <h1 className="text-[1.75rem] font-bold tracking-[-0.02em]">still-true</h1>
+      {/* One line. This used to restate the og:description at paragraph
+          length, which said the same thing twice to anyone who arrived from a
+          link preview. */}
+      <p className="mt-2 max-w-xl text-[0.95rem] leading-6 text-muted">
+        Forward a lease, a terms-of-service update, an insurance renewal — every
+        answer comes back quoted from your own text with the line it came from,
+        and where no single line answers the question, it says so.
       </p>
 
       {/* The interface, stated. */}
-      <div className={`mt-5 rounded border px-4 py-3 ${rule}`}>
-        <p className={`${label} text-slate-500 dark:text-slate-400`}>
-          Forward a document to
-        </p>
-        <p className="mt-1 font-mono text-base font-semibold">
-          <a href={`mailto:${INBOX}`} className="underline">
+      <div className="mt-6 rounded-sm border border-rule bg-card px-5 py-4">
+        <p className={`${label} text-faint`}>Forward a document to</p>
+        <p className="mt-1.5 font-mono text-[1rem] font-medium">
+          <a
+            href={`mailto:${INBOX}`}
+            className="underline decoration-rule underline-offset-4 hover:decoration-ink"
+          >
             {INBOX}
           </a>
         </p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-[0.78rem] leading-5 text-muted">
           A PDF attachment or a link in the body. The reply lands in about
           fifteen seconds. Nothing you forward appears on this page.
         </p>
       </div>
 
       {documents === undefined && (
-        <p className="mt-8 text-slate-500">Loading…</p>
+        <p className="mt-10 text-sm text-muted">Loading…</p>
       )}
       {documents?.length === 0 && (
-        <p className="mt-8 text-slate-500">No documents yet.</p>
+        <p className="mt-10 text-sm text-muted">No documents yet.</p>
       )}
 
       {documents !== undefined && documents.length > 0 && (
-        <p className="mt-8 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-10 font-mono text-[11px] leading-5 text-faint">
           {documents.length} public documents ·{" "}
           {documents.reduce((n, d) => n + d.lineCount, 0).toLocaleString()}{" "}
           lines read · every answer below carries the sentence it came from
@@ -326,17 +376,18 @@ export default function App() {
         </p>
       )}
 
-      <ul className="mt-3 flex flex-col gap-4">
-        {documents?.map((d) => (
-          <DocumentCard key={d._id} d={d} />
+      <ul className="mt-4 flex flex-col gap-5">
+        {documents?.map((d, i) => (
+          <DocumentCard key={d._id} d={d} index={i} />
         ))}
       </ul>
 
-      <p className="mt-10 text-xs text-slate-500 dark:text-slate-400">
-        Every quote is a numbered line of the document above it, pulled out by
-        index — the model returns a line number and never writes the sentence,
-        so a quote that is not in the document cannot be shown. This quotes and
-        counts. It does not interpret or advise, and it is not legal advice.
+      <p className="mt-12 max-w-xl text-[0.78rem] leading-5 text-muted">
+        The plain sentence above each quote is the model's summary. The quote is
+        not: the model returns a line number, and the sentence is cut out of your
+        document by index on the server. A quote that is not in the document
+        cannot be shown. This quotes and counts. It does not interpret or advise,
+        and it is not legal advice.
       </p>
     </main>
   );

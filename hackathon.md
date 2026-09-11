@@ -2280,3 +2280,273 @@ to agree.**
 
 Score unchanged at 67. Nothing new is open; two closures were completed and one
 ordering defect closed unscored.
+
+## 2026-09-10 — the page described a guarantee it did not have
+
+A pre-shoot review read `extract.ts` against the two sentences the project
+publishes about how it works, and they disagreed.
+
+`README.md`: *"The model never writes the answer text."*
+`src/App.tsx` footer: *"the model returns a line number and never writes the
+sentence."*
+
+The prompt in `extract.ts` tells the model **never to copy document text into
+`answer`**. The plain-English answer is therefore the one field on the page that
+is entirely model prose. Both sentences were false about the thing they named.
+
+### The guarantee is real, and it is about the quote
+
+An earlier reading had gone the other way and worried that `excerpt` *weakened*
+the grounding claim, because the model proposes clause text. It does not.
+`verify()` calls `excerpt(lines[lineNo - 1], claim.support_quote)`; `excerpt`
+returns `whole.slice(start, end)` of the document line. The model's string is
+used only to locate the cut, and if it is not present in the line character for
+character it is discarded and the whole line publishes. The model's text never
+reaches a reader.
+
+So *"neither I nor the model wrote that sentence"* is defensible — **about the
+quote, and only about the quote.** Both places now say so:
+
+> The plain sentence above each quote is the model's summary. The quote is not:
+> the model returns a line number, and the sentence is cut out of your document
+> by index on the server. A quote that is not in the document cannot be shown.
+
+That is a weaker sentence than the one it replaces, and it is the one that is
+true. The pattern is now familiar enough to name: **this project's retractions
+are all the same shape.** H5 retracted "this document does not state it." M7
+retracted a receipt printed under the wrong answer. The board retracted both a
+second time because nothing tested the page. H7 retracts a claim about the
+mechanism itself. Four for four, the false version was the stronger one and the
+correction cost a clause.
+
+### A fourth discovery mode, and it is free
+
+`READINESS.md` had three: re-reading code found nothing all week; sending mail
+found five flags; comparing the two renderers found three more in twenty
+minutes. This one is none of those. It compares **a claim about the pipeline to
+the pipeline** — a published sentence beside the prompt that produces the field
+it describes. No deploy, no mail, no model call, and it took one grep.
+
+The surface it applies to is small and enumerable: every sentence in `README.md`
+and `src/App.tsx` that begins *"the model"* or *"the system"*. That is a checkable
+list, and it is worth walking before the submission rather than after.
+
+### Also in this pass
+
+The 09-10 script rewrite lands with it: beat A no longer says *"it is not in
+there"* over a screen reading *"no single line states it"* — the same
+self-contradiction H5 exists to stop making, and it would have contradicted beat
+D ninety seconds later. Beat A now says *"the government's model health plan
+summary — the form every insurer fills in"*, because the SBC is CMS's completed
+sample and a judge who clicks finds a fictional plan. Beat B says the summary is
+the model's and the quote is not, out loud, so the video and the footer agree.
+Beat E names what the platform carried instead of rolling credits.
+
+`docs/shoot-card.md` is new and is the only thing that goes next to the camera:
+order, five hazards found in code rather than in the docs — the classifier
+re-roll that mails nothing and logs nothing, the token bucket at five forwards,
+beat B silently re-extracting the card that was hand-checked 21 of 21 — and one
+rule, which is *read the reply before you keep the take*.
+
+`docs/handoff-2026-09-10.md` carries the rest, including the judge panel
+(fourteen of seventeen work at the four sponsors) and the decided board
+redesign, which is not started.
+
+Score unchanged at 67. H7 opened and closed inside the pass and never survived a
+pass boundary, so it moves no number; it is on the do-not-re-flag list because
+it is the fourth instance of one class.
+
+## 2026-09-10 (afternoon) — the board became a pleading page
+
+The page had been a scaffold with real data in it since 09-02, when `index.css`
+recorded a deliberate deferral: *the typeface is the platform's own for now,
+because picking a webfont before the interface is designed would be guessing.*
+That note is now removed, because the guessing is over.
+
+### The hierarchy was arguing against the product
+
+The model's summary was bold. The quote — which is the entire claim, and the
+only text on a card that came out of the document — was small grey italic under
+it. The page led with the one part of a finding the model writes, on a product
+whose argument is that the model does not write the part that matters.
+
+So: **the quote is now the largest text on the card**, set in Newsreader, and
+the summary is an annotation above it in the chrome face. Line numbers moved
+into a real gutter down the left edge, one continuous rule, like a pleading
+page. **A refusal renders with an empty gutter** — no line number, because there
+is no line. That is the thesis stated before anyone reads a word, and it cost no
+new sentence.
+
+The colour decision follows from the same place: **the one accent belongs to
+absence.** "What no single line says" is the only thing on the page with a
+colour on it. Answers get none and earn attention through size instead. Green
+for good and red for bad would have put the differentiator underneath.
+
+Public Sans for chrome, because it is the US Web Design System's face and this
+product quotes government model documents. IBM Plex Mono for line numbers,
+hashes and timestamps, where it is doing an index job rather than signalling
+"technical". Light only — `prefers-color-scheme` meant the shooter's OS theme
+decided what beats A and D of the video looked like, and nothing on this page
+was gaining anything from the dark variant.
+
+### What was not allowed to move
+
+The board is a second renderer, and 09-09 is the reason that sentence is in the
+file header. `refusalLine` and `receiptKey` are still **imported** from
+`reply.ts`; `questionFor` is still imported from `questions.ts`; refusals still
+come first inside a card; refusing documents are still hoisted by CSS `order`
+derived from the data rather than by a hand-picked id; `PublicDocument` is still
+`Omit<Doc<"documents">, "watchError">`. **No new factual claim was added to the
+page.** Every sentence added is a sentence `reconcile.sh` has to keep true, and
+the redesign added none.
+
+### Verified by opening it, which is the whole point
+
+Rendered on `charming-kookabura-768` (**dev**) and read: the SBC card's four
+refusals sit against an empty gutter, the superseded clause on the Northfield
+fixture strikes through in serif with its own line number in the same gutter as
+the current one, and the footer carries the corrected sentence. The first
+alignment attempt opened a *second* gutter inside the first for the superseded
+clause and was fixed to re-enter the page's one gutter. Mobile at 390px holds;
+no console errors; no horizontal overflow.
+
+A dev server already running on this machine was serving the same source against
+**production's** public queries, which incidentally answered a question the
+pre-shoot review had left open: on production the SBC card is first and refuses
+four. That is the board's own data read through a read-only query, not a
+deployment — production is still unchanged and still cannot be deployed from
+here.
+
+### The stagger, and what it is approximating
+
+Cards fade and rise on entry, staggered. They already reorder as findings
+resolve, which is why the script says do not reload on camera; the stagger turns
+that reflow into choreography instead of a flicker. The delay keys off DOM index
+within the two `order` buckets rather than final visual position, so a hoisted
+card can animate a beat out of sequence — imperceptible at six cards and 50ms,
+and marked `ponytail:` with the upgrade path. `prefers-reduced-motion` turns it
+off.
+
+## 2026-09-10 (evening) — the riskiest thing in the video was a deploy, so it left the video
+
+Beat C had the shooter edit the fixture on camera, publish, and run
+`watch:sweep` by hand, while narrating. Three things wrong with that, and the
+third is the one that mattered.
+
+**`npm run deploy` is not a demo action.** It pushes the functions, builds the
+Vite client and re-uploads the whole static bundle. Running it mid-shoot means a
+slow all-or-nothing operation with dead air over it, and a dirty working tree
+shipping live on camera.
+
+**`watch:sweep` was the wrong entry point and always had been.** `watchable`
+filters on `url !== null`, not on `isPublic`, so a hand-run sweep re-reads every
+url-backed document in the deployment — private forwards included. `watch:recheck`
+already exists, takes one `documentId`, and is exactly what `sweep` enqueues per
+document. **The fix was a function that had been in the file the whole time**,
+which is the second time this week the answer was already in the repo.
+
+### The third one is the argument, not the mechanics
+
+Running the sweep by hand undercuts the sentence the beat exists for. *"I did not
+ask for this"* is weaker when the viewer has just watched you ask for it.
+
+So the change now happens **the day before**, and the daily cron finds it at
+11:17 UTC with nobody watching. *Unprompted* becomes literally true, and the beat
+gains an on-screen timestamp that a viewer can check — which is the only kind of
+claim this video makes. Nothing is faked and nothing is hidden: the narration
+still says out loud, first, that the page was changed on purpose.
+
+**The change is consumable, and that constrains the rehearsal.** Once a change is
+detected and published the new reading is the baseline and the next read finds
+nothing — the same shape as Firecrawl's `changeTracking`, where reading the
+status spends it. A Friday rehearsal that moves the late charge SPENDS the late
+charge. So Friday proves the chain on the entry notice (four hours to six), a
+clause the video never quotes, and leaves $400 and ninety alone.
+
+### What is left to fail, and it is now checkable before a take
+
+The classifier re-roll. Every hash move forces a re-classify, and if two
+consecutive readings land on different checklists the diff finds no prior
+question and mails nothing, with no error anywhere. That has not changed.
+
+What changed is that it is now **readable before the camera is on**, with one
+read-only query that sends no mail and calls no model: the fixture's `kind` and
+the count of findings carrying a `changedAt`. `changed` must be 2. If it is 0 the
+re-roll happened, and the recovery — edit again, deploy, `watch:recheck` — is off
+camera, which is the whole reason it was moved off camera.
+
+`docs/video-script.md`, `docs/shoot-card.md` and `docs/rehearsal.md` all carry
+the new order. Shoot day now contains no deploy at all.
+
+## 2026-09-10 (night) — three things the audit found after the design was called done
+
+Asked whether any stone was left unturned. The honest answer was no, and turning
+them over cost three fixes.
+
+### `npm run gate` and `scripts/reconcile.sh`, actually run
+
+7/7 on production `impressive-marten-163`, read-only: 17 functions and 2 public,
+6 public documents all `isPublic`, 37 answered findings all quoted with a line
+number, last sweep 9.6h ago, no document failing its re-check, 18 threads all
+bare addresses.
+
+Reconcile: **CONFIRMED 74, DRIFTED 1**. The one drift was `README.md` claiming
+**91 tests** against a suite that reports 97. Fixed. That is the fourth time a
+number in the README has drifted and the fourth time the script caught it, which
+is the argument for the script.
+
+### The gutter failed its own accessibility floor
+
+The palette shipped that afternoon put `faint` at **2.9:1** on the card ground,
+and `faint` was carrying the LINE NUMBERS — the single element the whole redesign
+is built around. Below the 4.5 floor for text that size, and worse, it is exactly
+the thin small text that mushes first under video compression.
+
+Measured rather than eyeballed, every token against both grounds. The ramp is now
+ink ~15, muted ~7.5, faint ~4.6, absent ~6.4, in **both** themes, so neither
+reads flatter than the other. `rule` stays at ~1.5 and is exempt: it is a
+hairline, and the line numbers beside it carry the meaning.
+
+**The lesson is not "check contrast".** It is that the token doing the most
+important job in a design is the one most likely to have been chosen for how
+quiet it looked.
+
+### Dark, and the reversal that goes with it
+
+The board ships **dark**. The 09-10 afternoon decision was "light only", on the
+grounds that `prefers-color-scheme` let the shooter's OS decide what the video
+looked like. That reason survives intact — a committed dark theme removes the
+variable just as completely — and Randall's call is that dark reads better on
+camera.
+
+Recorded as a reversal because the concern was real and was overruled: the design
+is a paper exhibit and dark works against that metaphor, and beats B and C cut
+between Gmail's white and the board. Both palettes are defined whole and the
+switch is one attribute in `index.html`, so Friday A/Bs them against the actual
+camera rather than a screenshot. That is the cheap measurement this project keeps
+saying to run first.
+
+Two fixes fell out of rendering it: the serif quote went to weight 500, because a
+400 serif thins out on a dark ground and the quote is supposed to be the heaviest
+thing on the card; and **the gutter rule ran straight through both section
+labels**, invisible on paper and obvious on dark. The labels moved into the
+content column, where they align with everything else and where they should have
+been anyway.
+
+### Also turned over
+
+`docs/video-script.md` still described the old live-deploy beat C in **three**
+sections after beat C itself had been rewritten — the shoot order, the recording
+checklist, and the things-that-will-go-wrong list. Fixed, and `CLAUDE.md` and
+`AGENTS.md` now name all four places a shoot-mechanics change has to reach. This
+is the second-renderer defect again, in prose this time.
+
+`watch:recheck` was recommended as the recovery command without anyone having run
+it. Run on **dev**: `lastCheckedAt` moved to 21:03:41Z, `watchError` null, line
+count unchanged at 94, findings intact. It takes the early exit cleanly on an
+unchanged page. The command form in the shoot card is now proven rather than
+assumed.
+
+**Left open on purpose:** `public/og.jpg` is still a screenshot of the old
+scaffold board, so every link preview shows a page that no longer exists. It is
+Randall's call whether to reshoot it before the submission.

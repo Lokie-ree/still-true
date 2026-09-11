@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-08 19:33 UTC` by `bash scripts/reconcile.sh`, at commit `cb33929`.
+Generated `2026-09-10 20:54 UTC` by `bash scripts/reconcile.sh`, at commit `b4e7269`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -21,12 +21,15 @@ What this cannot do, stated so a reader can discount it:
 | verdict | count |
 |---|---|
 | CONFIRMED | 74 |
-| DRIFTED | 0 |
+| DRIFTED | 1 |
 | UNVERIFIABLE | 12 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
-_Nothing._
+- **README.md says "91 tests"**
+  - ran: `npm test`
+  - got: the suite reports 97 tests, not 91
+
 
 ## UNVERIFIABLE — no command run here can settle it
 
@@ -81,16 +84,16 @@ _Nothing._
   - got: 6 documents, all isPublic
 - **production claim: every published answer carries its quote**
   - ran: `node scripts/gate.mjs`
-  - got: 36 answered findings, all quoted with a line number
+  - got: 37 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 0.8h ago, 6 documents stamped
+  - got: last sweep 9.6h ago, 6 documents stamped
 - **production claim: no document is failing its re-check**
   - ran: `node scripts/gate.mjs`
-  - got: 10 documents, none carrying a watch error
+  - got: 14 documents, none carrying a watch error
 - **production claim: every sender identity is a bare address**
   - ran: `node scripts/gate.mjs`
-  - got: 10 threads, 1 distinct senders, all bare addresses
+  - got: 18 threads, 1 distinct senders, all bare addresses
 - **P1 claimed shipped — README.md — "P1–P3 — the inbox, the parser, the extractor and the cit…"**
   - ran: `gh pr list --state merged --json number,title | grep 'P1'`
   - got: #13 P1: the front door — forwarded mail becomes a cited-ready document
@@ -169,6 +172,9 @@ _Nothing._
 - **link in docs/READINESS.md → https://www.paypal.com/us/legalhub/useragreement-full**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/legalhub/useragreement-full'`
   - got: HTTP 200
+- **link in docs/READINESS.md → probe-v4.md**
+  - ran: `test -e docs/probe-v4.md`
+  - got: docs/probe-v4.md exists
 - **link in docs/READINESS.md → transcript-sbc.md**
   - ran: `test -e docs/transcript-sbc.md`
   - got: docs/transcript-sbc.md exists
@@ -244,16 +250,16 @@ _Nothing._
 - **docs/ASSESSMENT.md carries a superseded/archived banner**
   - ran: `git log -1 --format=%cI -- docs/ASSESSMENT.md`
   - got: banner asserts 2026-09-02; git says last touched 2026-09-05. Label is dated, not vibes.
-- **docs/READINESS.md:99 cites `convex/mail.ts:769`**
+- **docs/READINESS.md:202 cites `convex/mail.ts:769`**
   - ran: `grep -nF 'by_url' convex/mail.ts`
   - got: `by_url` (rarest token, 1 occurrence(s)) is at L769, 0 line(s) from the cited L769 — the citation points at the right code
-- **docs/READINESS.md:109 cites `convex/documents.ts:28`**
+- **docs/READINESS.md:212 cites `convex/documents.ts:28`**
   - ran: `grep -nF 'recent' convex/documents.ts`
   - got: `recent` (rarest token, 2 occurrence(s)) is at L23, 5 line(s) from the cited L28 — the citation points at the right code
-- **docs/READINESS.md:112 cites `convex/mail.ts:326`**
+- **docs/READINESS.md:215 cites `convex/mail.ts:326`**
   - ran: `grep -nF 'console.error' convex/mail.ts`
   - got: `console.error` (rarest token, 1 occurrence(s)) is at L326, 0 line(s) from the cited L326 — the citation points at the right code
-- **docs/READINESS.md:115 cites `convex/mail.ts:894`**
+- **docs/READINESS.md:218 cites `convex/mail.ts:894`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
   - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L894, 0 line(s) from the cited L894 — the citation points at the right code
 - **hackathon.md is reachable**
@@ -289,7 +295,4 @@ _Nothing._
 - **CLAUDE.md says "seven read-only checks"**
   - ran: `grep -c '^check(' scripts/gate.mjs`
   - got: gate.mjs defines 7
-- **README.md says "91 tests"**
-  - ran: `npm test`
-  - got: the suite reports 91
 
