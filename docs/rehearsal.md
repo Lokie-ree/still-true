@@ -76,47 +76,42 @@ Midday — **prove the chain on a clause the video does not use.**
 The change is consumable: once a change is detected and published, the new
 reading is the baseline and the next read finds nothing. A rehearsal that moves
 the late charge **spends** the late charge. So it has to be a different clause —
-but **it has to be a clause something actually quotes.**
+and it has to be a clause **the current checklist quotes.**
 
-**Corrected 2026-09-11. This step used to say "edit the entry notice, four hours
-→ six hours", and it would have mailed nothing.** A change is only reported when
-a prior finding's quote is gone from the text. The fixture classified as `other`,
-so it is on the universal checklist, and the eight findings on it quote lines 17,
-21, 63, 63, 80 and 85 — rent, the late charge, the termination notice twice, the
-default cure and the modification clause. **Nothing quotes the entry notice.**
-Editing it moves the hash, re-extraction runs, every prior quote is still there,
-`diff` returns `[]`, and no mail is sent. Silence is also the symptom of the
-failure this step exists to rule out, so it would have cost the afternoon before
-the shoot debugging a system that was working.
+**Rewritten twice on 2026-09-11, and the second rewrite is the interesting one.**
+This step originally said *entry notice, four hours → six hours*. At 11:18 UTC
+that was wrong, because the fixture had classified as `other` and the universal
+checklist quotes no entry notice. It was changed to the modification clause,
+the proving run was run at 15:29 — and the re-check **re-classified the document
+to `lease`**, which reports nothing at all and mailed nothing. See H8 in
+[`READINESS.md`](READINESS.md). The checklist is now pinned on a re-check, the
+fixture is a `lease`, and under the lease checklist the entry notice is quoted
+again, by **L2**. The original instruction was right all along; what was wrong
+was assuming the checklist holds still.
 
-- [ ] Edit **line 206** of `public/watch-test/lease.html`: `No modification` →
-      `No amendment`. That is the whole edit. The string occurs once in the file
-      and sits on one source line. Leave $400 and seven (7) days alone — they are
-      the video's. Deploy.
+**Deploy the H8 fix before this step**, or the next reading can re-roll again.
+
+- [ ] Edit **line 127** of `public/watch-test/lease.html`: `four (4)` → `six (6)`.
+      The string occurs once in the file and sits on one source line — *"four (4)
+      hours"* wraps across lines 127–128, so `four (4)` is the token to search
+      for, not the phrase. Leave $400 and ninety alone; they are the video's.
+      Deploy.
 - [ ] Re-check that one document — **never `watch:sweep`**, which re-reads every
-      url-backed document in the deployment including private forwards. Values
-      read from production 2026-09-11:
+      url-backed document in the deployment including private forwards:
       ```
-      npx convex run watch:recheck '{"documentId":"jh7cnrw0gq81wxgfke2d8xk3x58e3vfk","url":"https://impressive-marten-163.convex.site/watch-test/lease.html","title":"Lease they sent over — what am I agreeing to?"}' --prod
+      bash scripts/recheck-fixture.sh
       ```
-      **The title has to be that string character for character, em dash and
-      all.** `readAndPublish` calls `classify(args.title, lines)` — the title is
-      an *input to the classifier*, not a label. Shorten it or drop the dash and
-      `kind` can re-roll to `lease`, at which point `diff` finds no prior
-      question to compare and reports nothing. That is the same silence as a
-      broken chain, self-inflicted. The cron passes the stored title, which is
-      why the cron is consistent; a hand-run re-check is only consistent if you
-      paste it.
-- [ ] An email arrives quoting the old modification sentence and the new one,
-      with their lines. **U5a is the question it answers.** If it does, the whole
-      chain works on production for the first time and you still have a day to
-      fix it if it did not.
+- [ ] An email arrives quoting four (4) hours and six (6) hours with their
+      lines. **L2 is the question it answers.** If it does, the whole chain works
+      on production for the first time and you still have a day to fix it if it
+      did not.
+- [ ] **Then check `kind` is still `lease`** — the pre-roll command on the shoot
+      card. That is the H8 fix proving itself on production, on the same run.
 
-**That last sentence is not a figure of speech.** As of this morning no finding
-on production carries a change stamp at all: the moved-clause path — old quote
-struck through, new one published, notice in the thread — has only ever run on
-dev. Tonight is the only slot to prove it on the deployment the video is shot
-against.
+**That "first time" is not a figure of speech.** Before today no finding on
+production carried a change stamp at all: the moved-clause path — old quote
+struck through, new one published, notice in the thread — had only ever run on
+dev.
 
 Afternoon — **the full dry run.** Screen recorder on, camera off, no mail sent.
 Walk B → A → C → D → E with the tabs, the Ctrl+F, the scroll, the cuts, saying
@@ -129,42 +124,43 @@ die. Watch it back once at 1.5×. You are looking for two things only: places yo
 scrolled when you meant not to, and places you stopped talking.
 
 Evening — **the real edit, then hands off.** Last thing you do on Friday. Two
-find-and-replaces in `public/watch-test/lease.html`, each unique in the file and
-each on a single source line:
+find-and-replaces in `public/watch-test/lease.html`, each occurring once in the
+file and each on a single source line:
 
 - [ ] **line 72** — `Four Hundred and 00/100 Dollars ($400.00)` →
-      `Six Hundred and 00/100 Dollars ($600.00)`
-- [ ] **line 194** — `seven (7) days` → `ten (10) days`
+      `Six Hundred and 00/100 Dollars ($600.00)`  (quoted by **L3a**)
+- [ ] **line 158** — `ninety (90)` → `thirty (30)`  (quoted by **L4a**)
 - [ ] Deploy. Stop touching it.
 - [ ] Do **not** re-check it by hand. The 11:17 UTC cron finding it unprompted is
       the entire beat; running the check yourself spends the change and leaves
       you nothing to show.
 
-**The second edit was `ninety days → thirty` until 2026-09-11, and it moved for a
-reason worth knowing on camera.** Two questions quote line 63 — U3a and U3b, the
-same sentence sliced at two different lengths — so that edit changes *three*
-findings and puts line 63 on screen twice in one notice, in the beat where you
-are asking a viewer to trust line numbers. The default-cure clause at line 80 is
-quoted once, by U4. Two edits, two findings, two distinct lines, and beat C's
-"two things I had quoted" stays true as written.
-
----
+**These are the script's original two edits, and they came back for a reason.**
+For part of 2026-09-11 the second one was `seven (7) days → ten (10) days`,
+because under the *universal* checklist line 63 was quoted twice — by U3a and
+U3b at two different lengths — and one edit would have moved three findings and
+printed one line twice on camera. The fixture is a `lease` now and line 63 is
+quoted once, by L4a, so the duplicate is gone and the cure period is quoted by
+nobody. Checked against production 2026-09-11: `$400.00` is inside L3a's quote
+and `ninety (90)` is inside L4a's.
 
 ## Saturday — shoot
 
 **First, before anything else:** the notice from the overnight cron is in the
-thread, and the `kind` check on the shoot card reports `kind: "other"` with
-**`U2` and `U4` in `changed`**. `U5a` will be in that list too, carried over from
+thread, and the `kind` check on the shoot card reports `kind: "lease"` with
+**`L3a` in `changed`**. `L4a` will be there too, and `L2` carried over from
 Friday's proving run — a change stamp survives later readings, and that is
-correct, not a leak. If `kind` came back `lease`, the classifier re-rolled: the
-prior U-questions have no counterpart on the L-checklist, `diff` skips all of
-them and reports nothing. Then edit again ($600 → $700), deploy, run
-`watch:recheck`, and shoot later. All of that is off camera, which is the whole
-reason it was moved off camera.
+correct, not a leak.
+
+If `kind` came back anything other than `lease`, the H8 pin is not deployed:
+the prior questions have no counterpart on the new checklist, `diff` skips all
+of them and reports nothing. Deploy it, then edit again ($600 → $700), deploy,
+run `bash scripts/recheck-fixture.sh`, and shoot later. All of that is off
+camera, which is the whole reason it was moved off camera.
 
 **Do not expect a number.** The old card said `changed` must be 2 and no number
 is right: drift can bring a moved clause back as `not_stated`, which is reported
-in the mail as a removal and never stamped. The question is whether `U2` moved,
+in the mail as a removal and never stamped. The question is whether `L3a` moved,
 not how many did.
 
 Card is next to the camera. Do the throwaway run of all five first and delete

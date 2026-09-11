@@ -67,6 +67,15 @@ closed together, behind a property test over the rendered reply rather than two
 more patches. M8 is what is left of that day, and it is a parser flag rather
 than a receipt one.
 
+**Amended 2026-09-11 (afternoon): H8, opened and closed by running the rehearsal
+instead of reading it.** A re-check re-classified the fixture — `other` at 11:18
+UTC, `lease` at 15:29 — and a re-classification skips every change in `diff`,
+replaces the findings with another checklist's, and ends that document's watch
+in silence. Three audits had read the line that does it. **Nothing that reads
+code was ever going to find this**, because the defect is a relationship between
+a model call in `mail.ts` and a `questionKey` comparison in `change.ts` that runs
+a day later. It is in *Closed*; the score line does not move.
+
 **Amended 2026-09-11: M9 and L6, opened and closed the same morning, by opening
 the deployed board on a phone.** Not a new discovery mode — it is the 09-09 one,
 *open the public page and read it* — but run on real hardware and, decisively,
@@ -268,6 +277,48 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **H8 (a re-check re-classified the document, and a re-classification silently
+  ends the watch)** opened and closed 2026-09-11, found by running the proving
+  run the video depends on. `readAndPublish` called `classify()` on every
+  reading, including a re-check. `classify` is a model call and it is not
+  deterministic: on production the video fixture read as **`other` at 11:18 UTC
+  and `lease` at 15:29**, one word of it changed and nothing else.
+
+  That is not a cosmetic wobble. `diff` matches a new finding to a prior one by
+  `questionKey`, and *a question the previous reading never asked is a first
+  answer, not a change* — correct on its own, and catastrophic across a
+  checklist boundary, where **every** key is new at once. So every change is
+  skipped, the stored findings are replaced by another checklist's answers, and
+  **the watch on that document is over**: no error, no `watchError`, no notice,
+  and a reply already told that sender it would keep watching. The next reading
+  compares against the new baseline and finds nothing either. It is silent, it
+  is permanent, and nothing in the product would ever have reported it.
+
+  Fixed by pinning: on a re-check, the checklist is the one the document was
+  FIRST answered against. `hashOf` became `priorReading` and returns the stored
+  `kind` with the hash — the same query, on the same path, already called there
+  — and `classify` now runs on a first reading only. A lease does not stop being
+  a lease between two readings, and the first reading is the one a reply was
+  built on and a sender was told about.
+
+  **Scored 15 and it is the fourth flag this week found by using the product
+  rather than reading it.** The two audits and the code review that have read
+  `mail.ts` since 09-04 all read this line and none of them saw it, because
+  nothing is wrong with the line: it is wrong only in relation to `diff`, in a
+  file it does not import, on a path that only runs a day later. **The score
+  line does not move** — opened and closed inside one pass, like H7 — but this
+  one had been shipping since the watch existed.
+
+  **Not verified on production**, which cannot be deployed from a Claude
+  session. The check after the deploy is the proving run: edit the entry notice,
+  `bash scripts/recheck-fixture.sh`, and confirm `kind` is still `lease` and a
+  notice quoting L2 arrives.
+
+  **What it cost, recorded because the alternative was worse.** It surfaced at
+  15:29 on the day before the shoot, in a rehearsal step written to catch
+  exactly this and nearly deleted twice for being redundant. Tomorrow morning it
+  would have produced an empty inbox, no error anywhere, and no time.
 
 - **M9 (one quoted URL pushed the board off the right edge of a phone)** opened
   and closed 2026-09-11. PayPal's line-74 clause quotes

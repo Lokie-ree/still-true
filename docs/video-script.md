@@ -226,17 +226,21 @@ below for why that is stronger and not weaker.
 > This page is a fixture I control. I changed it yesterday, on purpose, and I am
 > telling you that so the next part means something.
 
-The change is **$400 to $600** (line 72) and **seven days to ten** (line 194).
-Both strings were confirmed against the live production page on 09-11, and the
-working copy in `public/watch-test/lease.html` is byte-identical to what is
-deployed.
+The change is **$400 to $600** (source line 72, quoted by **L3a**) and **ninety
+days to thirty** (source line 158, quoted by **L4a**). Both strings were checked
+against production and against the deployed file on 09-11, and both are inside
+the quote the finding actually published — a clause the excerpt cut short of is
+a clause the diff will not notice has moved.
 
-**The second edit was `ninety days to thirty` until 09-11.** Two questions quote
-line 63 — U3a and U3b, the same sentence sliced at two different lengths — so
-that edit moves *three* findings and prints line 63 twice in one notice, in the
-beat that asks a viewer to trust line numbers. The default-cure clause is quoted
-once, by U4. Two edits, two findings, two lines, and the narration below stays
-true as written.
+**These are the script's original two edits, and they left and came back on
+09-11.** For part of that day the fixture was classified `other`, where line 63
+is quoted *twice* — U3a and U3b, the same sentence at two lengths — so the
+termination edit moved three findings and printed one line twice in the beat
+that asks a viewer to trust line numbers. It was swapped to the cure period,
+and then the proving run re-classified the document to `lease` and reported
+nothing at all (**H8**). The checklist is pinned now, the fixture is a `lease`,
+line 63 is quoted once, and the cure period is quoted by nobody. Two edits, two
+findings, two distinct lines, and the narration below is true as written.
 
 **Cut to the inbox.** The notice is already there, in the thread that asked days
 ago.
@@ -287,22 +291,21 @@ says out loud that the change was made deliberately, the day before.
 **The change is consumable.** Once a change is detected and published, the new
 reading becomes the baseline and the next read finds nothing. So a rehearsal that
 moves the late charge SPENDS the late charge. Prove the chain on a clause the
-video does not use — **the modification clause at line 206, `No modification` to
-`No amendment`** — and leave the late charge and the cure period alone for the
-real one.
+video does not use — **the entry notice at source line 127, `four (4)` to
+`six (6)`, quoted by L2** — and leave the late charge and the termination notice
+alone for the real one.
 
-**That clause used to be the entry notice, and the entry notice would have proved
-nothing.** A change is reported only when a prior finding's quote is gone from
-the text. The fixture is on the universal checklist and its eight findings quote
-lines 17, 21, 63, 63, 80 and 85; **no finding quotes the entry notice.** Editing
-it moves the hash, re-runs extraction, finds every prior quote still present, and
-sends no mail — which is also exactly what a broken chain looks like. The
-proving run has to move a clause that is somebody's receipt.
+**A proving clause has to be one the current checklist quotes, and the checklist
+was not a constant until 09-11.** A change is reported only when a prior
+finding's quote is gone from the text, so a clause nothing quotes produces
+silence — which is also what a broken chain produces. The entry notice is quoted
+under the lease checklist and not under the universal one, and this fixture has
+been read as both. The pin (**H8**) is what makes "the checklist" a thing you can
+name the day before.
 
-**And it is not only a rehearsal.** As of 2026-09-11 no finding on production
-carries a change stamp: the moved-clause path has only ever run on dev. Friday's
-proving run is the first and only production exercise of the path beat C is
-about.
+**And it is not only a rehearsal.** Until 2026-09-11 no finding on production
+carried a change stamp: the moved-clause path had only ever run on dev. Friday's
+proving run is the first production exercise of the path beat C is about.
 
 **If the cron mails nothing**, the recovery is off camera and unchanged in
 substance: edit again, then run the single-document re-check rather than the
@@ -419,8 +422,8 @@ submitted.
 - [ ] The fixture edit deployed **the day before**, and not touched since
 - [ ] The overnight change notice is in the thread, and the diff actually fired:
       the fixture's `kind` plus the **question keys** of the findings carrying a
-      `changedAt`, read with one read-only query. **`kind` must be `"other"` and
-      `changed` must contain `U2`** — `U4` too, and `U5a` carried over from
+      `changedAt`, read with one read-only query. **`kind` must be `"lease"` and
+      `changed` must contain `L3a`** — `L4a` too, and `L2` carried over from
       Friday. A count is not the check: drift can return a moved clause as
       `not_stated`, which is mailed as a removal and never stamped. Sends no
       mail, calls no model
@@ -470,8 +473,8 @@ the edit goes out the day before. Nothing is run by hand on shoot day and there
 is no wait to film — the notice is in the thread when you sit down.
 
 **Two notices will be in that thread, not one.** Friday's proving run on the
-modification clause mails into the same thread as Saturday's cron run on the late
-charge and the cure period. That is honest and it is arguably better footage — it
+entry notice mails into the same thread as Saturday's cron run on the late charge
+and the termination notice. That is honest and it is arguably better footage — it
 happened twice, unprompted, on a schedule — but **know which one you are pointing
 at** before the take, and read the timestamps. Friday's was triggered by hand with
 `watch:recheck`; Saturday's was not, and Saturday's is the one with 11:17 UTC on
