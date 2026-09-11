@@ -99,6 +99,14 @@ the shoot debugging a system that was working.
       ```
       npx convex run watch:recheck '{"documentId":"jh7cnrw0gq81wxgfke2d8xk3x58e3vfk","url":"https://impressive-marten-163.convex.site/watch-test/lease.html","title":"Lease they sent over — what am I agreeing to?"}' --prod
       ```
+      **The title has to be that string character for character, em dash and
+      all.** `readAndPublish` calls `classify(args.title, lines)` — the title is
+      an *input to the classifier*, not a label. Shorten it or drop the dash and
+      `kind` can re-roll to `lease`, at which point `diff` finds no prior
+      question to compare and reports nothing. That is the same silence as a
+      broken chain, self-inflicted. The cron passes the stored title, which is
+      why the cron is consistent; a hand-run re-check is only consistent if you
+      paste it.
 - [ ] An email arrives quoting the old modification sentence and the new one,
       with their lines. **U5a is the question it answers.** If it does, the whole
       chain works on production for the first time and you still have a day to

@@ -315,6 +315,12 @@ npx convex run watch:recheck '{"documentId":"<id>","url":"<fixture url>","title"
 `recheck` is what `sweep` enqueues per document, so it exercises the same
 `readAndPublish` path with none of the fan-out.
 
+**Paste the stored title exactly.** `readAndPublish` calls
+`classify(args.title, lines)`, so the title is an input to the classifier rather
+than a label: a shortened one can re-roll `kind`, and a re-rolled `kind` reports
+nothing at all. The values for this fixture are in
+[`rehearsal.md`](rehearsal.md), read from production on 09-11.
+
 The first draft put a measurement in that paragraph — two disagreements in
 forty-seven answers across two runs. It is a real number and it is in the README.
 It does not belong in narration, because the listener cannot check it while
