@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-11 12:38 UTC` by `bash scripts/reconcile.sh`, at commit `a47b436`.
+Generated `2026-09-11 12:54 UTC` by `bash scripts/reconcile.sh`, at commit `9ba2872`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -87,7 +87,7 @@ What this cannot do, stated so a reader can discount it:
   - got: 37 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 1.3h ago, 6 documents stamped
+  - got: last sweep 1.6h ago, 6 documents stamped
 - **production claim: every sender identity is a bare address**
   - ran: `node scripts/gate.mjs`
   - got: 18 threads, 1 distinct senders, all bare addresses
