@@ -73,12 +73,21 @@ Node, no dependencies, built-in `fetch`.
   API call**, naming every offending id — an unfilled number cannot reach the
   API and no paid render precedes the check. `--list` does not abort; it shows
   the brackets so they can be found.
-- **Settings:** `VOICE_ID`, `MODEL_ID`, `voice_settings` (stability, similarity,
-  speed), `SEED` are constants at the top of the file, set once after listening
-  to a single rendered segment, then never changed for this video. Committing
-  them is the lock. Until Randall reports them, `VOICE_ID` and `MODEL_ID` are
-  empty strings, and an empty one aborts before the first API call, the same
-  way a bracket does — the first run never spends a failed request to learn it.
+- **Settings:** constants at the top of the file, set once and then never
+  changed for this video. Committing them is the lock. Field names are the
+  API's, checked against the endpoint reference on 2026-09-13: `model_id`
+  (default `eleven_multilingual_v2`), `seed` (integer, 0–4294967295), and
+  `voice_settings` with `stability`, `similarity_boost` (**not** `similarity`
+  — the 09-12 draft's name is silently ignored by the API), `style`, `speed`,
+  `use_speaker_boost`. Voice is `bIHbv24MWmeRgasZH58o`, chosen 2026-09-13.
+  `MODEL_ID` holds `eleven_multilingual_v2` pending the confirmation call
+  below; an empty constant aborts before the first API call, the same way a
+  bracket does, so a first run never spends a failed request to learn it.
+- **Auth header:** `xi-api-key`, not a bearer token.
+- **Model confirmation:** before the first render, `GET /v1/models` with the
+  key and check `eleven_multilingual_v2` is present with
+  `can_do_text_to_speech` true. Read-only and free. This is the receipt for
+  the model id; it is not read off a settings page, because it is not there.
 - **Key:** `ELEVENLABS_API_KEY` from the environment; run with
   `node --env-file=.env.local scripts/render-vo.mjs`. Never in the repo.
 - **Output:** `vo/<id>.mp3`; `vo/` is gitignored. Skip-if-exists: delete a file
@@ -96,9 +105,26 @@ Node, no dependencies, built-in `fetch`.
 
 ## Licensing
 
-Free-tier ElevenLabs audio is (as recalled; verify on the pricing page)
-non-commercial with attribution. A prize hackathon is ambiguous. Decision:
-**Starter for one month, cancel after.** Step one of the runbook.
+Checked against the pricing page on 2026-09-13, not recalled. Starter lists
+**Commercial License** among what it adds over Free; Free does not list it. A
+prize hackathon is exactly the ambiguous case. Decision: **Starter for one
+month, cancel after.** Step one of the runbook.
+
+Verified numbers, which correct two the 09-12 draft carried:
+
+| | Free | Starter |
+|---|---|---|
+| Price | — | **$6/month**, not $5 |
+| Credits/month | 10,000 | **30,000**, not 10,000 |
+| Commercial License | not listed | listed |
+
+At 1 credit per character on `eleven_multilingual_v2` and roughly 1,900
+characters of narration, a full render costs about 1,900 credits — **about
+fifteen full renders in the month**, not the four the 09-12 draft budgeted.
+The discipline it argued for still stands, but it is no longer scarcity that
+enforces it; the reason not to re-render the whole script is that the joins
+click, not that the credits run out. The runbook rewrite carries this table
+and drops the scarcity framing.
 
 ## Shoot-day order
 
@@ -194,12 +220,14 @@ for any this list missed.
 
 ## Only Randall can do
 
-1. Pay for Starter; confirm the plan reads as commercial.
-2. Pick a voice: render one segment in the web app, listen on laptop speakers,
-   report voice id and model id. This chooses the voice. The settings lock
-   (shoot-day step 2) is a different render, through the script, and is what
-   fixes stability, similarity, speed and seed.
-3. Put the key in `.env.local`.
+1. Pay for Starter ($6); confirm the plan reads as commercial.
+2. ~~Pick a voice~~ — done 2026-09-13: `bIHbv24MWmeRgasZH58o`. The model id is
+   not a UI field and was never Randall's to find; it is the API constant
+   above, confirmed by the `GET /v1/models` call. The settings lock (shoot-day
+   step 2) is a separate render, through the script, and is what fixes
+   stability, similarity_boost, speed and seed.
+3. Create the API key **scoped to Text to Speech only**, with a credit limit
+   set and IP allowlisting left off, and put it in `.env.local`.
 4. Record.
 
 ## Verification before "done"
