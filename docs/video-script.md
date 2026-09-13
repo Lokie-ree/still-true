@@ -77,8 +77,9 @@ body:    https://impressive-marten-163.convex.site/watch-test/lease.html
          What's the late fee and how much notice do I have to give?
 ```
 
-Beat C says the question was asked days ago. Send it days ago and the sentence
-is true. Nothing else in the video depends on when it was sent.
+Beat C's narration says the question was asked once and then left alone. Send
+it well before you record and the sentence is true. Nothing else in the video
+depends on when it was sent.
 
 **Note which questions the reply asks** — lease keys or universal keys. Beat C's
 recovery path below depends on knowing it, and it costs one glance.
@@ -129,7 +130,7 @@ Not the order it appears in.
 **On screen:** the public board, cold. No preamble, no logo, no product name.
 The health plan card is first and it opens with four refusals.
 
-**Say:**
+**Narration:**
 
 > You can read a document once. You cannot notice what it does not say, because
 > there is nothing there to notice.
@@ -171,7 +172,7 @@ citations were opened by hand and held 21 of 21, and you will spot a bad answer
 in a second rather than a minute. It is still a live send, and it still
 re-extracts.
 
-**Say, over the wait:**
+**Narration, over the wait:**
 
 > So here is the same thing, live, on a document you can go read yourself. No
 > app, no upload, no account. I forwarded it to an email address.
@@ -222,7 +223,7 @@ deploy and the detection all happen before the shoot, and the beat is the
 consequence rather than the procedure. See *The change happened before the
 shoot, and that is the point* below for why that is stronger and not weaker.
 
-**Say the honest line first, exactly as before:**
+**Narration, the honest line first, exactly as before:**
 
 > This page is a fixture I control. I changed it yesterday, on purpose, and I am
 > telling you that so the next part means something.
@@ -352,7 +353,7 @@ built and already tested:
 It is also free: the no-document branch runs ahead of both spend gates, so this
 take costs no rate-limit token however many times you shoot it.
 
-**Say:**
+**Narration:**
 
 > When it cannot do the job it says so, and it does not invent a document to
 > talk about.
