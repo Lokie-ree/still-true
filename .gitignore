@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .env.local
+vo/
 .env.*.local
 .convex/
 *.log
