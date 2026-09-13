@@ -29,7 +29,7 @@ failure mode is narrating a claim the footage does not support. The rule was
 always the only thing protecting the video. It is now the *only* thing.
 
 **Every number is transcribed, not recalled.** `[N]` seconds in B, the timestamp
-in C, the refusal count in A. Write them into the script with the footage open
+in C. Write them into the script with the footage open
 in front of you. This is strictly safer than saying them live, and it makes
 *"say no number you did not see on screen"* mechanically true rather than a
 discipline.
@@ -41,11 +41,11 @@ audio produce beat C's silence — cut it in.
 
 ## The script file
 
-One line per segment, blank-line separated, in shooting order. Keep it as
-`docs/vo-script.txt` so the renderer stays four lines.
+One blockquote per segment under a beat heading, in shooting order, in
+`docs/vo-script.md`.
 
-Beats D and E have no footage-dependent numbers, so they can be rendered before
-the shoot. A, B and C get written after.
+A, D and E have none and render before the shoot; only B and C are written
+after.
 
 ---
 
@@ -56,38 +56,77 @@ lock and don't touch again:
 
 - voice id
 - model id
-- `voice_settings` (stability, similarity, speed)
+- `voice_settings` (stability, `similarity_boost`, speed) — the field is
+  `similarity_boost`, not `similarity`; the API accepts the wrong name and
+  silently ignores it
 - `seed`
 
 A segment re-rendered at 1am with different settings will not sit next to the
 ones around it. The join clicks and you will hear it and not know why.
 
-Render each segment to its own file — `A.mp3`, `B1.mp3` — so one rewrite costs
-one segment.
+Render each segment to its own file — ids are derived from beat letter and
+position: `A1.mp3`, `B1.mp3` — so one rewrite costs one segment.
 
 ---
 
 ## Credit budget
 
-1 character = 1 credit on the Multilingual v2/v3 models. Flash and Turbo are
-0.5. The narration across all five beats is roughly 2,400 characters.
+1 character = 1 credit on `eleven_multilingual_v2`. The full script measures
+2,529 characters — about eleven full renders on the Starter tier's 30,000
+credits/month, roughly a twelfth of the allowance each. The pre-shoot subset
+(beats A, D and E) is 11 segments, 1,326 characters.
 
-So on 10,000 credits: **about four full renders**, or many more if you only
-re-render the segment you changed. That is enough and it is not generous. The
-discipline that protects it is the same one above — lock settings before you
-batch, never re-render the whole script to fix one line.
+Credits are not the reason to avoid re-rendering the whole script. There is
+room for it. The reason is the same one above: the joins click. Lock settings
+before you batch, and re-render one file, not the script, when one line is
+wrong.
 
 Real number:
 
 ```
-wc -c docs/vo-script.txt
+node scripts/render-vo.mjs --list
 ```
 
-**Check the plan's commercial terms before you submit.** 10,000 credits/month is
-the free tier allowance, and the free tier restricts commercial use. A hackathon
-submission is an ambiguous case and this is not the week to find out. The paid
-entry tier is $5 and carries a commercial license. If the account is free-tier,
-pay the $5 — it is the cheapest risk you will retire all month.
+**Check the plan's commercial terms before you submit.** The Free tier (10,000
+credits/month) does not list a commercial license. The Starter tier is
+$6/month, 30,000 credits/month, and does list one. A hackathon submission is
+an ambiguous case and this is not the week to find out. If the account is
+free-tier, pay the $6 — it is the cheapest risk you will retire all month, and
+it buys the license, not headroom you were short on.
+
+---
+
+## Shoot-day order
+
+1. Pre-flight from the shoot card: the `kind` check, Do Not Disturb, three
+   tabs, Gmail filtered.
+2. Settings lock — render one D segment, play it on laptop speakers. Right
+   means the constants are locked and committed. Wrong means change them,
+   delete that one file, repeat. This is the only render that may be repeated
+   with different settings.
+3. Render the rest of the pre-shoot set (A, D, E) — everything without a
+   bracket.
+4. Throwaway run of all five beats on camera. Delete it.
+5. Record B, A, C, D, E — silent. Read every reply against its source between
+   takes (flag H6 is open).
+6. With the footage open, fill the two brackets: `[N]` in B and `[timestamp]`
+   in C, read off the screen. Then list, proofread, render.
+7. Assemble in Clipchamp.
+
+```
+node scripts/render-vo.mjs --list
+node --env-file=.env.local scripts/render-vo.mjs D1
+node --env-file=.env.local scripts/render-vo.mjs A D E
+```
+
+The constants in `scripts/render-vo.mjs` are the lock from step 2 — re-rendering
+one line means deleting that one file, not touching the constants. Naming
+beats (`A D E`) is what makes the pre-shoot render possible while B and C
+still hold their brackets; the parser refuses to render a segment with an
+unfilled `[` in it. `GET /v1/models` was tried as a way to confirm the model
+id and it returns HTTP 401 for a key scoped to Text-to-Speech only — that
+confirmation is impossible for a correctly-scoped key, so the settings-lock
+render in step 2 is the confirmation instead.
 
 ---
 
@@ -97,7 +136,7 @@ Not in scope, this week or after:
 
 - a voice-selection UI
 - a batch renderer with config
-- anything in the repo outside `docs/vo-script.txt` and one render script
+- anything in the repo outside `docs/vo-script.md` and one render script
 - regenerating beats that are already fine
 
 The student-facing version — the whole pipeline as a lesson, and the voice vote —
