@@ -102,7 +102,16 @@ Node, no dependencies, built-in `fetch`.
   to re-render that one line.
 - **Modes:** default renders missing segments and prints id, character count,
   running total. `--list` prints the same table and calls nothing — the credit
-  check and the proofread.
+  check and the proofread. **Bare ids or beat letters select a subset**
+  (`render-vo.mjs A D E`, `render-vo.mjs D1`), and the bracket check applies
+  to the selection, not the file. Without this the pre-shoot render is
+  impossible: A, D and E can only be rendered while B and C still hold their
+  brackets, and a whole-file abort would refuse every one of them. Found by
+  running the parser on 2026-09-13, not by reading it.
+- **Beat terminator:** any `## ` heading that is not a beat ends the current
+  beat. Without it, blockquotes under *Delivery notes* become `E4`, `E5`, and
+  since they carry no bracket they render and bill silently. Also found by
+  running it.
 - **Failure:** non-200 prints id, status, body, and stops; nothing is written
   for that segment, so a rerun picks it up.
 - **Check:** the parser is ~10 lines; `--list` against the real file is its
@@ -126,9 +135,12 @@ Verified numbers, which correct two the 09-12 draft carried:
 | Credits/month | 10,000 | **30,000**, not 10,000 |
 | Commercial License | not listed | listed |
 
-At 1 credit per character on `eleven_multilingual_v2` and roughly 1,900
-characters of narration, a full render costs about 1,900 credits — **about
-fifteen full renders in the month**, not the four the 09-12 draft budgeted.
+At 1 credit per character on `eleven_multilingual_v2`, and **2,529 characters
+measured** by running the parser over the rewritten script on 2026-09-13, a
+full render costs about 2,529 credits — **about eleven full renders in the
+month**, not the four the 09-12 draft budgeted. The pre-shoot set (A, D and E,
+everything without a bracket) is 11 segments and 1,326 characters. The 09-12
+draft's ~1,900 figure was the struck script, which measures 1,917.
 The discipline it argued for still stands, but it is no longer scarcity that
 enforces it; the reason not to re-render the whole script is that the joins
 click, not that the credits run out. The runbook rewrite carries this table

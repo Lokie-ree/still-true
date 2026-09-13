@@ -17,7 +17,7 @@
 | File | Responsibility |
 |---|---|
 | `docs/vo-script.md` | The spoken words. Source of truth for narration; parsed by the renderer. |
-| `scripts/render-vo.mjs` | Parse, check, render. Holds the locked voice constants. |
+| `scripts/render-vo.mjs` | Parse, select, check, render. Holds the locked voice constants. |
 | `vo/` (gitignored) | Build output, one mp3 per segment. |
 | `docs/voiceover.md` | The runbook: decisions plus the shoot-day order. |
 | `docs/shoot-card.md` | What goes next to the camera. Lines become "what this shot carries". |
@@ -25,11 +25,17 @@
 | `CLAUDE.md`, `AGENTS.md` | Project rules; the section count and the fixture-edit sentence. |
 | `docs/rehearsal.md`, `hackathon.md` | Dated notes. |
 
-**Verified before this plan was written** (2026-09-13, real calls):
+## What was run, not predicted (2026-09-13)
 
-- The key in `.env.local` works, and `git check-ignore` confirms the file is ignored.
-- `GET /v1/models` returns **401** for a Text-to-Speech-scoped key, so there is no model-list step in this plan.
-- One five-character POST to voice `bIHbv24MWmeRgasZH58o` with `model_id: eleven_multilingual_v2`, `seed`, and `voice_settings.similarity_boost` returned **HTTP 200, 13,836 bytes, MPEG layer III 128 kbps 44.1 kHz mono**. The constants below are the ones that returned audio.
+Every number in this plan came from executing the code below, not from reading it.
+
+- The key in `.env.local` works; `git check-ignore` confirms the file is ignored.
+- `GET /v1/models` returns **401** for a Text-to-Speech-scoped key, so there is no model-list step.
+- One five-character POST to voice `bIHbv24MWmeRgasZH58o` with `model_id: eleven_multilingual_v2`, `seed`, and `voice_settings.similarity_boost` returned **HTTP 200, 13,836 bytes, MPEG layer III 128 kbps 44.1 kHz mono**.
+- The parser on the **current struck** `docs/vo-script.md`: 21 segments, 1,917 characters, `C3` the only unfilled one.
+- The parser on the **rewritten** script in Task 3: 23 segments, **2,529 characters**, `B3` and `C3` unfilled.
+- The pre-shoot subset `A D E`: 11 segments, **1,326 characters**, and render mode proceeds past the bracket check.
+- Beat terminator proven with a fixture: blockquotes under a `## Delivery notes` heading produce no segments.
 
 ---
 
@@ -37,8 +43,7 @@
 
 Gives the rewrite a diff to be read against. Do not edit them in this task.
 
-**Files:**
-- Commit as-is: `docs/voiceover.md`, `docs/vo-script.md`
+**Files:** commit as-is `docs/voiceover.md`, `docs/vo-script.md`
 
 - [ ] **Step 1: Confirm both are untracked**
 
@@ -50,7 +55,7 @@ Expected: two lines, each starting `??`.
 
 Message: `docs: the voiceover decision and its first script, as drafted`
 
-Body should say the script does not match the shoot card and is rewritten in a later commit, and that it is committed first so the rewrite reads as a diff.
+Body: the script does not match the shoot card and is rewritten in a later commit; it is committed first so the rewrite reads as a diff.
 
 ---
 
@@ -62,15 +67,18 @@ Body should say the script does not match the shoot card and is rewritten in a l
 
 - [ ] **Step 1: Add `vo/` to `.gitignore`**
 
-Append a `vo/` line after the existing `.env.local` entry.
+Append a `vo/` line after the existing `.env.local` entry (currently line 5).
 
 - [ ] **Step 2: Write the script**
 
-Create `scripts/render-vo.mjs` with exactly this content:
+Create `scripts/render-vo.mjs` with exactly this content. It has been run against both the current and the rewritten script; do not "improve" the parser without re-running both.
 
 ```js
 // Renders docs/vo-script.md to one mp3 per segment.
-// Usage:  node --env-file=.env.local scripts/render-vo.mjs [--list]
+// Usage:  node --env-file=.env.local scripts/render-vo.mjs [--list] [id...]
+//   render-vo.mjs --list        every segment, no calls
+//   render-vo.mjs D1            just that segment
+//   render-vo.mjs A D E         every segment of those beats
 // Locked 2026-09-13. Changing a constant below renders audio that will not
 // sit next to audio already cut into the timeline. The join clicks.
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -106,13 +114,13 @@ function parse(md) {
     if (!buf.length) return;
     const text = clean(buf.join(" "));
     buf = [];
-    if (text) segments.push({ id: `${beat}${++n}`, text });
+    if (beat && text) segments.push({ id: `${beat}${++n}`, text });
   };
   for (const line of md.split(/\r?\n/)) {
-    const m = HEADING.exec(line);
-    if (m) {
+    if (line.startsWith("## ")) {
       flush();
-      beat = m[1];
+      const m = HEADING.exec(line);
+      beat = m ? m[1] : null;
       n = 0;
       continue;
     }
@@ -129,9 +137,21 @@ function parse(md) {
   return segments;
 }
 
-const segments = parse(readFileSync(SCRIPT, "utf8"));
-if (!segments.length) {
+const args = process.argv.slice(2);
+const listOnly = args.includes("--list");
+const want = args.filter((a) => !a.startsWith("--"));
+
+const all = parse(readFileSync(SCRIPT, "utf8"));
+if (!all.length) {
   console.error(`no segments parsed from ${SCRIPT}`);
+  process.exit(1);
+}
+
+const segments = want.length
+  ? all.filter((s) => want.some((w) => s.id === w || s.id.startsWith(w)))
+  : all;
+if (!segments.length) {
+  console.error(`nothing matches ${want.join(" ")} (parsed ${all.length})`);
   process.exit(1);
 }
 
@@ -143,11 +163,14 @@ for (const s of segments) {
 }
 console.log(`${segments.length} segments, ${total} characters`);
 
-if (process.argv.includes("--list")) process.exit(0);
+if (listOnly) process.exit(0);
 
 const unfilled = segments.filter((s) => s.text.includes("["));
 if (unfilled.length) {
-  console.error(`unfilled brackets: ${unfilled.map((s) => s.id).join(", ")}`);
+  console.error(
+    `unfilled brackets: ${unfilled.map((s) => s.id).join(", ")}\n` +
+      `fill them from the footage, or name the beats you can render (e.g. A D E)`,
+  );
   process.exit(1);
 }
 
@@ -186,35 +209,40 @@ for (const s of segments) {
 }
 ```
 
-Note on the heading regex: `—` is the em dash the beat headings already use. Written as an escape so the file has no ambiguity about which dash character is meant.
+Two details that look incidental and are not:
+
+- **The heading regex holds a literal em dash (U+2014)**, the character the beat headings already use. Retype it and you may get an en dash, and every segment silently disappears.
+- **Any `## ` heading that is not a beat clears the beat.** Without that line, blockquotes under *Delivery notes* parse as `E4`, `E5`, and because they carry no bracket they render and bill without complaint. This was found by running a fixture, not by reading the code.
 
 - [ ] **Step 3: Run the parser against the file that exists now**
 
-The struck `docs/vo-script.md` uses the same heading and blockquote shape, so it exercises the parser before the rewrite lands.
-
 Run: `node scripts/render-vo.mjs --list`
 
-Expected: segment ids grouped in A, B, C, D, E runs, a character count on each line, and a total. No network call is made. The stage direction in B about holding on the round trip must NOT appear as its own segment.
+Expected exactly: **21 segments, 1,917 characters**, ids `A1`-`A4`, `B1`-`B5`, `C1`-`C5`, `D1`-`D4`, `E1`-`E3`, with `C3` the only line marked unfilled. No network call. The stage direction in B about holding on the round trip produces no segment.
 
-- [ ] **Step 4: Confirm it refuses to spend on unfilled brackets**
-
-The struck script has bracketed placeholders in C.
+- [ ] **Step 4: Confirm it refuses to spend on an unfilled bracket**
 
 Run: `node --env-file=.env.local scripts/render-vo.mjs`
 
-Expected: the same table, then a line naming the unfilled segments, then exit 1. No audio written and no request made.
+Expected: the same table, then `unfilled brackets: C3`, then **exit 1**. No audio written, no request made. Check the exit code directly; do not pipe the output through `tail`, which masks it.
 
-- [ ] **Step 5: Lint**
+- [ ] **Step 5: Confirm a subset renders while brackets remain**
+
+Run: `node scripts/render-vo.mjs --list A D E`
+
+Expected: **11 segments, 1,061 characters** against the current file, none unfilled. This is the mechanism the whole pre-shoot render depends on.
+
+- [ ] **Step 6: Lint**
 
 Run: `npm run lint`
 
-Expected: clean. If ESLint's config does not reach `scripts/`, that is the existing arrangement. Do not widen it.
+Expected: clean. ESLint's rules are scoped to `**/*.{ts,tsx}`, so this file lints with no rules applied. Do not widen the config to cover it.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 Message: `feat: render the voiceover from the script that is read, not a copy of it`
 
-Body should say that segment ids are derived from the beat headings so no id is typed twice, and that an unfilled bracket aborts before the first API call, so a number nobody read off the footage cannot reach the renderer.
+Body: ids are derived from the beat headings so no id is typed twice; an unfilled bracket aborts before the first API call, so a number nobody read off the footage cannot reach the renderer; naming beats renders a subset, which is what lets A, D and E go before the shoot.
 
 ---
 
@@ -224,11 +252,23 @@ Body should say that segment ids are derived from the beat headings so no id is 
 
 **Files:**
 - Rewrite: `docs/vo-script.md`
-- Read, do not edit: `docs/shoot-card.md`
+- Read: `docs/shoot-card.md` (Task 5 edits it; this task does not)
 
 - [ ] **Step 1: Replace the file**
 
-Beats in video order A to E. Keep an on-screen line per beat, the delivery notes, and the undersell word list at the foot. Add near the top:
+Beats in video order A to E. **The five heading lines must be exactly these**, because the parser keys on them and on the em dash in particular:
+
+```
+## A — what it never says
+## B — why you can believe it
+## C — the change nobody asked for
+## D — what it does when it is wrong
+## E — the stack
+```
+
+Under each heading put one bold **On screen:** line, then the spoken lines as blockquote paragraphs separated by a bare `>`. Keep a *Delivery notes* section and the undersell word list at the foot, both as plain headings with **no blockquotes** under them. The old file's "all six segments" line is wrong twice over and goes; it is 23 segments.
+
+Add near the top:
 
 > **Every line below exists on `docs/shoot-card.md` or is a bracket.** Two brackets, both filled from footage: `[N]` in B and `[timestamp]` in C. A, D and E carry no bracket and render before the shoot. No relative-time word appears anywhere, because A, D and E are rendered under locked settings and have to stay true on whatever day you record.
 
@@ -290,17 +330,23 @@ The spoken lines:
 >
 > There's no app. The interface is your mail client. One question, forwarded once, answered with receipts, and watched until it stops being true.
 
+**Three of these lines differ from the card on purpose** — C1, C2 and D2 drop `yesterday`, `days ago` and `Two days ago`. Task 5 Step 2 makes the matching edit on the card. Until that task lands, the by-hand check in Step 3 will flag them, which is correct.
+
 - [ ] **Step 2: Verify the parse**
 
 Run: `node scripts/render-vo.mjs --list`
 
-Expected: 23 segments, ids `A1`-`A4`, `B1`-`B7`, `C1`-`C5`, `D1`-`D4`, `E1`-`E3`. Exactly two lines marked unfilled, `B3` and `C3`. Record the printed character total for the runbook.
+Expected exactly: **23 segments, 2,529 characters**, ids `A1`-`A4`, `B1`-`B7`, `C1`-`C5`, `D1`-`D4`, `E1`-`E3`, with exactly two marked unfilled, `B3` and `C3`. If any other id appears, a blockquote has leaked under a non-beat heading.
+
+Also run: `node scripts/render-vo.mjs --list A D E`
+
+Expected: **11 segments, 1,326 characters**, none unfilled. This is the pre-shoot set.
 
 - [ ] **Step 3: The by-hand check, and say you did it**
 
 Read all 23 lines against `docs/shoot-card.md`. Confirm and state the result:
 
-1. every line appears on the card or is a bracket;
+1. every line appears on the card, is one of the three deliberate rewordings above, or is a bracket;
 2. no line carries a relative-time word: `yesterday`, `overnight`, `days ago`, `two days ago`, `Friday`, `Saturday`, `this morning`. "On a Tuesday" in C5 is idiom, not a date, and stays;
 3. no line carries an undersell word from the foot of the script: `just`, `simple`, `only`, `a little`, `kind of`, `sort of`, `hopefully`, `I'm still learning`, `two years in`.
 
@@ -308,40 +354,43 @@ Read all 23 lines against `docs/shoot-card.md`. Confirm and state the result:
 
 Message: `docs: the VO script says what the shoot card says`
 
-Body should name what the first draft got wrong, the struck opening and the four numbers, and state that every line here is on the card or is a bracket.
+Body: name what the first draft got wrong, the struck opening and the four numbers, and state that every line is on the card, a named rewording, or a bracket.
 
 ---
 
 ### Task 4: The runbook
 
-**Files:**
-- Modify: `docs/voiceover.md`
+**Files:** modify `docs/voiceover.md`
 
 - [ ] **Step 1: Correct the sentences the decisions made false**
 
 | Find | Replace with |
 |---|---|
-| "the refusal count in A" | drop it, A carries no number |
+| "the refusal count in A" | drop it; A carries no number |
 | "A, B and C get written after" | only B and C are written after |
 | the example ids `A.mp3`, `B1.mp3` | ids are derived: `A1.mp3`, `B1.mp3` |
 | every `docs/vo-script.txt` reference | `docs/vo-script.md` |
 | the `wc -c` block | `node scripts/render-vo.mjs --list` |
 | "the renderer stays four lines" | drop |
+| "`voice_settings` (stability, **similarity**, speed)" | `similarity_boost` — the wrong name is accepted and silently ignored |
 
-- [ ] **Step 2: Replace the credit budget with the checked numbers**
+- [ ] **Step 2: Replace the credit budget with the measured numbers**
 
-Free is 10,000 credits a month. Starter is $6 a month and 30,000 credits, and lists a Commercial License that Free does not. At one credit per character, a full render is roughly a fifteenth of the month. Say plainly that the reason not to re-render the whole script is that the joins click, not that credits are scarce. That replaces the old scarcity framing, which was built on the wrong allowance.
+Free is 10,000 credits a month. Starter is **$6** a month and **30,000** credits, and lists a Commercial License that Free does not. The rewritten script measures **2,529 characters**, so a full render is about **a twelfth of the month, roughly eleven full renders**. The pre-shoot set is 1,326.
+
+Say plainly that the reason not to re-render the whole script is that the joins click, not that credits are scarce. That replaces the old scarcity framing, which was built on the wrong allowance and on the struck script's 1,917 characters.
 
 - [ ] **Step 3: Add the shoot-day order and the script's usage**
 
-The seven steps from the spec's shoot-day order, plus both commands:
+The seven steps from the spec's shoot-day order, plus all three invocations:
 
 ```
 node scripts/render-vo.mjs --list
-node --env-file=.env.local scripts/render-vo.mjs
+node --env-file=.env.local scripts/render-vo.mjs D1
+node --env-file=.env.local scripts/render-vo.mjs A D E
 ```
 
-Say that the constants in `scripts/render-vo.mjs` are the lock, that re-rendering one line means deleting that one file, and that the models-list check was tried and returns 401 on a Text-to-Speech-scoped key, so the settings-lock render is the confirmation.
+Say that the constants in `scripts/render-vo.mjs` are the lock; that re-rendering one line means deleting that one file; that naming beats is what makes the pre-shoot render possible while B and C still hold brackets; and that the models-list check was tried and returns 401 on a Text-to-Speech-scoped key, so the settings-lock render is the confirmation.
 
 - [ ] **Step 4: Commit**
 
@@ -351,32 +400,40 @@ Message: `docs: the runbook matches the pipeline that exists`
 
 ### Task 5: The shoot card
 
-**Files:**
-- Modify: `docs/shoot-card.md`
+**Files:** modify `docs/shoot-card.md`
 
 - [ ] **Step 1: Reframe the spoken bullets**
 
-Under each beat, the bullets stop being lines to say and become what this shot has to carry, with a pointer to `docs/vo-script.md` for the words. Do not reword the bullets themselves. Task 3 derived the narration from them and the two must keep matching.
+Under each beat, the bullets stop being lines to say and become what this shot has to carry, with a pointer to `docs/vo-script.md` for the words. Reword a bullet only where Step 2 says to. The card and the VO script have to keep matching in both directions.
 
 - [ ] **Step 2: Correct the dated and spoken-era lines**
 
+The first three rows are the rewordings Task 3 already made in the VO script. Without them the card and the script disagree and Task 3's by-hand check fails.
+
 | Find | Replace with |
 |---|---|
-| under *Order*, "The fixture edit went out Friday; the cron found it at 11:17 UTC." | the edit went out 2026-09-11 and the cron found it the next morning; the notice in the thread is the receipt on any later day |
-| in beat C, "happened yesterday and overnight" | happened before this shoot |
-| in beat C, "That arrived at 11:17 UTC" | "That arrived at [local time from the inbox]", filled at shoot-day step 6 |
-| the `IF THIS HAPPENS` row "Fluffed a line" | delete, there is no line to fluff |
+| beat C: "I changed it **yesterday**, on purpose" | "I changed it, on purpose, before the watch's next run" |
+| beat C: "Once, **days ago**. Then I went to bed." | "Once, and then left it alone." |
+| beat D: "**Two days ago** a test document proved" | "A test document proved" |
+| beat C: "happened yesterday and overnight" | happened before this shoot |
+| beat C: "That arrived at 11:17 UTC" | "That arrived at [local time from the inbox]", filled at shoot-day step 6 |
+| under *Order*: "The fixture edit went out Friday; the cron found it at 11:17 UTC." (wraps across two lines) | the edit went out 2026-09-11 and the cron found it the next morning; the notice in the thread is the receipt on any later day |
+| `IF THIS HAPPENS` row "Fluffed a line" | delete; there is no line to fluff |
 | the row label "Cron mailed nothing overnight" | "Cron mailed nothing" |
 
 - [ ] **Step 3: Add one `IF THIS HAPPENS` row**
 
-Bracket still unfilled: the renderer stopped and named the segment. Open the footage, read the number off the screen, fill it, run again. Never type a number you did not see.
+Bracket still unfilled: the renderer stopped and named the segment. Open the footage, read the number off the screen, fill it, run again. Never type a number you did not see. To render everything else meanwhile, name the beats: `A D E`.
 
 - [ ] **Step 4: Sharpen the one rule**
 
 The rule stays: read the reply before you keep the take. Add that it matters more now, because the narration is written hours later against footage, and the failure mode is narrating a claim the footage does not support.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Re-run the by-hand check from Task 3 Step 3**
+
+With the card now edited, all three conditions must hold with no exceptions. State the result.
+
+- [ ] **Step 6: Commit**
 
 Message: `docs: the card is a shot list now, not a script`
 
@@ -386,8 +443,7 @@ Message: `docs: the card is a shot list now, not a script`
 
 `CLAUDE.md` says four. There are five. All five move. The narration beats A to E do not.
 
-**Files:**
-- Modify: `docs/video-script.md`
+**Files:** modify `docs/video-script.md`
 
 - [ ] **Step 1: The order it has to be shot in, step 2**
 
@@ -402,10 +458,11 @@ Message: `docs: the card is a shot list now, not a script`
 
 - [ ] **Step 3: The recording checklist**
 
-- "The fixture edit deployed the day before, and not touched since" becomes "deployed 2026-09-11, and not touched since".
+- "The fixture edit deployed **the day before**, and not touched since" becomes "deployed **2026-09-11**, and not touched since". The bold markers sit inside the phrase, so a literal grep for the plain sentence will miss it.
 - "The overnight change notice is in the thread" becomes "The 2026-09-12 change notice is in the thread".
-- Delete the mic test item. There is no live audio.
 - Add an item: the settings-lock render is done and `vo/` holds A, D and E.
+
+There is no mic item in this checklist; the mic test is in the ten-minute list and Step 5 removes it.
 
 - [ ] **Step 4: The things that will go wrong**
 
@@ -416,7 +473,7 @@ Message: `docs: the card is a shot list now, not a script`
 
 - [ ] **Step 5: How to actually record it**
 
-- Delete the mic test from the ten-minute list.
+- Delete the mic test, item 4 of the ten-minute list.
 - "Rehearse once with recording OFF ... Read the script aloud while clicking through" becomes: walk the clicks silently and watch the hands. The paragraph about lines that will not fit your mouth moves to the VO script's delivery notes, or goes.
 - The B bullet's "the wait is real, 25 to 30 seconds, and the narration is what fills it" becomes: the wait is real and is filled in the edit.
 - The B bullet's "Fluffed a line? Forward again" becomes: re-forward only for a bad answer (H6) or a bad shot.
@@ -427,9 +484,7 @@ Message: `docs: the card is a shot list now, not a script`
 
 - [ ] **Step 6: Confirm nothing was missed**
 
-Run a case-insensitive search of `docs/video-script.md` for: day before, overnight, aloud, mic, fluff, and "narration is what fills".
-
-Expected: every remaining hit sits inside a narration beat A to E, or is a dated historical statement.
+Search `docs/video-script.md`, case-insensitively, for: day before, overnight, aloud, mic, fluff, and "narration is what fills". Expect every remaining hit to sit inside a narration beat A to E, or to be a dated historical statement. Bold markers break literal matches, so search for short fragments rather than whole sentences.
 
 - [ ] **Step 7: Commit**
 
@@ -439,8 +494,7 @@ Message: `docs: all five shoot-mechanics sections, not the four we counted`
 
 ### Task 7: Project rules, rehearsal note, build log
 
-**Files:**
-- Modify: `CLAUDE.md`, `AGENTS.md` (twins, identical edits), `docs/rehearsal.md`, `hackathon.md`
+**Files:** modify `CLAUDE.md`, `AGENTS.md` (twins, identical edits), `docs/rehearsal.md`, `hackathon.md`
 
 - [ ] **Step 1: `CLAUDE.md` and `AGENTS.md`**
 
@@ -450,9 +504,7 @@ Message: `docs: all five shoot-mechanics sections, not the four we counted`
 
 - [ ] **Step 2: Verify the twins stayed identical**
 
-Diff the shoot section of both files, from the "The shoot, until it is shot" heading to end of file.
-
-Expected: no output.
+Diff the shoot section of both files, from the "The shoot, until it is shot" heading to end of file. Expected: no output. They are byte-identical today, so any difference is this task's.
 
 - [ ] **Step 3: `docs/rehearsal.md`**
 
@@ -460,7 +512,13 @@ One dated note at the top: the 09-10 to 09-12 schedule was written for live narr
 
 - [ ] **Step 4: `hackathon.md`**
 
-A dated 2026-09-13 entry covering four things: the switch to generated narration and why; that the first VO script was the struck first draft, and how it got there, written from memory instead of from the card; the checked ElevenLabs numbers and the two corrections, $6 not $5 and 30,000 credits not 10,000; and the models-list step that a correctly-scoped key could not perform, deleted rather than widening the key.
+A dated 2026-09-13 entry covering five things:
+
+1. the switch to generated narration and why;
+2. the first VO script was the struck first draft, and how it got there, written from memory instead of from the card;
+3. the checked ElevenLabs numbers and the two corrections, $6 not $5 and 30,000 credits not 10,000;
+4. the models-list step that a correctly-scoped key could not perform, deleted rather than widening the key;
+5. the two parser defects a review caught by running the code rather than reading it: a whole-file bracket abort that would have made every pre-shoot render impossible, and a missing beat terminator that would have billed for the delivery notes.
 
 - [ ] **Step 5: Commit**
 
@@ -478,25 +536,25 @@ Expected: lint clean, tests pass, seven production checks pass. Name the deploym
 
 - [ ] **Step 2: Push and open the PR**
 
-Push the branch, then open the PR against `main` with an explicit base. Write the body to a file first and pass it with `--body-file` rather than inlining a long body.
+Push the branch, then open the PR against `main` with an explicit `--base main`. Write the body to a file first and pass it with `--body-file`.
 
-The body covers: the pipeline's three stages; that the first VO script did not match the card, and why; the checked vendor facts; the deleted models-list step; and that the PR stays open until the settings-lock constants and the filled brackets land on it.
+The body covers: the pipeline's three stages; that the first VO script did not match the card, and why; the checked vendor facts; the deleted models-list step; the two parser defects found by execution; and that the PR stays open until the settings-lock constants and the filled brackets land on it.
 
 - [ ] **Step 3: Do not merge**
 
-The PR is not complete until Task 9. Merging here would publish a claim that the pipeline is locked when its constants have not been listened to.
+The PR is not complete until Task 9. Merging here publishes a claim that the pipeline is locked when its constants have not been listened to.
 
 ---
 
 ### Task 9: Shoot day
 
-Randall does the shooting; the agent assists. Not executable ahead of time. It closes the PR opened in Task 8.
+Randall shoots; the agent assists. Not executable ahead of time. It closes the PR opened in Task 8.
 
 - [ ] **Step 1: Pre-flight.** The card's `kind` check, Do Not Disturb, three tabs, Gmail filtered.
-- [ ] **Step 2: Settings lock.** Render one D segment and play it on laptop speakers. If it is right, the constants are locked. If not, change them, delete that one file, repeat. Commit the constants.
-- [ ] **Step 3: Render A, D and E.** Everything without a bracket.
-- [ ] **Step 4: Throwaway run** of all five. Delete it.
+- [ ] **Step 2: Settings lock.** `render-vo.mjs D1`, then play `vo/D1.mp3` on laptop speakers. Right means the constants are locked. Wrong means change them, delete that one file, repeat. Commit the constants.
+- [ ] **Step 3: Render the pre-shoot set.** `render-vo.mjs A D E` — 11 segments, 1,326 characters. `D1` is skipped as already present.
+- [ ] **Step 4: Throwaway run** of all five beats on camera. Delete it.
 - [ ] **Step 5: Record B, A, C, D, E, silent.** Read every reply against its source between takes. H6 is open.
-- [ ] **Step 6: Fill the two brackets** from the footage, `[N]` in B and `[timestamp]` in C, read off the screen, plus the local-time parenthetical in `docs/video-script.md`. Then list, proofread, render. Commit.
+- [ ] **Step 6: Fill the two brackets** from the footage, `[N]` in B and `[timestamp]` in C, read off the screen, plus the local-time parenthetical in `docs/video-script.md`. Then `--list`, proofread, and run the renderer with no filter to pick up B and C. Commit.
 - [ ] **Step 7: Assemble** in Clipchamp. Export 1080p.
 - [ ] **Step 8: Merge the PR.**
