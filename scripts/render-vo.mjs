@@ -20,12 +20,14 @@ const VOICE_SETTINGS = {
 
 const SCRIPT = "docs/vo-script.md";
 const OUT = "vo";
+// The dash below is a literal EM DASH (U+2014), matching the beat headings.
+// Retype it as an en dash and every segment silently vanishes.
 const HEADING = /^##\s+([A-E])\s+—/;
 
 const clean = (s) =>
   s
     .replace(/\*\([^)]*\)\*/g, " ")
-    .replace(/[*_`]/g, "")
+    .replace(/[*_`>]/g, "") // ">" too: a pasted quoted reply must not be spoken
     .replace(/\s+/g, " ")
     .trim();
 
@@ -41,6 +43,8 @@ function parse(md) {
     if (beat && text) segments.push({ id: `${beat}${++n}`, text });
   };
   for (const line of md.split(/\r?\n/)) {
+    // Any "## " heading that is not a beat ends the current beat, so blockquotes
+    // under Delivery notes are never billed as narration.
     if (line.startsWith("## ")) {
       flush();
       const m = HEADING.exec(line);
