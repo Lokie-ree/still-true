@@ -80,9 +80,8 @@ Node, no dependencies, built-in `fetch`.
   `voice_settings` with `stability`, `similarity_boost` (**not** `similarity`
   — the 09-12 draft's name is silently ignored by the API), `style`, `speed`,
   `use_speaker_boost`. Voice is `bIHbv24MWmeRgasZH58o`, chosen 2026-09-13.
-  `MODEL_ID` holds `eleven_multilingual_v2` pending the confirmation call
-  below; an empty constant aborts before the first API call, the same way a
-  bracket does, so a first run never spends a failed request to learn it.
+  Both voice and model are proved by the probe below, so no constant ships
+  empty and no run spends a failed request to learn one.
 - **Auth header:** `xi-api-key`, not a bearer token.
 - **Model confirmation — the render is the receipt.** An earlier draft of this
   spec called for `GET /v1/models` before the first render. Tried on
