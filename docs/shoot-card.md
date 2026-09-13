@@ -2,8 +2,10 @@
 
 Everything else is in `docs/video-script.md`. This is what goes next to the camera.
 
-**One rule:** read the reply before you keep the take. That's it. Nothing else
-can put a false claim in this video.
+**One rule:** read the reply before you keep the take. It matters more now —
+the narration is written hours later against this footage, and the failure
+mode is narrating a claim the footage doesn't support. It was always the only
+thing protecting the video; it is now the only thing.
 
 ---
 
@@ -20,6 +22,8 @@ can put a false claim in this video.
       from Friday's proving run. **The count is not the check.** Any other
       `kind` means the H8 pin is not deployed, the classifier re-rolled, and
       nothing was reported: recovery below.
+- [ ] **Pre-shoot render is done.** The settings-lock render ran; `vo/` holds
+      the rendered segments for beats A, D and E.
 - [ ] Do Not Disturb on. Slack, Discord, Steam quit.
 - [ ] Three tabs: board, Gmail, Livonia lease. Bookmarks bar hidden. Zoom 125%.
 - [ ] Gmail searched for `still-true` so the list is clean.
@@ -28,8 +32,9 @@ can put a false claim in this video.
 
 **B** → read the Livonia card → **A** → **C** → **D** → **E**
 
-No deploy on shoot day. The fixture edit went out Friday; the cron found it at
-11:17 UTC.
+No deploy on shoot day. The fixture edit went out 2026-09-11 and the cron
+found it the next morning. The notice in the thread is the receipt on any
+later day.
 
 Shoot one throwaway run of all five first. Delete it. That's the plan, not a failure.
 
@@ -37,11 +42,14 @@ Shoot one throwaway run of all five first. Delete it. That's the plan, not a fai
 
 ## B · the live send
 
+*What this shot has to carry — words in `docs/vo-script.md`.*
+
 Forward the lease link. Type a real question. Send. **Don't cut.**
 
 - Here's the same thing, live, on a document you can go read yourself.
 - No app. No upload. No account. I sent it to an email address.
-- *(reply lands — say the real number)* That took [N] seconds.
+- *(reply lands)* Note the number — it's read off the screen later, when the
+  `[N]` bracket in the VO is filled.
 - Every claim comes back with a sentence from the document and the line it's on.
 
 Read the late-charge finding. Switch to the lease. `Ctrl+F`. **Don't cut.**
@@ -52,6 +60,8 @@ Read the late-charge finding. Switch to the lease. `Ctrl+F`. **Don't cut.**
 - So it can't show you a sentence that isn't in your document.
 
 ## A · the board, cold
+
+*What this shot has to carry — words in `docs/vo-script.md`.*
 
 Health plan card first, four refusals on screen. Don't scroll.
 
@@ -65,16 +75,18 @@ Health plan card first, four refusals on screen. Don't scroll.
 
 ## C · the change nobody asked for
 
+*What this shot has to carry — words in `docs/vo-script.md`.*
+
 **Nothing here is done on camera.** The edit, the deploy and the detection all
-happened yesterday and overnight. You are showing the consequence.
+happened before this shoot; you are showing the consequence.
 
 Fixture on screen as it now reads. Then cut to the inbox, notice already in it.
 
-- This page is a fixture I control. I changed it yesterday, on purpose, and I'm
-  telling you so the next part means something.
-- I asked one question about this page. Once, days ago. Then I went to bed.
-- *(point at the timestamp)* That arrived at 11:17 UTC. I didn't run it. It's a
-  daily job, and it found this while nobody was looking.
+- This page is a fixture I control. I changed it, on purpose, before the
+  watch's next run, and I'm telling you so the next part means something.
+- I asked one question about this page. Once, and then left it alone.
+- *(point at the timestamp)* That arrived at [local time from the inbox]. I
+  didn't run it. It's a daily job, and it found this while nobody was looking.
 - Two things I'd quoted don't read the same way. It's not telling me the lease
   got worse — it isn't qualified to judge that. It's telling me these aren't the
   words that were there.
@@ -84,15 +96,17 @@ Fixture on screen as it now reads. Then cut to the inbox, notice already in it.
 
 ## D · when it's wrong
 
+*What this shot has to carry — words in `docs/vo-script.md`.*
+
 Send a message with no attachment and no link.
 
 - When it can't do the job it says so. It doesn't invent a document to talk about.
 
 Health plan refusal back on screen.
 
-- This used to say "this document does not state it." Two days ago a test
-  document proved that can be false — a fact split across two lines is in the
-  document and on no single line of it.
+- This used to say "this document does not state it." A test document proved
+  that can be false — a fact split across two lines is in the document and on
+  no single line of it.
 - So now it says what it actually knows: no single line states it. That's weaker
   than what I shipped, and it's the version that's true.
 - Everything currently wrong with this is in the repo, scored, with the fixed
@@ -101,6 +115,8 @@ Health plan refusal back on screen.
 Don't rush this one. Don't deliver it as a confession.
 
 ## E · the stack
+
+*What this shot has to carry — words in `docs/vo-script.md`.*
 
 - Convex is the whole backend. One deployment: the schema, the documents and
   findings, the daily cron, the reactive queries behind that page, the workpool
@@ -119,12 +135,12 @@ End on the reply. Not a logo.
 | | |
 |---|---|
 | **Answer doesn't match its quote** | H6. Forward again, new take. Don't talk around it. |
-| **Line count differs from last take** | M6, expected. Say no numbers you can't see on screen. |
+| **Line count differs from last take** | M6, expected. Don't carry a number into the VO that you can't see on screen. |
 | **6th forward comes back a rate-limit reply** | Bucket's empty. 5 per burst, then one every 6 min. Wait or shoot A. |
 | **Two change notices in the thread** | Expected. Friday's proving run (entry notice, L2) + Saturday's cron (late charge L3a and termination notice L4a). Check the timestamp before you point. |
-| **Cron mailed nothing overnight** | Reclassified — `kind` is not `lease`, so no prior question matched (H8). Off camera: edit $600 → $700, deploy, `bash scripts/recheck-fixture.sh` (NOT `sweep`). It converges. |
+| **Cron mailed nothing** | Reclassified — `kind` is not `lease`, so no prior question matched (H8). Off camera: edit $600 → $700, deploy, `bash scripts/recheck-fixture.sh` (NOT `sweep`). It converges. |
 | **Not sure the diff will work** | Read it before you shoot — the `kind` check under *Before you hit record*. |
 | **Board reorders on screen** | You reloaded. Leave the tab open. |
-| **Fluffed a line** | Forward again, different subject. Third take is usually the one. |
+| **Bracket still unfilled** | The renderer stopped and named the segment. Open the footage, read the number off the screen, fill it, run again. Never type a number you did not see. To render everything else meanwhile, name the beats: `A D E`. |
 
 **Nothing here is one-way.** The deploys were. The takes aren't.
