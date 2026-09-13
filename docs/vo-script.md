@@ -1,99 +1,92 @@
-# still-true — demo VO script (2:30)
+# still-true — demo VO script
 
-Target: ~150s. Read pace ~140 wpm with real pauses. Each segment is its own audio file so you can re-render one line without touching the rest.
+Spoken lines only. Shot order, stage directions, and the `IF THIS HAPPENS`
+table live on `docs/shoot-card.md`.
 
-**Rule for every line below:** it points at something on screen at that moment. If a line has nothing to point at, it's inspiration and it gets cut.
-
----
-
-## A — The refusal (0:00–0:28)
-
-**On screen:** board open on a refusal card. Empty gutter. Hold it. No cursor movement for the first two seconds.
-
-> This is a question the system was asked and would not answer.
->
-> It searched a hundred and seventy-four lines and said the answer isn't in the document.
->
-> A refusal is a first-class output here. It gets its own line count, and an empty gutter where the quote would be.
->
-> Everything after this is about making that refusal worth believing.
+> **Every line below exists on `docs/shoot-card.md` or is a bracket.** Two
+> brackets, both filled from footage: `[N]` in B and `[timestamp]` in C. A, D
+> and E carry no bracket and render before the shoot. No relative-time word
+> appears anywhere, because A, D and E are rendered under locked settings and
+> have to stay true on whatever day you record.
 
 ---
 
-## B — Live forward, verified by hand (0:28–1:10)
+## A — what it never says
 
-**On screen:** Gmail forward to still-true@agentmail.to → reply arriving → copy quote → source PDF → Ctrl+F → match highlights.
+**On screen:** the health plan card, four refusals, no scrolling.
 
-> I'm forwarding a Summary of Benefits from my own inbox.
+> You can read a document once. You can't notice what it doesn't say, there's nothing there to notice.
 >
-> *(hold on the round trip — let it take as long as it takes)*
+> This is the government's model health plan summary. The form every insurer fills in.
 >
-> Twenty-three seconds. Four answered, four refused. Unedited.
+> No single line of it tells you how to cancel your coverage.
 >
-> Every answer carries a line number. The model never writes the quote — it returns an index, and the quote is pulled from the source by that index.
+> Something read every line to be able to say that. I opened the source PDF and checked it by hand.
+
+## B — why you can believe it
+
+**On screen:** the forward, the reply landing, then the quote checked against the lease with Ctrl+F.
+
+> Here's the same thing, live, on a document you can go read yourself.
 >
-> So the check is: copy the quote, open the original, Ctrl+F.
+> No app. No upload. No account. I sent it to an email address.
 >
-> A fabricated quote isn't something this system can express. That isn't a rule I asked it to follow.
-
-**Cut note:** if you trim the round trip, put `23s — unedited` on screen. Don't let a fast cut do the lying.
-
----
-
-## C — SLOT: the unprompted change notice (1:10–1:45)
-
-**Fill after 6:17.** Draft below — swap the bracketed values for whatever the receipt actually says.
-
-**On screen:** the change notice in the inbox, timestamped. Then the diff: old clause, new clause.
-
-> Nobody asked it for this.
+> That took [N] seconds.
 >
-> At 6:17 this morning the daily watch re-read a document it had already answered on.
+> Every claim comes back with a sentence from the document and the line it's on.
 >
-> [The hash moved, and the clause it had quoted is gone.]
+> The plain sentence is the model's summary. The quote under it isn't.
 >
-> Two gates have to fire before anyone gets mail: the content hash changed, **and** the quoted clause is missing. Either one alone mails nobody.
+> The model returns a line number. The server cuts that sentence out of your document by index, after the model is done talking.
 >
-> Full disclosure — I made that edit myself so you could watch it land. The watch is real and running on real documents. The edit is mine.
+> So it can't show you a sentence that isn't in your document.
 
-**Do not** bump `PARSER_VERSION` between the fixture enrolment and the fixture edit. The freeze holds until this beat is in the can.
+## C — the change nobody asked for
 
----
+**On screen:** the fixture as it now reads, then the notice in the inbox with its timestamp.
 
-## D — What it does when it's wrong (1:45–2:12)
-
-**On screen:** the published late-fee answer beside the line it cites. Then `docs/READINESS.md` with the scored flags.
-
-> Here's where it's currently wrong.
+> This page is a fixture I control. I changed it, on purpose, before the watch's next run, and I'm telling you so the next part means something.
 >
-> Published answer: the late fee is fifty dollars. The line it cites reads only "Dollars, fifty dollars, for that month." The answer out-ran its own citation. It's open, it's scored, and it has a fix order.
+> I asked one question about this page. Once, and then left it alone.
 >
-> I scored this project at ninety-two, twice, by reading my own code. Then I started sending it mail. It's at sixty-seven.
+> That arrived at [timestamp]. I didn't run it. It's a daily job, and it found this while nobody was looking.
 >
-> Every point it lost this week, it lost to evidence.
-
----
-
-## E — The stack (2:12–2:30)
-
-**On screen:** `npm run gate` running, 6/6 green.
-
-> Convex for the backend. AgentMail for the inbox. Firecrawl for the parse. OpenAI for extraction.
+> Two things I'd quoted don't read the same way. It's not telling me the lease got worse, it isn't qualified to judge that. It's telling me these aren't the words that were there.
 >
-> Six read-only checks run against production. They've caught my own README drifting three times.
+> It won't email you because a model answered differently on a Tuesday. A change is reported when the hash of the text moved and the exact clause it quoted is gone. Both gates are string comparisons. Neither asks the model again.
+
+## D — what it does when it is wrong
+
+**On screen:** the no-document reply, then the health plan refusal.
+
+> When it can't do the job it says so. It doesn't invent a document to talk about.
 >
-> The hard problem here was never generating the answer. It was knowing when to stop trusting one. That's a state machine, not a model.
+> This used to say "this document does not state it." A test document proved that can be false, a fact split across two lines is in the document and on no single line of it.
+>
+> So now it says what it actually knows: no single line states it. That's weaker than what I shipped, and it's the version that's true.
+>
+> Everything currently wrong with this is in the repo, scored, with the fixed ones still on the page so nobody rediscovers them.
+
+## E — the stack
+
+**On screen:** the reply. Not a logo.
+
+> Convex is the whole backend. One deployment: the schema, the documents and findings, the daily cron, the reactive queries behind that page, the workpool that retries a failed re-check, the HTTP action the mail webhook hits, and the site itself. No server. No separate host. No queue.
+>
+> AgentMail is the inbox. Firecrawl parses the PDFs.
+>
+> There's no app. The interface is your mail client. One question, forwarded once, answered with receipts, and watched until it stops being true.
 
 ---
 
 ## Delivery notes
 
-- Flat, factual read. No lift at the end of sentences. The numbers do the work; don't help them.
-- Same voice and same settings across all six segments, or the joins will click. Generate one segment, listen, lock the settings, then batch the rest.
-- Record the pauses into the video, not the audio. Silence between segments is a cut, not a breath.
+- Flat, factual read, no lift at the end of sentences.
+- The numbers do the work.
+- Silence between segments is a cut in the timeline, not a breath — do not try to make the audio produce it.
 
 ## Words that don't appear in this script
 
 `just` · `simple` · `only` · `a little` · `kind of` · `sort of` · `hopefully` · `I'm still learning` · `two years in`
 
-If one shows up in a rewrite at 1am, it's the undersell talking. Cut it and re-render that segment.
+If one shows up in a rewrite at 1am, it's the undersell talking — cut it and re-render that segment.
