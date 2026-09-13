@@ -72,9 +72,11 @@ position: `A1.mp3`, `B1.mp3` — so one rewrite costs one segment.
 ## Credit budget
 
 1 character = 1 credit on `eleven_multilingual_v2`. The full script measures
-2,529 characters — about eleven full renders on the Starter tier's 30,000
-credits/month, roughly a twelfth of the allowance each. The pre-shoot subset
-(beats A, D and E) is 11 segments, 1,326 characters.
+2,767 characters — about ten full renders on the Starter tier's 30,000
+credits/month, roughly a tenth of the allowance each. The pre-shoot subset
+(beats A, D and E) is 12 segments, 1,564 characters. Re-measured 2026-09-13
+after beat D gained the line naming H6; run `--list` rather than trusting
+this paragraph.
 
 Credits are not the reason to avoid re-rendering the whole script. There is
 room for it. The reason is the same one above: the joins click. Lock settings

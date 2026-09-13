@@ -135,11 +135,11 @@ Verified numbers, which correct two the 09-12 draft carried:
 | Credits/month | 10,000 | **30,000**, not 10,000 |
 | Commercial License | not listed | listed |
 
-At 1 credit per character on `eleven_multilingual_v2`, and **2,529 characters
+At 1 credit per character on `eleven_multilingual_v2`, and **2,767 characters
 measured** by running the parser over the rewritten script on 2026-09-13, a
-full render costs about 2,529 credits — **about eleven full renders in the
+full render costs about 2,767 credits — **about ten full renders in the
 month**, not the four the 09-12 draft budgeted. The pre-shoot set (A, D and E,
-everything without a bracket) is 11 segments and 1,326 characters. The 09-12
+everything without a bracket) is 12 segments and 1,564 characters. The 09-12
 draft's ~1,900 figure was the struck script, which measures 1,917.
 The discipline it argued for still stands, but it is no longer scarcity that
 enforces it; the reason not to re-render the whole script is that the joins

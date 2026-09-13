@@ -109,6 +109,13 @@ Health plan refusal back on screen.
   no single line of it.
 - So now it says what it actually knows: no single line states it. That's weaker
   than what I shipped, and it's the version that's true.
+
+`docs/READINESS.md` on screen, the **H6** entry, its quoted block visible.
+
+- Here's the one that's still open. An answer can out-run the line it cites: the
+  quote is really in your document, and the line it points at can still fail to
+  state the answer by itself. It's the highest thing on my list and it isn't
+  fixed.
 - Everything currently wrong with this is in the repo, scored, with the fixed
   ones still on the page so nobody rediscovers them.
 
@@ -134,7 +141,7 @@ End on the reply. Not a logo.
 
 | | |
 |---|---|
-| **Answer doesn't match its quote** | H6. Forward again, new take. Don't talk around it. |
+| **Answer doesn't match its quote** | H6. Forward again, new take. Don't write around it. |
 | **Line count differs from last take** | M6, expected. Don't carry a number into the VO that you can't see on screen. |
 | **6th forward comes back a rate-limit reply** | Bucket's empty. 5 per burst, then one every 6 min. Wait or shoot A. |
 | **Two change notices in the thread** | Expected. Friday's proving run (entry notice, L2) + Saturday's cron (late charge L3a and termination notice L4a). Check the timestamp before you point. |

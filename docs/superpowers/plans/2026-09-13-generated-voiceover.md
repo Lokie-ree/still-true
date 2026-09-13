@@ -33,8 +33,8 @@ Every number in this plan came from executing the code below, not from reading i
 - `GET /v1/models` returns **401** for a Text-to-Speech-scoped key, so there is no model-list step.
 - One five-character POST to voice `bIHbv24MWmeRgasZH58o` with `model_id: eleven_multilingual_v2`, `seed`, and `voice_settings.similarity_boost` returned **HTTP 200, 13,836 bytes, MPEG layer III 128 kbps 44.1 kHz mono**.
 - The parser on the **current struck** `docs/vo-script.md`: 21 segments, 1,917 characters, `C3` the only unfilled one.
-- The parser on the **rewritten** script in Task 3: 23 segments, **2,529 characters**, `B3` and `C3` unfilled.
-- The pre-shoot subset `A D E`: 11 segments, **1,326 characters**, and render mode proceeds past the bracket check.
+- The parser on the **rewritten** script in Task 3: 23 segments, **2,529 characters**, `B3` and `C3` unfilled. Beat D later gained a line naming H6, taking it to **24 segments, 2,767 characters**.
+- The pre-shoot subset `A D E`: 11 segments, **1,326 characters**, and render mode proceeds past the bracket check. After the H6 line: **12 segments, 1,564 characters**.
 - Beat terminator proven with a fixture: blockquotes under a `## Delivery notes` heading produce no segments.
 
 ---
@@ -336,11 +336,11 @@ The spoken lines:
 
 Run: `node scripts/render-vo.mjs --list`
 
-Expected exactly: **23 segments, 2,529 characters**, ids `A1`-`A4`, `B1`-`B7`, `C1`-`C5`, `D1`-`D4`, `E1`-`E3`, with exactly two marked unfilled, `B3` and `C3`. If any other id appears, a blockquote has leaked under a non-beat heading.
+Expected exactly (before the H6 addition): **23 segments, 2,529 characters**, ids `A1`-`A4`, `B1`-`B7`, `C1`-`C5`, `D1`-`D4`, `E1`-`E3`, with exactly two marked unfilled, `B3` and `C3`. If any other id appears, a blockquote has leaked under a non-beat heading.
 
 Also run: `node scripts/render-vo.mjs --list A D E`
 
-Expected: **11 segments, 1,326 characters**, none unfilled. This is the pre-shoot set.
+Expected: **11 segments, 1,326 characters**, none unfilled — **12 and 1,564** once beat D names H6. This is the pre-shoot set.
 
 - [ ] **Step 3: The by-hand check, and say you did it**
 
@@ -376,7 +376,7 @@ Body: name what the first draft got wrong, the struck opening and the four numbe
 
 - [ ] **Step 2: Replace the credit budget with the measured numbers**
 
-Free is 10,000 credits a month. Starter is **$6** a month and **30,000** credits, and lists a Commercial License that Free does not. The rewritten script measures **2,529 characters**, so a full render is about **a twelfth of the month, roughly eleven full renders**. The pre-shoot set is 1,326.
+Free is 10,000 credits a month. Starter is **$6** a month and **30,000** credits, and lists a Commercial License that Free does not. The rewritten script measures **2,767 characters**, so a full render is about **a tenth of the month, roughly ten full renders**. The pre-shoot set is 1,564.
 
 Say plainly that the reason not to re-render the whole script is that the joins click, not that credits are scarce. That replaces the old scarcity framing, which was built on the wrong allowance and on the struck script's 1,917 characters.
 
@@ -572,7 +572,7 @@ Randall shoots; the agent assists. Not executable ahead of time. It closes the P
 
 - [ ] **Step 1: Pre-flight.** The card's `kind` check, Do Not Disturb, three tabs, Gmail filtered.
 - [ ] **Step 2: Settings lock.** `render-vo.mjs D1`, then play `vo/D1.mp3` on laptop speakers. Right means the constants are locked. Wrong means change them, delete that one file, repeat. Commit the constants.
-- [ ] **Step 3: Render the pre-shoot set.** `render-vo.mjs A D E` — 11 segments, 1,326 characters. `D1` is skipped as already present.
+- [ ] **Step 3: Render the pre-shoot set.** `render-vo.mjs A D E` — 12 segments, 1,564 characters. `D1` is skipped as already present.
 - [ ] **Step 4: Throwaway run** of all five beats on camera. Delete it.
 - [ ] **Step 5: Record B, A, C, D, E, silent.** Read every reply against its source between takes. H6 is open.
 - [ ] **Step 6: Fill the two brackets** from the footage, `[N]` in B and `[timestamp]` in C, read off the screen, plus the local-time parenthetical in `docs/video-script.md`. Then `--list`, proofread, and run the renderer with no filter to pick up B and C. Commit.

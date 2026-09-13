@@ -65,6 +65,8 @@ table live on `docs/shoot-card.md`.
 >
 > So now it says what it actually knows: no single line states it. That's weaker than what I shipped, and it's the version that's true.
 >
+> Here's the one that's still open. An answer can out-run the line it cites: the quote is really in your document, and the line it points at can still fail to state the answer by itself. It's the highest thing on my list and it isn't fixed.
+>
 > Everything currently wrong with this is in the repo, scored, with the fixed ones still on the page so nobody rediscovers them.
 
 ## E — the stack

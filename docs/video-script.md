@@ -375,6 +375,25 @@ against itself, and it is the one thing no rival can copy in two weeks.
 Do not recite the score trajectory. It means nothing to a stranger and it eats
 eight seconds. One sentence that changed, and why, is the whole beat.
 
+**Added 2026-09-13: the beat also names H6, and that is deliberate.** As written
+above, D showed only a flag that is *closed* — H5's refusal wording. The one
+high-severity flag still open, **an answer can out-run the line it cites**, went
+unmentioned, and it is the first thing a judge who opens `docs/READINESS.md`
+finds. Naming it turns a discoverable gap into a point on the board, which is
+the move this project has made all week.
+
+**It is shown from `docs/READINESS.md`, not from the board.** The production
+instance is on `probe-v4/contradiction.html`, checked 2026-09-13 and still
+live — `L3a` answers *"The late fee is $50.00."* citing *"Dollars ($50.00) for
+that month."* But that document is `isPublic: false`, so it is not on the public
+board and cannot be filmed there. The H6 entry in the readiness file carries the
+same rendering and is filmable today. The narration says only what that entry
+supports: the quote is genuinely in the document, and the line it points at can
+still fail to state the answer by itself.
+
+The spoken version of this beat lives in `docs/vo-script.md`; the block above is
+the reasoning record, not the narration track.
+
 ---
 
 ## E — the stack · 2:15–2:30
