@@ -84,10 +84,19 @@ Node, no dependencies, built-in `fetch`.
   below; an empty constant aborts before the first API call, the same way a
   bracket does, so a first run never spends a failed request to learn it.
 - **Auth header:** `xi-api-key`, not a bearer token.
-- **Model confirmation:** before the first render, `GET /v1/models` with the
-  key and check `eleven_multilingual_v2` is present with
-  `can_do_text_to_speech` true. Read-only and free. This is the receipt for
-  the model id; it is not read off a settings page, because it is not there.
+- **Model confirmation — the render is the receipt.** An earlier draft of this
+  spec called for `GET /v1/models` before the first render. Tried on
+  2026-09-13 against the real key: **HTTP 401**. A key scoped to Text to
+  Speech, which is what this spec tells Randall to create, cannot list models.
+  Widening the scope to satisfy a confirmation step is backwards, so the step
+  is deleted. A wrong `model_id` fails the render with a named error, and the
+  settings-lock render (shoot-day step 2) is therefore the confirmation.
+
+  Probed the same day, five characters, one call: **HTTP 200, 13,836 bytes,
+  MPEG layer III 128 kbps 44.1 kHz mono.** That single call confirms the key,
+  the voice `bIHbv24MWmeRgasZH58o`, `eleven_multilingual_v2`, and that `seed`
+  and `similarity_boost` are accepted as named. The constants in this spec are
+  not recalled; they are the ones that returned audio.
 - **Key:** `ELEVENLABS_API_KEY` from the environment; run with
   `node --env-file=.env.local scripts/render-vo.mjs`. Never in the repo.
 - **Output:** `vo/<id>.mp3`; `vo/` is gitignored. Skip-if-exists: delete a file
@@ -220,14 +229,14 @@ for any this list missed.
 
 ## Only Randall can do
 
-1. Pay for Starter ($6); confirm the plan reads as commercial.
+1. Pay for Starter ($6); confirm the plan reads as commercial. **Open.**
 2. ~~Pick a voice~~ — done 2026-09-13: `bIHbv24MWmeRgasZH58o`. The model id is
    not a UI field and was never Randall's to find; it is the API constant
-   above, confirmed by the `GET /v1/models` call. The settings lock (shoot-day
-   step 2) is a separate render, through the script, and is what fixes
-   stability, similarity_boost, speed and seed.
-3. Create the API key **scoped to Text to Speech only**, with a credit limit
-   set and IP allowlisting left off, and put it in `.env.local`.
+   above. The settings lock (shoot-day step 2) is a separate render, through
+   the script, and is what fixes stability, similarity_boost, speed and seed.
+3. ~~Create the API key~~ — done 2026-09-13, scoped to Text to Speech, in
+   `.env.local` (gitignored, verified). Key, voice and model proved by the
+   probe above.
 4. Record.
 
 ## Verification before "done"
