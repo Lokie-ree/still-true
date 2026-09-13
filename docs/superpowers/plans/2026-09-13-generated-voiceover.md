@@ -212,7 +212,7 @@ for (const s of segments) {
 Two details that look incidental and are not:
 
 - **The heading regex holds a literal em dash (U+2014)**, the character the beat headings already use. Retype it and you may get an en dash, and every segment silently disappears.
-- **Any `## ` heading that is not a beat clears the beat.** Without that line, blockquotes under *Delivery notes* parse as `E4`, `E5`, and because they carry no bracket they render and bill without complaint. This was found by running a fixture, not by reading the code.
+- **Any `## ` heading that is not a beat clears the beat.** Without that line, blockquotes under *Delivery notes* keep the previous beat and, because `n` resets on every `## `, come back as duplicate `E1` and `E2` — overwriting real narration files. They carry no bracket, so they render and bill without complaint. Found by running a fixture, not by reading the code: removing the terminator line takes the rewritten script from 23 segments to 25.
 
 - [ ] **Step 3: Run the parser against the file that exists now**
 
@@ -236,7 +236,7 @@ Expected: **11 segments, 1,061 characters** against the current file, none unfil
 
 Run: `npm run lint`
 
-Expected: clean. ESLint's rules are scoped to `**/*.{ts,tsx}`, so this file lints with no rules applied. Do not widen the config to cover it.
+Expected: clean. The lint script runs `eslint . --ext ts,tsx`, so a `.mjs` file is not linted at all. That is the existing arrangement; do not widen it to cover this file.
 
 - [ ] **Step 7: Commit**
 
@@ -367,7 +367,7 @@ Body: name what the first draft got wrong, the struck opening and the four numbe
 | Find | Replace with |
 |---|---|
 | "the refusal count in A" | drop it; A carries no number |
-| "A, B and C get written after" | only B and C are written after |
+| "Beats D and E have no footage-dependent numbers" and "A, B and C get written after" (one pair, rewrite together) | A, D and E have none and render before the shoot; only B and C are written after |
 | the example ids `A.mp3`, `B1.mp3` | ids are derived: `A1.mp3`, `B1.mp3` |
 | every `docs/vo-script.txt` reference | `docs/vo-script.md` |
 | the `wc -c` block | `node scripts/render-vo.mjs --list` |
@@ -441,13 +441,19 @@ Message: `docs: the card is a shot list now, not a script`
 
 ### Task 6: The video script's five mechanics sections
 
-`CLAUDE.md` says four. There are five. All five move. The narration beats A to E do not.
+`CLAUDE.md` says four. There are five. All five move.
+
+**What does not move:** the **quoted narration blocks** inside beats A to E. They are the reasoning record.
+
+**What does move, and is easy to miss:** prose *shoot instructions* that sit inside those same beats, outside the quotes. Three of them tell Randall to speak while recording, and generated narration makes all three false. Step 6 below is written to catch this class; do not let the "beats do not move" rule wave them through.
 
 **Files:** modify `docs/video-script.md`
 
 - [ ] **Step 1: The order it has to be shot in, step 2**
 
 "The day before the shoot, deploy the fixture edit ... The 11:17 UTC cron finds it overnight" becomes: the edit went out 2026-09-11, the cron found it the next morning, and that notice is the receipt. No edit precedes this shoot. Keep "No deploy happens on shoot day."
+
+The line immediately below it, "see *The change happens the day before* under beat C", points at the subsection Step 2 renames. Update it here so the rename lands in one pass.
 
 - [ ] **Step 2: Beat C's mechanics subsection**
 
@@ -474,7 +480,7 @@ There is no mic item in this checklist; the mic test is in the ten-minute list a
 - [ ] **Step 5: How to actually record it**
 
 - Delete the mic test, item 4 of the ten-minute list.
-- "Rehearse once with recording OFF ... Read the script aloud while clicking through" becomes: walk the clicks silently and watch the hands. The paragraph about lines that will not fit your mouth moves to the VO script's delivery notes, or goes.
+- "Rehearse once with recording OFF ... Read the script aloud while clicking through" becomes: walk the clicks silently and watch the hands. The paragraph about lines that will not fit your mouth goes. Do not move it into the VO script; Task 3 already wrote that file and this task does not touch it.
 - The B bullet's "the wait is real, 25 to 30 seconds, and the narration is what fills it" becomes: the wait is real and is filled in the edit.
 - The B bullet's "Fluffed a line? Forward again" becomes: re-forward only for a bad answer (H6) or a bad shot.
 - The A bullet's "screen and voice only" becomes "screen only".
@@ -482,11 +488,25 @@ There is no mic item in this checklist; the mic test is in the ten-minute list a
 - Its recovery line "edit the clause again, $600 to $700, deploy, sweep" becomes `bash scripts/recheck-fixture.sh`, which the card already uses and which `CLAUDE.md` requires over `watch:sweep`.
 - The Clipchamp subsection gains the audio track: segments under their shots, silence cut in for C, and the unedited-duration caption on B if the round trip is trimmed. "No music and no transitions" stays.
 
-- [ ] **Step 6: Confirm nothing was missed**
+- [ ] **Step 6: The three live-narration lines inside beats A and B**
 
-Search `docs/video-script.md`, case-insensitively, for: day before, overnight, aloud, mic, fluff, and "narration is what fills". Expect every remaining hit to sit inside a narration beat A to E, or to be a dated historical statement. Bold markers break literal matches, so search for short fragments rather than whole sentences.
+These are prose, not quoted narration, and they tell Randall to talk while recording. All three go.
 
-- [ ] **Step 7: Commit**
+| Find | Becomes |
+|---|---|
+| beat A: "Let the four refusals sit on screen **while you say it**. Do not scroll yet." | let them sit on screen for the whole shot; do not scroll |
+| beat B: "The reply lands in under thirty seconds. **Say the number out loud** only after the timestamp is visible, and say whatever it actually was" | the reply lands in under thirty seconds; read the number off the timestamp when you fill `[N]`, and write whatever it actually was |
+| beat B: "**Read the late-charge finding aloud**, switch to the lease, and find it" | open the late-charge finding, switch to the lease, and find it |
+
+The second one matters most: "say whatever it actually was" is the say-what-you-see discipline, and the `[N]` bracket is now what enforces it. Keep the discipline, move it to the bracket.
+
+- [ ] **Step 7: Confirm nothing was missed**
+
+Search `docs/video-script.md`, case-insensitively, for: day before, overnight, aloud, mic, fluff, **say**, **out loud**, **while you**, and "narration is what fills".
+
+Accept a hit only if it sits **inside a quoted narration block** (a `>` line) or is a dated historical statement. "Inside beat A to E" is not sufficient — that is exactly the rule that hid the three lines in Step 6. Bold markers break literal matches, so search short fragments rather than whole sentences.
+
+- [ ] **Step 8: Commit**
 
 Message: `docs: all five shoot-mechanics sections, not the four we counted`
 
