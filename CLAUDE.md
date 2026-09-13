@@ -87,6 +87,7 @@ Five files, and they are not interchangeable:
   and what only Randall can close.
 
 **No deploy happens on shoot day.** The edit went out 2026-09-11 and the
-11:17 UTC cron found it the next morning; `watch:sweep` is never run by hand,
+11:17 UTC cron found it the next morning; the notice in the thread is the
+receipt on any later day. `watch:sweep` is never run by hand,
 because `watch:recheck` takes one `documentId` and the sweep fans out over
 private forwards.
