@@ -40,13 +40,27 @@ One file. Human-readable and machine-parsed; no second copy.
   then the spoken lines as blockquote paragraphs. One blockquote paragraph is
   one segment; ids are derived (`A1`, `A2`, `B1`…), never typed.
 - Lines come from the shoot card's bullets, reworded only where speech needs it.
-- Footage-dependent numbers are `[brackets]` until the footage exists: `[N]`
-  seconds in B, `[timestamp]` in C. Beat A speaks no line count (M6). D and E
-  have no brackets and render before the shoot.
-- Beat C never says "this morning" or "overnight"; it says the timestamp on
-  screen, in local time, because that is what Gmail shows. The card's
-  "11:17 UTC" line changes to match.
+- Footage-dependent numbers are `[brackets]` until the footage exists. There
+  are exactly two: `[N]` seconds in B, `[timestamp]` in C. **Beat A has no
+  bracket and speaks no number** — the card's A bullets carry none, and M6 is
+  why. So A, D and E have no brackets and render before the shoot; only B and C
+  are filled after.
+- **No relative-time words anywhere.** Not "this morning", "overnight",
+  "yesterday", "days ago", "two days ago", "Friday", "Saturday". A, D and E are
+  rendered under locked settings before the shoot and must stay true on any
+  later day; B and C may be recorded days after the cron fired. The card lines
+  that carry these words are reworded timelessly: C's "I changed it yesterday"
+  → "I changed it, on purpose, before the watch's next run"; C's "Once, days
+  ago" → "once, and left it"; D's "Two days ago a test document proved" → "A
+  test document proved". C says the timestamp on screen, in local time, because
+  that is what Gmail shows; the card's "11:17 UTC" line changes to match.
+- **No fixture re-edit.** The 2026-09-12 notice is the receipt on any later
+  day: the change stamps persist and the cron mails nothing while the hash is
+  unchanged. If a re-edit is ever forced (the H8 recovery on the card), the
+  timestamp bracket is simply filled from the new notice.
 - Italic stage directions `*(…)*` are allowed inside a beat and are not spoken.
+  The parser strips them wherever they appear; a paragraph that is empty after
+  stripping is not a segment.
 - The banned-words list from the first draft stays.
 
 ## The render script — `scripts/render-vo.mjs`
@@ -54,8 +68,11 @@ One file. Human-readable and machine-parsed; no second copy.
 Node, no dependencies, built-in `fetch`.
 
 - **Parse:** `## X —` sets the beat letter; each blockquote paragraph under it
-  is the next segment. Skip `*(…)*` directions. Any segment still containing
-  `[` aborts the run naming the id — an unfilled number cannot reach the API.
+  is the next segment. Strip `*(…)*` directions; drop paragraphs left empty.
+  In render mode, any segment still containing `[` aborts **before the first
+  API call**, naming every offending id — an unfilled number cannot reach the
+  API and no paid render precedes the check. `--list` does not abort; it shows
+  the brackets so they can be found.
 - **Settings:** `VOICE_ID`, `MODEL_ID`, `voice_settings` (stability, similarity,
   speed), `SEED` are constants at the top of the file, set once after listening
   to a single rendered segment, then never changed for this video. Committing
@@ -83,12 +100,17 @@ non-commercial with attribution. A prize hackathon is ambiguous. Decision:
 
 1. Pre-flight from the card, unchanged: `kind` check, Do Not Disturb, three
    tabs, Gmail filtered.
-2. Render D and E — locks the voice settings before anything is recorded.
-3. Throwaway run of all five, deleted.
-4. Record B → A → C → D → E, silent. Read every reply against its source between
+2. Render one D segment. Play it back on laptop speakers. If it is right, the
+   settings are locked and committed; if not, change them and delete the file.
+   This is the settings-lock step, and the only render that may be repeated
+   with different settings.
+3. Render the rest of A, D and E — everything without a bracket.
+4. Throwaway run of all five, deleted.
+5. Record B → A → C → D → E, silent. Read every reply against its source between
    takes (H6 open).
-5. With footage open, fill brackets in A, B, C. `--list`, proofread, render.
-6. Assemble in Clipchamp as above.
+6. With footage open, fill the two brackets in B and C. `--list`, proofread,
+   render.
+7. Assemble in Clipchamp as above.
 
 ## Documents that move in the same PR
 
@@ -100,9 +122,18 @@ describes it.
 - `docs/shoot-card.md` → spoken bullets become "the line this shot carries";
   timestamp line reads local time; "Fluffed a line" row leaves `IF THIS
   HAPPENS`; "Bracket still unfilled" row joins it.
-- `docs/video-script.md` → the four mechanics sections: shoot order, beat C,
-  recording checklist (mic test leaves), things that will go wrong. Narration
-  beats stay as the reasoning record.
+- `docs/video-script.md` → **five** sections describe shoot mechanics, not the
+  four `CLAUDE.md` counts, and all five move: the shoot order, beat C, the
+  recording checklist, the things that will go wrong, and "How to actually
+  record it" (the section that carries the mic test, "the narration is what
+  fills it", "Fluffed a line? Forward again", "screen and voice only", and
+  "read the script aloud"). The mic test leaves. While that section is open,
+  its "$600 → $700, deploy, sweep" recovery line is corrected to
+  `bash scripts/recheck-fixture.sh`, which `CLAUDE.md` already requires.
+  `CLAUDE.md`'s own count of the sections changes from four to five. The
+  narration beats (A–E) stay as the reasoning record and are **not** edited;
+  in particular beat C's quoted "11:17 UTC" line stays, and is not a missed
+  rename.
 - `docs/rehearsal.md` → one dated note at top: Saturday's plan executed on a
   later day with generated narration; points at the runbook.
 - `hackathon.md` → dated entry for the decision, including that the first VO
@@ -119,8 +150,10 @@ describes it.
 
 ## Verification before "done"
 
-- `--list` on the rewritten script: D and E have no brackets; total characters printed.
-- One real render of a D segment with locked settings, played back (the only paid test).
+- `--list` on the rewritten script: A, D and E have no brackets, B and C have
+  exactly one each, no relative-time words anywhere; total characters printed.
+- The settings-lock render (shoot-day step 2), played back. Every later render
+  uses the committed constants.
 - `npm run gate` before the PR (prod, read-only).
 - Every spoken line in the final script exists on the shoot card or is a
   bracket — checked by hand, line for line, and stated as such.
