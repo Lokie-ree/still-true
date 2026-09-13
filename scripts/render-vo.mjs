@@ -3,8 +3,10 @@
 //   render-vo.mjs --list        every segment, no calls
 //   render-vo.mjs D1            just that segment
 //   render-vo.mjs A D E         every segment of those beats
-// Locked 2026-09-13. Changing a constant below renders audio that will not
-// sit next to audio already cut into the timeline. The join clicks.
+// Locked 2026-09-13. Randall rendered D1, listened on laptop speakers and
+// approved the voice; beats A, D and E were batched under these exact values.
+// Changing a constant below renders audio that will not sit next to audio
+// already cut into the timeline. The join clicks.
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 
 const VOICE_ID = "bIHbv24MWmeRgasZH58o";
