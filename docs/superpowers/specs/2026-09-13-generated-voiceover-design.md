@@ -76,7 +76,9 @@ Node, no dependencies, built-in `fetch`.
 - **Settings:** `VOICE_ID`, `MODEL_ID`, `voice_settings` (stability, similarity,
   speed), `SEED` are constants at the top of the file, set once after listening
   to a single rendered segment, then never changed for this video. Committing
-  them is the lock.
+  them is the lock. Until Randall reports them, `VOICE_ID` and `MODEL_ID` are
+  empty strings, and an empty one aborts before the first API call, the same
+  way a bracket does — the first run never spends a failed request to learn it.
 - **Key:** `ELEVENLABS_API_KEY` from the environment; run with
   `node --env-file=.env.local scripts/render-vo.mjs`. Never in the repo.
 - **Output:** `vo/<id>.mp3`; `vo/` is gitignored. Skip-if-exists: delete a file
@@ -134,8 +136,10 @@ for any this list missed.
   and the count comes from `--list`); "the renderer stays four lines".
 - `docs/shoot-card.md` → spoken bullets become "the line this shot carries";
   C's "happened yesterday and overnight" → timeless; the "That arrived at
-  11:17 UTC" line reads local time; the pre-flight "the cron found it at 11:17
-  UTC" keeps its date (it is history); "Fluffed a line" row leaves `IF THIS
+  11:17 UTC" line reads local time; under *Order*, "The fixture edit went out
+  Friday; the cron found it at 11:17 UTC" → "went out 2026-09-11; the cron
+  found it the next morning", matching the `CLAUDE.md` rewrite; "Fluffed a
+  line" row leaves `IF THIS
   HAPPENS`; "Bracket still unfilled" row joins it; the "Cron mailed nothing
   overnight" row label loses "overnight".
 - `docs/video-script.md` → **five** sections describe shoot mechanics, not the
@@ -157,15 +161,27 @@ for any this list missed.
     (still true); "forward again rather than talking around it" → "rather than
     writing around it"; "resolves overnight" and "the edit goes out the day
     before" → dated; the "Friday's … Saturday's" notice paragraph keeps its
-    days (history) but "Saturday's is the one with 11:17 UTC on" gains "(6:18
-    AM Central in the inbox)".
+    days (history) but "Saturday's is the one with 11:17 UTC on" gains a
+    parenthetical with the local time **as read from the inbox at shoot-day
+    step 6**, when the `[timestamp]` bracket is filled. Nothing in the repo
+    records what Gmail shows, and a previous draft of this spec wrote "6:18 AM
+    Central" from a conversion of the stamp, not from the screen — the defect
+    this spec exists to stop. Until step 6 the parenthetical is a bracket.
   - *How to actually record it*: the mic test leaves the pre-record list;
     "Rehearse once with recording OFF: read the script aloud" → walk the clicks
     silently; "the narration is what fills it" → the wait is filled in the
     edit; "Fluffed a line? Forward again" leaves; "screen and voice only" →
-    "screen only"; the "$600 → $700, deploy, sweep" recovery line is corrected
-    to `bash scripts/recheck-fixture.sh`, which `CLAUDE.md` already requires;
-    Clipchamp gains the audio track and the silence cut.
+    "screen only"; the C bullet's "the only shot with a real cost, because
+    deploying the edit changes the page for good. Shoot A and B first" goes
+    (no edit precedes this shoot; C is the cheapest shot, nothing on camera is
+    live); its "$600 → $700, deploy, sweep" recovery line is corrected to
+    `bash scripts/recheck-fixture.sh`, which the card already uses; Clipchamp
+    gains the audio track and the silence cut.
+  - The beat C subsection title "The change happens the day before, and that
+    is the point" and its cross-reference under the beat C heading → "The
+    change happened before the shoot, and that is the point".
+  - `docs/handoff-2026-09-10.md` is on `CLAUDE.md`'s shoot-file list and was
+    read: no sentence in it goes false. It is not edited.
 - `CLAUDE.md` and its twin `AGENTS.md` → the section count four → five, and
   "The fixture edit goes out the day before and the 11:17 UTC cron finds it"
   → "The fixture edit went out 2026-09-11 and the 11:17 UTC cron found it the
@@ -192,8 +208,9 @@ for any this list missed.
   exactly one each; total characters printed. The script checks brackets and
   nothing else — no banned-word list, no config.
 - By hand, line for line, and stated as such: every spoken line exists on the
-  shoot card or is a bracket, and no line carries a relative-time word (the
-  list above; "on a Tuesday" in C is idiom, not a date, and stays).
+  shoot card or is a bracket, no line carries a relative-time word (the list
+  above; "on a Tuesday" in C is idiom, not a date, and stays), and no line
+  carries a word from the undersell list at the foot of the VO script.
 - The settings-lock render (shoot-day step 2), played back. Every later render
   uses the committed constants.
 - `npm run gate` before the PR (prod, read-only).
@@ -209,5 +226,18 @@ to a second project, not before.
 
 ## Delivery
 
-Branch `demo/generated-voiceover-0913`. Checkpoint commits: spec → script +
-gitignore → VO script rewrite → doc updates. One PR; one concern.
+Branch `demo/generated-voiceover-0913`. Checkpoint commits, in order:
+
+1. spec (done);
+2. the two untracked files, `docs/voiceover.md` and the struck
+   `docs/vo-script.md`, committed **as they are**, so the rewrite is a diff
+   and the hackathon entry has a commit to point at;
+3. script + gitignore;
+4. VO script rewrite;
+5. doc updates.
+
+One PR; one concern. The PR opens after commit 5 and **stays open** until the
+settings-lock commit (shoot-day step 2) lands on it, since committed constants
+are the lock and a PR without them describes a pipeline that has not been
+locked. The filled brackets (step 6) go on the same PR. Merge after the
+video is assembled.
