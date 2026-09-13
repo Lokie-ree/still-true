@@ -87,8 +87,10 @@ Node, no dependencies, built-in `fetch`.
 - **Failure:** non-200 prints id, status, body, and stops; nothing is written
   for that segment, so a rerun picks it up.
 - **Check:** the parser is ~10 lines; `--list` against the real file is its
-  runnable check. No test file — adding one changes the test glob and the count
-  the README carries.
+  runnable check. No test file: the suite's glob is `convex/*.test.ts`, so a
+  test here would either be invisible or need the glob widened, which changes
+  the count the README carries. Not worth it for ten lines whose failure is
+  visible in `--list`.
 
 ## Licensing
 
@@ -117,23 +119,57 @@ non-commercial with attribution. A prize hackathon is ambiguous. Decision:
 Per `CLAUDE.md`: a change to how a beat is shot reaches every file that
 describes it.
 
-- `docs/voiceover.md` → the runbook: keeps its decisions; gains the day's order,
-  script usage, settings-lock step; drops the `.txt` reference; names ElevenLabs.
+Two decisions make sentences false: **narration is generated** (nothing is
+said while recording) and **no fixture re-edit** (the shoot is not "the day
+after" the edit; the receipt is the 2026-09-12 notice). The sentences below
+are the ones found by reading each file; the implementer re-reads each file
+for any this list missed.
+
+- `docs/voiceover.md` → the runbook. Keeps its decisions; gains the shoot-day
+  order, script usage, and the settings-lock step; names ElevenLabs. Sentences
+  that go false and change: "the refusal count in A" (A carries no number);
+  "A, B and C get written after" (only B and C); the example ids `A.mp3,
+  B1.mp3` (ids are derived: `A1`, `B1`); every `docs/vo-script.txt` reference,
+  including the `wc -c` line and the scope list (the file is `vo-script.md`
+  and the count comes from `--list`); "the renderer stays four lines".
 - `docs/shoot-card.md` → spoken bullets become "the line this shot carries";
-  timestamp line reads local time; "Fluffed a line" row leaves `IF THIS
-  HAPPENS`; "Bracket still unfilled" row joins it.
+  C's "happened yesterday and overnight" → timeless; the "That arrived at
+  11:17 UTC" line reads local time; the pre-flight "the cron found it at 11:17
+  UTC" keeps its date (it is history); "Fluffed a line" row leaves `IF THIS
+  HAPPENS`; "Bracket still unfilled" row joins it; the "Cron mailed nothing
+  overnight" row label loses "overnight".
 - `docs/video-script.md` → **five** sections describe shoot mechanics, not the
-  four `CLAUDE.md` counts, and all five move: the shoot order, beat C, the
-  recording checklist, the things that will go wrong, and "How to actually
-  record it" (the section that carries the mic test, "the narration is what
-  fills it", "Fluffed a line? Forward again", "screen and voice only", and
-  "read the script aloud"). The mic test leaves. While that section is open,
-  its "$600 → $700, deploy, sweep" recovery line is corrected to
-  `bash scripts/recheck-fixture.sh`, which `CLAUDE.md` already requires.
-  `CLAUDE.md`'s own count of the sections changes from four to five. The
-  narration beats (A–E) stay as the reasoning record and are **not** edited;
-  in particular beat C's quoted "11:17 UTC" line stays, and is not a missed
-  rename.
+  four `CLAUDE.md` counts, and all five move:
+  - *The order it has to be shot in*, step 2: "The day before the shoot, deploy
+    the fixture edit … the cron finds it overnight" → the edit went out
+    2026-09-11 and the 09-12 notice is the receipt; no edit precedes the shoot.
+  - *Beat C*, the mechanics subsection "The change happens the day before":
+    "edit and deploy on Friday … shoot Saturday afternoon", "the narration says
+    out loud that the change was made deliberately, the day before" → the
+    narration says it was made deliberately, without a day. The quoted
+    narration block itself (including "I changed it yesterday" and "11:17
+    UTC") is the reasoning record and is **not** edited; a one-line note under
+    it says the spoken version is in `vo-script.md`.
+  - *The recording checklist*: "The fixture edit deployed the day before, and
+    not touched since" → "deployed 2026-09-11 and not touched since"; "The
+    overnight change notice" → "The 2026-09-12 change notice".
+  - *The things that will go wrong*: "Cut the number from the narration" stays
+    (still true); "forward again rather than talking around it" → "rather than
+    writing around it"; "resolves overnight" and "the edit goes out the day
+    before" → dated; the "Friday's … Saturday's" notice paragraph keeps its
+    days (history) but "Saturday's is the one with 11:17 UTC on" gains "(6:18
+    AM Central in the inbox)".
+  - *How to actually record it*: the mic test leaves the pre-record list;
+    "Rehearse once with recording OFF: read the script aloud" → walk the clicks
+    silently; "the narration is what fills it" → the wait is filled in the
+    edit; "Fluffed a line? Forward again" leaves; "screen and voice only" →
+    "screen only"; the "$600 → $700, deploy, sweep" recovery line is corrected
+    to `bash scripts/recheck-fixture.sh`, which `CLAUDE.md` already requires;
+    Clipchamp gains the audio track and the silence cut.
+- `CLAUDE.md` and its twin `AGENTS.md` → the section count four → five, and
+  "The fixture edit goes out the day before and the 11:17 UTC cron finds it"
+  → "The fixture edit went out 2026-09-11 and the 11:17 UTC cron found it the
+  next morning; the notice is the receipt on any later day."
 - `docs/rehearsal.md` → one dated note at top: Saturday's plan executed on a
   later day with generated narration; points at the runbook.
 - `hackathon.md` → dated entry for the decision, including that the first VO
@@ -143,20 +179,24 @@ describes it.
 ## Only Randall can do
 
 1. Pay for Starter; confirm the plan reads as commercial.
-2. Pick a voice; render one segment in the web app; listen on laptop speakers;
-   report voice id and model id.
+2. Pick a voice: render one segment in the web app, listen on laptop speakers,
+   report voice id and model id. This chooses the voice. The settings lock
+   (shoot-day step 2) is a different render, through the script, and is what
+   fixes stability, similarity, speed and seed.
 3. Put the key in `.env.local`.
 4. Record.
 
 ## Verification before "done"
 
 - `--list` on the rewritten script: A, D and E have no brackets, B and C have
-  exactly one each, no relative-time words anywhere; total characters printed.
+  exactly one each; total characters printed. The script checks brackets and
+  nothing else — no banned-word list, no config.
+- By hand, line for line, and stated as such: every spoken line exists on the
+  shoot card or is a bracket, and no line carries a relative-time word (the
+  list above; "on a Tuesday" in C is idiom, not a date, and stays).
 - The settings-lock render (shoot-day step 2), played back. Every later render
   uses the committed constants.
 - `npm run gate` before the PR (prod, read-only).
-- Every spoken line in the final script exists on the shoot card or is a
-  bracket — checked by hand, line for line, and stated as such.
 
 ## Out of scope this week
 
