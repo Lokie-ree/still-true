@@ -85,7 +85,7 @@ Fixture on screen as it now reads. Then cut to the inbox, notice already in it.
 - This page is a fixture I control. I changed it, on purpose, before the
   watch's next run, and I'm telling you so the next part means something.
 - I asked one question about this page. Once, and then left it alone.
-- *(point at the timestamp)* That arrived at [local time from the inbox]. I
+- *(point at the timestamp)* That arrived at 6:18 AM. I
   didn't run it. It's a daily job, and it found this while nobody was looking.
 - Two things I'd quoted don't read the same way. It's not telling me the lease
   got worse — it isn't qualified to judge that. It's telling me these aren't the

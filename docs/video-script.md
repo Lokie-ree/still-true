@@ -504,7 +504,7 @@ and the termination notice. That is honest and it is arguably better footage —
 happened twice, unprompted, on a schedule — but **know which one you are pointing
 at** before the take, and read the timestamps. Friday's was triggered by hand with
 `watch:recheck`; Saturday's was not, and Saturday's is the one with 11:17 UTC
-(local: `[timestamp]`) on it.
+(local: 6:18 AM) on it.
 
 **`watch:sweep` is never run by hand.** It re-reads every url-backed document in
 the deployment, forwarded ones included. `watch:recheck` takes one `documentId`

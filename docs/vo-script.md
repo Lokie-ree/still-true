@@ -31,7 +31,7 @@ table live on `docs/shoot-card.md`.
 >
 > No app. No upload. No account. I sent it to an email address.
 >
-> That took [N] seconds.
+> That took about a minute.
 >
 > Every claim comes back with a sentence from the document and the line it's on.
 >
@@ -49,7 +49,7 @@ table live on `docs/shoot-card.md`.
 >
 > I asked one question about this page. Once, and then left it alone.
 >
-> That arrived at [timestamp]. I didn't run it. It's a daily job, and it found this while nobody was looking.
+> That arrived at 6:18 in the morning. I didn't run it. It's a daily job, and it found this while nobody was looking.
 >
 > Two things I'd quoted don't read the same way. It's not telling me the lease got worse, it isn't qualified to judge that. It's telling me these aren't the words that were there.
 >
