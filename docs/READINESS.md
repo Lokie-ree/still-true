@@ -494,13 +494,33 @@ one constant in a deploy that is happening anyway. The limiter waits.
 
 ## Candidate — evidence too thin to score
 
-### C3 — the reply lands in spam for a reader who has never seen this address
+### C3 — the reply sometimes lands in spam, and which time is not predictable
 
-**Measured 2026-09-14 night, two Gmail accounts, same sender and near-identical
-replies.** `rplapointjr@gmail.com`, which has dozens of read and replied-to
-exchanges with `still-true@agentmail.to`, gets `INBOX` and `IMPORTANT` — zero
-messages in spam across seven days, and today's PayPal TOS reply is in the
-inbox. `rplj1253@gmail.com`, cold, got spam.
+**Measured 2026-09-14 night, three Gmail accounts, same sender and
+near-identical replies. Two inbox, one spam.**
+
+| account | history with this address | result |
+|---|---|---|
+| the author's own | dozens of read and replied-to exchanges | `INBOX`, `IMPORTANT`, zero spam in 7 days |
+| a second account | none | **spam** |
+| a third account | none | `INBOX` |
+
+**The first reading of this was wrong and the third account falsified it inside
+the hour.** With two accounts in hand the obvious mechanism was *a reader with no
+history with the sender gets filtered*, and it fit both points exactly. It is not
+what is happening: the third account had no history either and was delivered.
+
+**What survives is weaker and more useful.** Delivery to someone who has not
+written here before is **not predictable**. That is worse than a rule, not
+better: a rule tells you which readers to warn, and this tells you there is no
+such group. It is also the reason the mitigation below is stated unconditionally
+rather than aimed at first-time readers, which is how it was written an hour ago.
+
+**Deliberately NOT expressed as a rate.** One in two cold accounts is not a
+frequency, and putting "about half" on the board would be M11 exactly — a
+two-sample result promoted to a standing claim — committed in the paragraph that
+exists because of M11. The honest form of a two-sample split is *it happens*, and
+nothing more.
 
 **Authentication is not the cause and can be ruled out from the headers**, read
 off the delivered message rather than assumed:
@@ -524,21 +544,33 @@ in every single message. Shared IP, bulk headers, a campaign-tagged link, and a
 recipient with no history is the standard filtered profile. None of the three is
 ours to remove.
 
-**Why this is a Candidate and not a scored high.** One cold mailbox is one data
-point, and this file's rule is that plausible findings are listed and do not move
-the score. **The measurement that settles it is two minutes**: forward a document
-from a third address that has never mailed this inbox, from a different provider
-if possible. If it reproduces this is a high — it defeats the primary path for
-every reader who is not Randall, which is all of them — and it will want its own
-entry rather than this one.
+**Why this stays a Candidate, and why that is now a closer call than it was.**
+It did not reproduce, so the version of this flag that would have been a high —
+*every new reader is filtered* — is dead. What is left cannot be scored the
+normal way: the failure is real and was seen once, but it is intermittent, and
+this file's rule is that a plausible finding is listed and does not move the
+score. It stays off the number.
 
-**The half that is ours was shipped anyway, because it is right either way.**
-Until tonight nothing on the board, in the README, in the listing or in the video
-description told a first-time reader to look in spam. The product promised a
-reply in under a minute and said nothing about the folder. That gap is closed in
-this PR; it reduces the blast radius and **does not close this finding**, because
-a reader who never sees the mail and never reads the board is not helped by
-either.
+**It is a closer call because intermittent is not rare.** Seventeen judges is not
+one sample. A defect that fires unpredictably still fires, and the thing that
+makes this un-scoreable is also what makes it un-plannable — there is no
+configuration to check and no reader to warn specifically.
+
+**What would actually settle it** is more samples than one evening affords, and
+across providers rather than three accounts at one provider — every data point
+here is Gmail, so nothing at all is known about Outlook, Yahoo or a corporate
+gateway. That is a real coverage gap and it is named in *Coverage* rather than
+pretended away here.
+
+**The half that is ours shipped anyway, and the falsification made it MORE
+clearly right rather than less.** Until tonight nothing on the board, in the
+README, in the listing or in the video description told a reader to look in spam.
+The product promised a reply in under a minute and said nothing about the folder.
+If the rule had held, that line could have been aimed at new readers only; since
+it did not hold, it has to be told to everyone, which is what now ships.
+
+It reduces the blast radius and **does not close this finding** — a reader who
+never sees the mail and never reads the board is helped by neither.
 
 **Not fixable by a custom domain in the time left, and worth writing down so the
 next session does not try.** A new domain starts at zero reputation and needs
@@ -1236,6 +1268,16 @@ Documented decisions with named upgrade paths:
   code, not actionable.
 
 ## Coverage — what the audit could not see
+
+**Deliverability is measured at one provider only (2026-09-14).** Every data
+point behind C3 is Gmail — three accounts, one evening, two inbox and one spam.
+**Nothing is known about Outlook, Yahoo, iCloud or any corporate gateway**, and
+Microsoft in particular is stricter than Gmail with shared relay pools, so the
+one provider that was tested is not the conservative case. A judge reading mail
+at work is outside every measurement this file contains.
+
+This is a gap, not a flag: it cannot be closed by reading code, and closing it
+needs addresses at other providers rather than another pass over `mail.ts`.
 
 Log evidence has been thin since 09-03 and mostly still is: prod log reads are
 refused by the read-only MCP selector, and dev retains zero entries. "No failures

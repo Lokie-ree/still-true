@@ -3332,3 +3332,17 @@ address settles it. **Shipped regardless: the board, README, listing and video
 description now say to check spam**, because until tonight the product promised a
 reply in under a minute and said nothing about where it lands.
 
+
+## 2026-09-14, night — the spam finding did not reproduce, and that is the finding
+
+A third Gmail account, also cold, got the inbox. So the mechanism I proposed an
+hour earlier — no history with the sender means filtered — is dead; it fit both
+points I had and was falsified by the third.
+
+What replaces it is weaker and more useful: delivery to a new reader is not
+predictable, which is worse than a rule rather than better, because a rule would
+tell me which readers to warn. The board, README and listing said "check spam"
+with a reason attached; they now say it without one, to everybody. **All three
+samples are Gmail**, so nothing is known about Outlook or a work gateway — logged
+under Coverage.
+
