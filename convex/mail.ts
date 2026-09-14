@@ -111,8 +111,8 @@ async function reply(
 // that stops a double reply would swallow every one of them.
 //
 // What stops a duplicate instead is upstream: a change is only ever computed
-// when Firecrawl reports the source text moved, and the next check compares
-// against the text we just read. Nothing here needs a second opinion about it.
+// when OUR SHA-256 over the parsed lines moves, and the next check compares
+// against the hash we just stored. Nothing here needs a second opinion about it.
 async function notify(
   ctx: MutationCtx,
   threadRowId: Id<"threads">,
@@ -517,12 +517,24 @@ async function attachmentUrl(
   return downloadUrl;
 }
 
-// What Firecrawl says about this URL since the last time OUR team scraped it.
-// `new` on a first read, `same` when the page is byte-identical to our previous
-// scrape, `changed` when it is not. This is the watch's whole gate: it is
-// computed by Firecrawl from the two texts, so it is deterministic — unlike
-// asking the model twice and diffing the answers, which the 09-04 deploy
-// measured drifting on 2 of 47 cells with the documents standing still.
+// Fetch the markdown, and nothing else. The request asks for `["markdown"]`
+// and that is the whole of what this function wants from Firecrawl.
+//
+// In particular it does NOT ask for `changeTracking`, and the watch's gate is
+// not Firecrawl's. The gate is a SHA-256 over our own parsed lines
+// (`lines.ts`, `fingerprint`), stored on our own row — deterministic, and
+// re-readable as many times as a retry needs.
+//
+// The first design DID use `changeTracking.changeStatus`, and a live run killed
+// it: that signal compares a scrape against your team's previous scrape of the
+// same URL, so reading it SPENDS it. A sweep on 2026-09-05 scraped this
+// project's own fixture after two clauses were edited, failed after the fetch,
+// and every read afterwards said `same` — the new text against the new text.
+// See `documents.contentHash` in schema.ts, which carries the same history.
+//
+// What both designs rule out is asking the model twice and diffing the answers,
+// which the 09-04 deploy measured drifting on 2 of 47 cells with the documents
+// standing still.
 async function scrape(url: string): Promise<string> {
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
@@ -655,6 +667,34 @@ export const priorReading = internalQuery({
   },
 });
 
+// H9, 2026-09-14. The checklist a document already has, found by the same
+// `by_url` lookup `attach` dedupes on — so `readAndPublish` can pin the
+// checklist on **whether this document has been read before**, rather than on
+// which door it came through.
+//
+// `priorReading` above answers the same question for the WATCH, which knows the
+// row it is re-reading. `ingest` and `probe` do not: they arrive with
+// `recheckOf: null` and a URL, and H8's pin therefore never fired for them —
+// which is the whole of H9.
+//
+// It deliberately returns ONLY the kind, and never the hash. The early exit in
+// `readAndPublish` returns before `attach`, so taking it on the mail path would
+// leave the sender with no reply and the thread with no `documentId`. Pin the
+// checklist; re-read everything else.
+export const priorKindForUrl = internalQuery({
+  args: { url: v.union(v.string(), v.null()) },
+  returns: v.union(documentKind, v.null()),
+  handler: async (ctx, args) => {
+    const url = args.url;
+    if (url === null) return null;
+    const document = await ctx.db
+      .query("documents")
+      .withIndex("by_url", (q) => q.eq("url", url))
+      .first();
+    return document === null ? null : document.kind;
+  },
+});
+
 export const checked = internalMutation({
   args: { documentId: v.id("documents") },
   returns: v.null(),
@@ -719,6 +759,19 @@ export async function readAndPublish(
         return null;
       }
     }
+  } else {
+    // H9. `attach` dedupes on `by_url`, so `ingest` and `probe` reach rows that
+    // already exist — carrying `recheckOf: null`, because they genuinely are
+    // not re-checks. H8 pinned the checklist on that flag, which made the pin a
+    // statement about the caller rather than about the document, and a second
+    // forward of a URL already on the board re-classified it: findings replaced
+    // across a checklist boundary, every key new at once so `diff` reports no
+    // change, and the first sender never told their clause moved.
+    //
+    // No early exit here. An unchanged page still owes this sender a reply.
+    priorKind = await ctx.runQuery(internal.mail.priorKindForUrl, {
+      url: args.url,
+    });
   }
 
   // The document is only in memory here, and it is never written down — the
@@ -868,7 +921,9 @@ export const attach = internalMutation({
         .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
         .take(50);
 
-      // Only when Firecrawl says the text moved. On a re-forward of an
+      // Only when our stored hash no longer matches what the page reads as
+      // now — never a model-answer diff, and never a vendor's flag. On a
+      // re-forward of an
       // unchanged page this stays empty, so two people forwarding the same
       // terms page a week apart never mail each other a change that did not
       // happen.

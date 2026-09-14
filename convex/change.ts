@@ -142,8 +142,11 @@ export function diff(
     // the same lie as telling them one was removed.
     //
     // Restoring it needs the previous TEXT, which this system deliberately does
-    // not store — or the added lines out of Firecrawl's git-diff, which the
-    // scrape already requests and nothing yet reads. That is where to start.
+    // not store. Firecrawl can return added lines as a git-diff under
+    // `changeTracking`, but the scrape does NOT request it and should not start
+    // — that signal is consumable, and spending it is what broke the 09-05
+    // sweep (see `scrape` in mail.ts). Storing the previous text, or a
+    // per-question hash of the lines it was drawn from, is where to start.
     //
     // not_stated → not_stated is silence twice. Nothing to report either.
   }

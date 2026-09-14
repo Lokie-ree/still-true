@@ -3306,3 +3306,15 @@ file as it stood before that merged. **A dated log entry citing a stale line is 
 known and accepted cost here; an OPEN flag citing one is not**, because its whole
 job is to send the next person to the code. Corrected from the reconciler's own
 output: DRIFTED 26 → 0, CONFIRMED 81 → 105.
+
+## 2026-09-14, night — the checklist was pinned to the caller, not the document
+
+H9 closed, with M15, L12 and L8 in the same PR. `readAndPublish` now resolves
+`url → kind` through the same `by_url` lookup `attach` dedupes on, so the pin
+says *this document has been read before* rather than *I arrived as a re-check*;
+a guard keyed on the caller is defeated by a second caller, which is the whole of
+how H8 stayed open through a second door.
+
+L8 was filed as "one word" and was two — the flag's own evidence list named
+`noDocumentBody` as a sibling that escapes when it does not. Score 22 → 44.
+
