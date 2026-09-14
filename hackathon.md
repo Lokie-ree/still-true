@@ -3280,3 +3280,19 @@ been used by a stranger. That is not a defect and there is nothing to fix in
 code. It is worth writing down because this project's own record says that
 forwarding mail finds what reading code cannot, and the population of forwarders
 has been one person the entire time.
+
+### 2026-09-14 — the video is public, and the README named a line count no document has
+
+Published: https://youtu.be/HofqXKI8KJs, 2:42, verified reachable with no auth
+(`isUnlisted:false`, oEmbed resolves, duration `PT2M43S`). 20 of 22 entries in
+this hackathon carry a video; this was the only gap visible from the listing
+index without reading a word.
+
+Two things the README has been getting wrong the whole time, both found while
+adding the link. **It quoted `"Searched all 421 lines"` as the refusal it
+produces**, and no document on this deployment has 421 lines — Livonia is 418,
+and 421 is its count from *before* the 09-04 markup strip moved every line in the
+corpus. The sentence the README uses to explain its own central claim was
+carrying a number that stopped being true ten days ago. **And the README had
+never named the inbox address**: `grep -c "agentmail.to" README.md` returned 0,
+so a judge could read the whole file and have no way to try the product.

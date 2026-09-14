@@ -8,7 +8,7 @@ and by when, with **every claim quoted from the source and the line it came
 from**. Where the document is silent, it says so and tells you how many lines it
 searched — and since 2026-09-09 it says that precisely. A fact stated **across
 two lines** cannot be cited under a one-line contract, so the refusal claims
-only what it can know: *"Searched all 421 lines. No single line states it."* It
+only what it can know: *"Searched all 418 lines. No single line states it."* It
 said *"This document does not state it"* until a playtest caught that being
 false on a document that states the fact twice
 ([H5](docs/READINESS.md), closed).
@@ -19,6 +19,8 @@ specific thing you asked about changes.
 Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
 Live: **https://impressive-marten-163.convex.site**
+Demo: **https://youtu.be/HofqXKI8KJs** (2:42)
+Try it: forward a PDF or a link to **still-true@agentmail.to**
 
 ## Why it can be trusted
 
