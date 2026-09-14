@@ -3195,3 +3195,80 @@ a request to anybody's paid API:
 of the repository. Five of seventeen judges work at Convex and `package.json` is
 a twenty-second read. Logged as **L12**, and the fix is deleting the line — not
 finding a use for it.
+
+### Later the same day — M15, and the sponsor issues are not filable as written
+
+Two corrections to the plan written this morning, both from pointing a pass at
+the sponsor stack specifically.
+
+**The Firecrawl bug report cannot be filed as drafted, and filing it would have
+produced the opposite of what it is for.** `docs/sponsor-issues.md` §1 reports a
+byte-identical PDF parsing to 171/174/174/171 in one afternoon, with both
+SHA-256s and a clean `cmp`. The evidence holds. What the draft never states is
+the request configuration — and the setting most likely to explain the result is
+sitting in it: `parsers: [{ type: "pdf", mode: "auto", maxPages: 200 }]`
+(`mail.ts:523`). **`mode: "auto"` delegates the parser choice to Firecrawl by
+name.** If auto routes between paths per request, four different line counts are
+the documented behaviour of a setting we chose, not a defect, and the first reply
+will say so.
+
+Filing a non-determinism report that omits the non-determinism knob is the same
+failure this project retracted two production claims for. `mode` and `maxPages`
+appear nowhere in the draft, nowhere in this log, and nowhere in `READINESS.md`
+— confirmed by grep. The fix is thirty minutes (paste the request body, name the
+untested variable) or an hour (re-measure four reads with `mode` pinned and
+report whether it stabilises). The second turns a stability report into a
+diagnosis.
+
+**The AgentMail draft is accurate on mechanism and wrong on two details.** It
+says Convex 1.44; installed is **1.45.0**, and the mechanism still holds there —
+say "reproduced on 1.44 and still present on 1.45.0" and the easiest dismissal
+disappears. More importantly its suggested fix is incomplete: declaring the key
+in the component's `convex.config.ts` is necessary but not sufficient, because a
+bound env var is surfaced through the **`env` export from `_generated/server`**,
+not `process.env` — which this repository's own `guidelines.md:261` says in as
+many words. A maintainer who implements the draft as written still fails.
+
+### M15 — the code still explains the Firecrawl design we rejected
+
+`README.md:57` tells the world that `changeTracking` is **not** used, because the
+signal is consumable and reading it spends it. That is the best sponsor finding
+in this repository. Four comments still describe the architecture the other way
+round, and the worst of them is the docstring **directly above the only Firecrawl
+call in the codebase**:
+
+> What Firecrawl says about this URL since the last time OUR team scraped it…
+> **This is the watch's whole gate: it is computed by Firecrawl from the two
+> texts.**
+
+It is not. The gate is a SHA-256 over our own parsed lines, on our own row,
+precisely because of the finding the README leads with. `mail.ts:114` and
+`mail.ts:850` repeat it, and `change.ts:145` is **false rather than merely
+stale** — it points a future session at "the added lines out of Firecrawl's
+git-diff, which the scrape already requests", and the scrape requests
+`formats: ["markdown"]` and nothing else, forty lines away.
+
+**This is H7's class inside the code rather than on the page**, found by the
+fourth discovery mode — compare a claim about the pipeline to the pipeline — and
+it is the second-renderer defect for the fourth time: reversed in one place, left
+standing in three.
+
+Scored 5 for who reads it. One judge of seventeen works at Firecrawl, he opens
+the file with the Firecrawl call in it, and the comment nearest the call
+contradicts the claim the README leads with.
+
+**A note on how this was found, because it nearly was not.** The first grep for
+it searched the literal strings `changeTracking`, `changeStatus` and `git-diff`
+and returned **one** hit. Three of the four comments describe the rejected design
+in prose without naming the API, and a grep for the vocabulary of a decision does
+not find the places that decision is explained in English. Score **27 → 22**.
+
+### And one number that is not a flag
+
+`npm run gate` reads **26 threads, 1 distinct sender**. Every message this inbox
+has ever received came from the person who built it. The inbound path is real,
+signed, rate-limited and has answered twenty-six times — and it has never once
+been used by a stranger. That is not a defect and there is nothing to fix in
+code. It is worth writing down because this project's own record says that
+forwarding mail finds what reading code cannot, and the population of forwarders
+has been one person the entire time.

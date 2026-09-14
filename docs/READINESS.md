@@ -7,10 +7,10 @@ by an invariant rather than by two patches — and **H6 opened the same evening*
 by the A5 check written to confirm that fix on production. **M10 opened 2026-09-11**.
 **M11 and L7 opened and closed 2026-09-14 midday**, both found by subtracting two
 timestamps nobody had subtracted; they move nothing.
-**Fifth pass 2026-09-14 evening — nine flags opened, and it was a code audit that
-found them.** Score **27/100**, the lowest this file has ever recorded:
-`100 − 15(H6) − 15(H9) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×8(L3,L4,L5,L8,L9,L10,L11,L12)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 27** (09-03, 09-05,
+**Fifth pass 2026-09-14 evening — ten flags opened, and it was a code audit that
+found them.** Score **22/100**, the lowest this file has ever recorded:
+`100 − 15(H6) − 15(H9) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 5(M15) − 1×8(L3,L4,L5,L8,L9,L10,L11,L12)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
 09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
 09-14 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
@@ -18,7 +18,8 @@ Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
 where H8, M9 and L6 all opened and closed inside one day and move nothing — and
-then **0** on 09-14, where M11 and L7 did the same.
+then **0** on 09-14 midday, where M11 and L7 did the same, and then
+`−15 H9, −5 M12, −5 M13, −5 M14, −5 M15, −1×5 (L8,L9,L10,L11,L12)` that evening.
 
 **The 09-14 pair was found by arithmetic on data this deployment had already
 stored**, which is a third way in, alongside the audits that find little and the
@@ -28,8 +29,6 @@ claim can be asked of the data instead of the code, ask the data** — the same
 lesson the 09-06 sweep taught about `lastCheckedAt`, arriving by a different
 road.
 
-then `−15 H9, −5 M12, −5 M13, −5 M14, −1×5 (L8,L9,L10,L11,L12)` on 09-14.
-
 **Amended 2026-09-14: the thesis of this file was wrong, and an audit is what
 falsified it.** Twenty lines below, in the entry written on 09-09, this file
 says: *"Both drops came from running the product, and neither came from
@@ -38,7 +37,7 @@ contains."* It said that after five consecutive passes where auditing found
 little and forwarding mail found a lot, and it was an honest reading of five
 data points.
 
-The sixth pass found **nine flags, including a high, by reading code.** Not one
+The sixth pass found **ten flags, including a high, by reading code.** Not one
 of them needed a scrape, a model call, a forward, or a deploy. **H9 is the one
 that settles it**: a re-forward re-classifies a document and silently ends its
 watch — which is H8, the flag this file used on 09-11 as its proof that *"nothing
@@ -58,15 +57,15 @@ it names.
 
 **The generalisable finding, restated:** a method finds the defects it is shaped
 to find, and a run of passes that all find nothing is evidence the method has
-been aimed at a corner that is already clean. Six of today's nine are on paths
+been aimed at a corner that is already clean. Six of today's ten are on paths
 that **no amount of forwarding documents would ever exercise**, because they need
 a second arrival, a deletion, a forged header, or an empty part.
 
-**27 is the honest number and it is not a regression.** Nothing broke on 09-14.
-Every one of these nine has been shipping for days, four of them since P1, and
+**22 is the honest number and it is not a regression.** Nothing broke on 09-14.
+Every one of these ten has been shipping for days, four of them since P1, and
 production answered mail correctly throughout — `npm run gate` reads 7/7 on the
 same morning this was written. That gap is the finding: **the gate is green and
-the score is 27**, and both are true, because the gate asks whether the promises
+the score is 22**, and both are true, because the gate asks whether the promises
 being made today are being kept and the score asks what is waiting to break one.
 
 **M13 is the flag to read first, and it is not the worst one.** It says the
@@ -467,6 +466,48 @@ nobody is looking.
 
 **Not scheduled before the video.** The backoff ships tonight only because it is
 one constant in a deploy that is happening anyway. The limiter waits.
+
+### M15 — four comments still describe the Firecrawl design this project rejected, and one of them is false (medium)
+
+`convex/mail.ts:499-503`, `mail.ts:114`, `mail.ts:850`, `convex/change.ts:145`.
+
+`README.md:57` tells the world that Firecrawl's own `changeTracking` **is not
+used**, because the signal is consumable and reading it spends it — the single
+best sponsor finding this repository contains. The code still explains itself the
+other way round:
+
+- **`mail.ts:499-503`** — the docstring **directly above the only Firecrawl call
+  in the codebase**: *"What Firecrawl says about this URL since the last time OUR
+  team scraped it… **This is the watch's whole gate: it is computed by Firecrawl
+  from the two texts**."* The watch's gate is a SHA-256 over our own parsed lines
+  (`lines.ts`, `fingerprint`), stored on our own row. Firecrawl computes nothing
+  for us; the scrape requests `formats: ["markdown"]` and nothing else.
+- **`mail.ts:114`** — *"a change is only ever computed when Firecrawl reports the
+  source text moved."* It is computed when **our** hash moves.
+- **`mail.ts:850`** — *"Only when Firecrawl says the text moved."* Same.
+- **`change.ts:145`** — *"the added lines out of Firecrawl's git-diff, **which the
+  scrape already requests** and nothing yet reads."* The scrape does not request
+  it. This one is not merely stale, it is **false about the request body sitting
+  forty lines away**, and it is written as a suggestion for where a future
+  session should start — so it is a false claim aimed at whoever picks this up.
+
+**This is H7's class, in the code rather than on the page**, and it is the fourth
+discovery mode doing its job: *compare a claim about the pipeline to the
+pipeline*. It is also the second-renderer defect this project has now logged four
+times — a decision was reversed in one place and left standing in three others.
+
+**Scored 5 rather than 1 because of who reads it.** One of seventeen judges works
+at Firecrawl. He opens one file — the one containing the Firecrawl call — and the
+docstring above it contradicts the headline Firecrawl claim in the README. The
+strongest sponsor finding in the repository is undercut by the comment nearest to
+the thing it is about.
+
+**Not scored 15**, because nothing a user receives is wrong and no behaviour
+changes. The gate is correct; only its explanation is.
+
+Fix: rewrite four comments to describe the hash gate, and keep the rejected
+design as history where it belongs rather than as present tense. Belongs in the
+H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
 
 ### Low
 
@@ -1077,7 +1118,7 @@ asked of the data instead of the logs, ask the data.
 
 **Rewritten 2026-09-14. The freeze is over and nine flags joined the list.**
 
-**H9 → M13 → (L12, L8) → M12 → the two free reads → M8 → (measure H6 again) →
+**H9 (+M15) → M13 → (L12, L8) → M12 → the two free reads → M8 → (measure H6 again) →
 M10 → M2 → M6 → (L3, L4, L9, L10, L11).**
 M5, H5, M7, H8, M9, L6, M11 and L7 are closed.
 
