@@ -3086,3 +3086,112 @@ the screen** and cannot see the UTC conversion — a narrator naming a figure th
 is not on screen is asking to be taken on trust, which is the one thing beat C
 exists not to do. Both are the same instant. 11:17 UTC stays everywhere it names
 the cron's schedule, which is what the file's four other references do.
+## 2026-09-14 — the audit that found something, and what that costs this file's thesis
+
+Nine flags opened today, one of them high, and **every one was found by reading
+code**. No scrape, no model call, no forward, no deploy. The score goes
+**62 → 27**, the lowest this project has recorded, on a morning when
+`npm run gate` reads 7/7 against production.
+
+Both of those are true at once, and the gap between them is the entry. The gate
+asks whether the promises being made today are being kept. The score asks what is
+waiting to break one. Every one of these nine has been shipping for days — four
+since P1 — while production answered mail correctly the whole time.
+
+### The thesis in `READINESS.md` was wrong, and an audit is what falsified it
+
+Written on 09-09, after five consecutive passes:
+
+> Both drops came from running the product, and neither came from re-reading the
+> code — which is the only generalisable finding this file contains.
+
+That was an honest reading of five data points and it is now false. The sixth
+pass read code and found nine.
+
+**H9 is what settles it, because H9 is H8.** On 09-11 this log used H8 — a
+re-check re-classifying a document and silently ending its watch — as the proof
+that *"nothing that reads code was ever going to find this."* H8 was fixed on the
+re-check path. `attach` dedupes on `by_url` **by design**, so `ingest` reaches
+rows that already exist, and it arrives with `recheckOf: null` — which is exactly
+the condition H8's fix keys on. **A second forward of a URL already on the board
+re-classifies it, replaces every published finding, and ends its watch in
+silence.** The pin was keyed on how we got here rather than on whether this
+document has been read before.
+
+A code audit noticed. Three previous audits had read the same line.
+
+### What was actually true, and it is narrower
+
+The four discovery modes this project accumulated — send mail, compare two
+renderings, compare a claim to its pipeline, run it on real hardware — all find
+defects that live in the **relationship between a run and its output**. A code
+audit cannot see those. That half stands.
+
+What does not stand is the inverse. Five audits finding little was a fact about
+**those audits**, not a law about auditing. They were hunting the class the mail
+was already finding. This one was pointed somewhere else: at the paths nobody
+forwards down. **Six of today's nine need a second arrival, a deletion mid-flight,
+a forged header, or an empty message part** — and no quantity of forwarded
+documents would ever have produced one of them.
+
+So the generalisable finding, restated and weaker than the one it replaces: **a
+method finds the defects it is shaped to find, and a run of passes that all find
+nothing is evidence the method has been aimed at a corner that is already clean.**
+
+### The one that is about the instrument
+
+**M13: the gate's sweep receipt can be minted by hand.** `gate.mjs` takes
+`Math.max` over every public document's `lastCheckedAt`, and `mail.attach` stamps
+that field on every re-read of an existing row — including an inbound forward and
+a hand-run `mail:probe`. So one fresh document hides thirteen stale ones, and the
+cron can be dead while the gate reports the watch has swept, for 48 hours, on the
+strength of a probe somebody ran during a rehearsal.
+
+The check's own comment concedes the smaller half — *"a green check still only
+means the sweep ran"* — and not the larger one, that the sweep is not the only
+thing that sets it.
+
+This project has argued since 09-05 that a judgement call standing in for a
+measurement is the root failure. **A measurement that can be satisfied by the
+wrong thing is that same failure wearing the costume of its own fix**, and it is
+worse, because the absence of a check is visible and a hollow one is not.
+
+### The freeze is over
+
+The fix order carried a clause since 09-09: *"nothing in this fix order happens
+before the video is shot."* The video was shot on 09-13. The reason was specific
+— M8 bumps `PARSER_VERSION`, and a bump between the enrolment and the edit would
+have made `attach` re-baseline and swallow the change beat C exists to show — and
+it has expired, because there is no longer a change waiting to be shown.
+
+One consequence worth writing down rather than rediscovering: **if a beat is ever
+re-shot, it must be re-shot before M8 ships.** Re-rendering narration is free. A
+re-baselined corpus is not.
+
+New order: **H9 → M13 → (L12, L8) → M12 → the two free reads → M8 → measure H6
+again → M10 → M2 → M6 → the rest.**
+
+### Three free reads, none of them taken
+
+Each one either closes a flag or converts a guess into a finding, and none costs
+a request to anybody's paid API:
+
+1. **Does AgentMail's inbound object carry an SPF/DKIM verdict?** M14's entire
+   fix depends on the answer. `From` is attacker-controlled today and three gates
+   key on it — `stopFor`, the burst limiter, and the 25-document cap — so a
+   spoofed `STOP` silences a stranger's watch.
+2. **Has AgentMail ever delivered a text-less message here?** Both the link
+   extraction and the STOP test read only the `text` part. Twenty-six threads are
+   stored on production; if the count is zero this is a ceiling to name, and if it
+   is not zero it is an open high, because it is M4's unsubscribe failing for a
+   class of mail client rather than for an edge case.
+3. **What is the actual Firecrawl per-minute limit?** Unclaimed since 09-11. Every
+   sizing decision for M10's limiter depends on a number this project has only
+   ever seen quoted back to it inside an error message.
+
+### And one that cost nothing to find
+
+`convex-helpers` has been a declared dependency, imported nowhere, for the life
+of the repository. Five of seventeen judges work at Convex and `package.json` is
+a twenty-second read. Logged as **L12**, and the fix is deleting the line — not
+finding a use for it.
