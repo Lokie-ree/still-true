@@ -58,13 +58,20 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-10
+## Status — 2026-09-14
 
-**Live on production and answering real mail.**
+**Live on production and answering real mail. The demo is recorded.**
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and
-  one refusal. The board was designed on 2026-09-10 and is now a pleading page:
+  one refusal. **That 15 seconds is one event on 09-06, and it is the fast end.**
+  Across the 20 real answers production has sent, the median is 20.4 seconds and
+  the slowest is 42.6 — measured 2026-09-14 by subtracting `threads.receivedAt`
+  from `threads.repliedAt`, two fields that had been sitting there since P1. The
+  board said "about fifteen seconds" until that measurement and now says "under a
+  minute", which is true of all twenty. Latency does not track document length:
+  the fastest run of the twenty is the 1,182-line PayPal agreement, and one
+  418-line lease spanned 14.8s to 42.6s in a single evening. The board was designed on 2026-09-10 and is now a pleading page:
   line numbers in a gutter down the left edge, the quote as the largest text on
   a card, the model's summary demoted to an annotation above it — and a refusal
   rendered with an EMPTY gutter, because there is no line to name. No new claim
@@ -104,9 +111,9 @@ used: the signal is consumable, so reading it spends it. See
   thread now; apologies, rate-limit notices and unsubscribe confirmations go to
   whoever wrote.
 
-The public board carries six documents, 36 answered findings and 11 refusals, as
-of the `npm run gate` run on 2026-09-07. It said 37 and 10 the day before, and 35
-and 12 the day before that. The counts move on their own: two deployments reading
+The public board carries six documents, 35 answered findings and 12 refusals, as
+of the `npm run gate` run on 2026-09-14. It said 36 and 11 on 09-07, 37 and 10
+the day before that, and 35 and 12 the day before that. The counts move on their own: two deployments reading
 these same six documents hours apart on 09-04 disagreed on 2 of 47 cells with
 nothing about the documents changing, so a cell crossing between answered and
 refused overnight is the expected amount of drift, not a finding. This system

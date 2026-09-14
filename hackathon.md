@@ -2893,3 +2893,77 @@ no mail, and `watch.checked` wiped the `watchError`. The gate reads 7/7 again.
 gate, and in the logs, on a deployment that retains no failure log for long — and
 a document that is failing is now a thing you can see rather than a thing you
 find out about when somebody asks why they never got told.
+
+## 2026-09-14 — the fifteen seconds was the fastest quarter, and the data said so all along
+
+The board told every visitor the reply lands in about fifteen seconds. It does
+not. `threads` has carried `receivedAt` and `repliedAt` since P1, and nobody had
+subtracted one from the other in the eleven days the board spent making a claim
+derived from exactly that pair. Twenty real answers on production:
+
+```
+median 20.4s   min 11.6s   max 42.6s
+≤15s:  5 of 20        ≤60s: 20 of 20
+```
+
+**The sentence was never invented.** Fifteen seconds is the 09-06 forward, and
+the README reports it in the past tense, where it stays true. What the board did
+was drop the date. A measurement pinned to the day it was taken survives; the
+same measurement with the date removed is a standing claim about the typical
+case, and it goes false the first time the world moves. That is H7 again, and
+the three README count drifts again, and the whole argument for `npm run gate` —
+this time in the one sentence on the page that a stranger acts on before they
+have anything to compare it against.
+
+Fixed as a **bound**, not a central tendency: "under a minute", true of all
+twenty. Not derived live on the page, deliberately — a rolling percentile on the
+board would be a public number moving with no cause a reader can see, which is
+precisely M6's complaint about `lineCount` and not a thing to build a second
+instance of on purpose.
+
+### What the measurement found that the fix did not need
+
+Latency does not track document length, and the ranking is close to inverted.
+The **fastest** run of the twenty is the **1,182-line** PayPal user agreement at
+11.6s. A **46-line** page took 30.0s. One **418-line** lease, forwarded five
+times in one evening, spanned **14.8s to 42.6s** — same document, same parser,
+same night, a 3× spread.
+
+So the comfortable explanation was not available. There is no "your document was
+long" sentence to write, because the numbers refuse it. The variance lives in the
+model call rather than in the parse, and an upper bound is the only honest shape
+a claim about it can take.
+
+### The 68.5-hour reply, which was the demo's own receipt
+
+One thread measured 246,506 seconds from received to replied. It was not a
+failure and nothing had broken: it is the thread the video is built on, answered
+on 09-09, and re-stamped at **11:18 UTC on 09-12** when the cron found the edit
+that went out the day before.
+
+`mail.recordSend` patched `repliedAt: Date.now()` on every accepted send, and
+`notify` routes through it too — deliberately, because a change notice has to be
+able to follow an answer weeks later. Both guards that read the field only test
+it against null, so nothing misbehaved. What drifted was the field's **meaning**,
+from "when we answered" to "when we last mailed this thread", with no note
+anywhere recording the change. A timestamp that quietly answers a different
+question than its name is the same class as the one-day bug where `repliedAt`
+meant "enqueued" — and that one is already in this file, three screens up.
+
+Stamped once now, `?? Date.now()`. No second field: "when we last mailed this
+thread" has no reader, and a column added to be complete rather than to be used
+is the thing READINESS keeps telling the next session not to build.
+
+### Logged as M11 and L7, and the score does not move
+
+Both opened and closed today, so 62/100 stands. The pass history gains a 62 and
+a delta of zero, which is the honest entry — the same shape H8, M9 and L6 got on
+09-11.
+
+**The way in is worth more than either flag.** This is the third distinct route
+to a finding in this project, and the first two are already written down: audits
+find little, forwarding real documents finds a lot. This one was arithmetic on
+data the deployment had already stored, with no model call, no scrape and no
+mail sent. The 09-06 sweep taught the same lesson through `lastCheckedAt` —
+*where a claim can be asked of the data instead of the logs, ask the data*. It
+turns out that also holds where the alternative is asking the code.

@@ -189,6 +189,12 @@ export default defineSchema({
     // mutation that queued it. It meant "enqueued" for one day and recorded a
     // reply for a message that was never sent; a timestamp that can be true
     // while the thing it names did not happen is worse than no timestamp.
+    //
+    // The FIRST accepted send, never the most recent. A change notice goes out
+    // through the same action and used to re-stamp this, which left the field
+    // measuring "when we last mailed this thread" while still being read as
+    // "when we answered". See `recordSend` in `mail.ts` for the 68.5-hour reply
+    // that turned out to be the demo's own change notice.
     repliedAt: v.union(v.number(), v.null()),
     // The inbox the mail actually arrived at, so the reply goes back out the
     // same door. Optional only because the P1 test rows predate it; a row
