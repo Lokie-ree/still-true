@@ -208,6 +208,25 @@ export const send = internalAction({
 // day it recorded a reply for a message AgentMail never accepted — the row said
 // replied while the sender's inbox stayed empty. A timestamp that can be true
 // while the thing it names did not happen is worse than no timestamp.
+//
+// And it means the FIRST send, not the most recent one. `notify` deliberately
+// ignores `repliedAt` so a change notice can follow an answer weeks later — but
+// the notice still lands here, and this used to stamp the field again. Nothing
+// broke: both guards that read it (`reply` and `notify`) only test it against
+// null. What broke was the field's meaning, which drifted from "when we
+// answered" to "when we last mailed this thread" with no note anywhere saying
+// so.
+//
+// It surfaced on 2026-09-14 as a thread that had apparently taken 68.5 hours to
+// answer a message. It had not: it is the video's own thread, answered on 09-09
+// and re-stamped at 11:18 UTC on 09-12 when the cron found the edit. That is the
+// receipt the demo is built on, wearing the costume of a defect — and until it
+// was read, `repliedAt - receivedAt` could not be trusted to measure anything,
+// on a project whose landing page makes a claim about how long a reply takes.
+//
+// So: stamp it once. `?? Date.now()` rather than a second field, because
+// "when we last mailed this thread" has no reader and inventing one to hold it
+// is a column that exists to be complete rather than to be used.
 export const recordSend = internalMutation({
   args: {
     threadRowId: v.id("threads"),
@@ -215,11 +234,13 @@ export const recordSend = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const thread = await ctx.db.get("threads", args.threadRowId);
+    if (thread === null) return null;
     await ctx.db.patch(
       "threads",
       args.threadRowId,
       args.error === null
-        ? { repliedAt: Date.now() }
+        ? { repliedAt: thread.repliedAt ?? Date.now() }
         : { error: args.error },
     );
     return null;

@@ -370,9 +370,26 @@ export default function App() {
             {INBOX}
           </a>
         </p>
+        {/* "about fifteen seconds" until 2026-09-14, and it described the
+            fastest quarter of runs. `threads` has carried `receivedAt` and
+            `repliedAt` since P1 and nobody had subtracted them: across the 20
+            real answers on production the median is 20.4s, the range 11.6s to
+            42.6s, and 5 of 20 came in at or under fifteen. The README's version
+            of this number is a specific event on 09-06 and stays true; this one
+            generalised a best case into a typical case, which is the same class
+            of drift this file has now logged four times.
+
+            An upper bound rather than the median, because 6 of 20 ran past 30s
+            and a page that argues it only claims what it can show should miss
+            in the direction of arriving early. 20 of 20 landed inside a minute.
+
+            Deliberately NOT derived from the data: a live p90 on the board
+            would be a number moving with no cause a reader can see, which is
+            M6's complaint about `lineCount`. This is a bound, re-measured by
+            hand when the pipeline changes. */}
         <p className="mt-2 text-[0.78rem] leading-5 text-muted">
-          A PDF attachment or a link in the body. The reply lands in about
-          fifteen seconds. Nothing you forward appears on this page.
+          A PDF attachment or a link in the body. The reply lands in under a
+          minute. Nothing you forward appears on this page.
         </p>
       </div>
 

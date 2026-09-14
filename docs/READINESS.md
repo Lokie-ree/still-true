@@ -5,15 +5,25 @@ opened the same day by the probe-v4 playtest, which is not an audit either —
 it is the product being used; **H5 and M7 closed the same evening**, together,
 by an invariant rather than by two patches — and **H6 opened the same evening**,
 by the A5 check written to confirm that fix on production. **M10 opened 2026-09-11**, and it is the only flag today that is not also closed
-today. Score **62/100**:
+today. **M11 and L7 opened and closed 2026-09-14**, both found by subtracting two
+timestamps nobody had subtracted. Score **62/100**, unmoved:
 `100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62** (09-03, 09-05,
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
-where H8, M9 and L6 all opened and closed inside one day and move nothing.
+where H8, M9 and L6 all opened and closed inside one day and move nothing — and
+then **0** on 09-14, where M11 and L7 did the same.
+
+**The 09-14 pair was found by arithmetic on data this deployment had already
+stored**, which is a third way in, alongside the audits that find little and the
+forwards that find a lot. Nobody had subtracted `repliedAt` from `receivedAt` in
+eleven days of the board promising a number derived from exactly that. **Where a
+claim can be asked of the data instead of the code, ask the data** — the same
+lesson the 09-06 sweep taught about `lastCheckedAt`, arriving by a different
+road.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -319,6 +329,55 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **M11 (the board generalised a best case into a typical case)** opened and
+  closed 2026-09-14, found by subtracting two fields that had been sitting in
+  production since P1. `src/App.tsx` told every visitor *"The reply lands in
+  about fifteen seconds."* `threads` carries `receivedAt` and `repliedAt`;
+  across the **20 real answers production has sent**, the median is **20.4s**,
+  the range **11.6s to 42.6s**, and **5 of 20** came in at or under fifteen.
+
+  **The sentence was not invented.** It is the 09-06 event the README reports in
+  the past tense, where it is still true. What the board did was promote one
+  measurement to a standing claim about the typical case — the same move that
+  produced H7 and the three README count drifts, and the reason `npm run gate`
+  exists at all. A claim pinned to a date survives; the same claim with the date
+  removed becomes false the first time the world moves.
+
+  Fixed by stating a **bound** instead of a central tendency: "under a minute",
+  true of 20 of 20, and deliberately not derived live on the page — a rolling
+  p90 on the board would be a public number moving with no cause a reader can
+  see, which is **M6**'s complaint about `lineCount`.
+
+  **The measurement's own finding, which is worth more than the fix.** Latency
+  does not track document length. The fastest of the twenty is the **1,182-line**
+  PayPal agreement at 11.6s; a **46-line** page took 30.0s; one **418-line**
+  lease spanned **14.8s to 42.6s in a single evening**. So there is no "your PDF
+  was long" story available, and an upper bound is the only honest shape for
+  this claim. The variance is in the model call, not in the parse.
+
+- **L7 (`repliedAt` was re-stamped by change notices)** opened and closed
+  2026-09-14, found by the M11 measurement rather than by reading the code.
+  `mail.recordSend` patched `repliedAt: Date.now()` on every accepted send, and
+  `notify` reaches it too — deliberately, since a change notice must be able to
+  follow an answer weeks later.
+
+  Nothing misbehaved: both guards that read the field (`reply`, `notify`) only
+  test it against null. What drifted was its **meaning**, from "when we answered"
+  to "when we last mailed this thread", silently. It surfaced as a thread that
+  had apparently taken **68.5 hours** to answer — which is the video's own
+  thread, answered 09-09 and re-stamped at 11:18 UTC on 09-12 when the cron found
+  the edit. **The demo's best receipt, presenting as a defect.**
+
+  Fixed with `repliedAt: thread.repliedAt ?? Date.now()`. No second field: "when
+  we last mailed this thread" has no reader, and a column added to be complete
+  rather than to be used is the thing this file keeps telling the next session
+  not to build.
+
+  **Scored 1, not 5.** Nothing published was wrong and no promise failed. But it
+  made the one question this project's landing page answers — how long does a
+  reply take — unanswerable from its own data, on a repository whose premise is
+  that a claim without a current receipt is not worth reading.
 
 - **H8 (a re-check re-classified the document, and a re-classification silently
   ends the watch)** opened and closed 2026-09-11, found by running the proving
