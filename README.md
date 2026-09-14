@@ -90,7 +90,11 @@ used: the signal is consumable, so reading it spends it. See
   documents, with nobody watching. Enrolment is still automatic and takes no
   opt-in; **replying STOP now ends it** — that thread and every other one from
   the same address — and a re-check that fails now says so on the document row
-  instead of only in logs nobody can read.
+  instead of only in logs nobody can read. **A second forward of a URL already
+  known no longer ends that watch:** the row is shared by design, and until
+  2026-09-14 the second arrival re-classified it, replaced every published
+  finding, and left the first sender enrolled in a watch that would never fire
+  ([H9](docs/READINESS.md), closed).
 - **P5 — the CC reply:** shipped, and smaller than it was described as being.
   Cc this address on a thread and the document is read out of the quoted
   original, with the cited answer replied to **everyone on the thread** — which
