@@ -21,6 +21,10 @@ Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 Live: **https://impressive-marten-163.convex.site**
 Demo: **https://youtu.be/HofqXKI8KJs** (2:42)
 Try it: forward a PDF or a link to **still-true@agentmail.to**
+**Check your spam folder the first time.** The reply is sent over a shared
+relay from an address you have no history with; measured 2026-09-14 on two
+Gmail accounts, the one with prior exchanges got the inbox and a cold one got
+spam.
 
 ## Why it can be trusted
 

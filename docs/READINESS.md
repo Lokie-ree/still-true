@@ -494,6 +494,65 @@ one constant in a deploy that is happening anyway. The limiter waits.
 
 ## Candidate — evidence too thin to score
 
+### C3 — the reply lands in spam for a reader who has never seen this address
+
+**Measured 2026-09-14 night, two Gmail accounts, same sender and near-identical
+replies.** `rplapointjr@gmail.com`, which has dozens of read and replied-to
+exchanges with `still-true@agentmail.to`, gets `INBOX` and `IMPORTANT` — zero
+messages in spam across seven days, and today's PayPal TOS reply is in the
+inbox. `rplj1253@gmail.com`, cold, got spam.
+
+**Authentication is not the cause and can be ruled out from the headers**, read
+off the delivered message rather than assumed:
+
+```
+dkim=pass   header.i=@agentmail.to
+dkim=pass   header.i=@amazonses.com
+spf=pass    mail.agentmail.to designates 24.110.104.197
+dmarc=pass  (p=REJECT sp=REJECT) header.from=agentmail.to
+```
+
+In-Reply-To and References are set correctly, so Gmail sees a genuine reply to a
+thread the recipient started. That is as clean as a sender gets.
+
+**What is left is reputation and shape, and all three signals are the vendor's.**
+Every reply leaves over Amazon SES's shared pool
+(`i104-197.smtp-out.amazonses.com`), carries `List-Unsubscribe` and
+`List-Unsubscribe-Post: One-Click`, and ends with AgentMail's branded footer —
+which is a UTM-tagged campaign link (`utm_medium=email&utm_campaign=branded-footer`)
+in every single message. Shared IP, bulk headers, a campaign-tagged link, and a
+recipient with no history is the standard filtered profile. None of the three is
+ours to remove.
+
+**Why this is a Candidate and not a scored high.** One cold mailbox is one data
+point, and this file's rule is that plausible findings are listed and do not move
+the score. **The measurement that settles it is two minutes**: forward a document
+from a third address that has never mailed this inbox, from a different provider
+if possible. If it reproduces this is a high — it defeats the primary path for
+every reader who is not Randall, which is all of them — and it will want its own
+entry rather than this one.
+
+**The half that is ours was shipped anyway, because it is right either way.**
+Until tonight nothing on the board, in the README, in the listing or in the video
+description told a first-time reader to look in spam. The product promised a
+reply in under a minute and said nothing about the folder. That gap is closed in
+this PR; it reduces the blast radius and **does not close this finding**, because
+a reader who never sees the mail and never reads the board is not helped by
+either.
+
+**Not fixable by a custom domain in the time left, and worth writing down so the
+next session does not try.** A new domain starts at zero reputation and needs
+warm-up; five days before a deadline it is likelier to do worse than
+`agentmail.to`, which at least has DMARC at `p=REJECT` and a functioning SES
+pool behind it.
+
+**One thing found while reading the headers, unrelated and unscored:** the
+`List-Unsubscribe` one-click endpoint is AgentMail's, not ours. A reader who
+uses it is unsubscribed at the vendor and `threads.stopped` never learns, so the
+watch believes it is still enrolled. M4's STOP reply is the only path this
+system can see.
+
+
 **An HTML-only message's STOP is not an unsubscribe, and its link is not a
 document.** `convex/mail.ts:374` (link extraction) and `mail.ts:427` (the STOP
 test) both read `readString(message, "text")` and fall back to `""`. Nothing in

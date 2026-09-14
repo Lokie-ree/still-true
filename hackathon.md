@@ -3318,3 +3318,17 @@ how H8 stayed open through a second door.
 L8 was filed as "one word" and was two — the flag's own evidence list named
 `noDocumentBody` as a sibling that escapes when it does not. Score 22 → 44.
 
+
+## 2026-09-14, night — the reply lands in spam for anyone who is not me
+
+A dry run from a cold Gmail account put the reply in spam; my own account, which
+has dozens of exchanges with this address, has had zero spam in seven days. The
+headers rule out the obvious cause — SPF, DKIM and DMARC all pass, DMARC at
+`p=REJECT`, and the message is correctly threaded — so what is left is a shared
+SES pool, bulk headers and a vendor footer, none of which is mine to remove.
+
+Filed as a Candidate, not a high: one cold mailbox is one data point, and a third
+address settles it. **Shipped regardless: the board, README, listing and video
+description now say to check spam**, because until tonight the product promised a
+reply in under a minute and said nothing about where it lands.
+

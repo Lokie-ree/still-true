@@ -387,9 +387,24 @@ export default function App() {
             would be a number moving with no cause a reader can see, which is
             M6's complaint about `lineCount`. This is a bound, re-measured by
             hand when the pipeline changes. */}
+        {/* 2026-09-14. "Check spam" is not a disclaimer, it is the missing
+            half of the instruction. Measured the same evening on two Gmail
+            accounts, same sender and near-identical replies: the one with
+            dozens of prior exchanges got INBOX and IMPORTANT, a cold one got
+            spam. Every reply leaves over Amazon SES's shared pool with
+            List-Unsubscribe, one-click POST and a UTM-tagged footer link —
+            bulk-shaped mail from an address the reader has no history with.
+            All three are AgentMail's and none is ours to remove.
+
+            So the first-time reader is the one most likely to be filtered, and
+            until this line existed nothing anywhere — board, README, listing,
+            video — told them where to look. A page that argues it only claims
+            what it can show cannot promise a reply lands in a minute and stay
+            quiet about the folder it lands in. */}
         <p className="mt-2 text-[0.78rem] leading-5 text-muted">
           A PDF attachment or a link in the body. The reply lands in under a
-          minute. Nothing you forward appears on this page.
+          minute — check spam the first time, this address has no history with
+          your mail provider yet. Nothing you forward appears on this page.
         </p>
       </div>
 

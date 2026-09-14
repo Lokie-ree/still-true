@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-14 17:54 UTC` by `bash scripts/reconcile.sh`, at commit `3b81fc2`.
+Generated `2026-09-14 18:39 UTC` by `bash scripts/reconcile.sh`, at commit `824dafb`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -20,9 +20,9 @@ What this cannot do, stated so a reader can discount it:
 
 | verdict | count |
 |---|---|
-| CONFIRMED | 99 |
+| CONFIRMED | 101 |
 | DRIFTED | 0 |
-| UNVERIFIABLE | 34 |
+| UNVERIFIABLE | 32 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
@@ -30,9 +30,6 @@ _Nothing._
 
 ## UNVERIFIABLE — no command run here can settle it
 
-- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
-  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in docs/READINESS.md → https://x/terms**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://x/terms'`
   - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
@@ -42,9 +39,6 @@ _Nothing._
 - **link in hackathon.md → http://127.0.0.1:3210**
   - ran: `nothing that can settle it`
   - why: an illustrative address, not a live resource. Deliberately not fetched; whether it is 'correct' is not a question a request can answer.
-- **link in hackathon.md → https://www.att.com/howtocancel**
-  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
-  - why: no HTTP response — DNS, TLS or timeout. That is a network failure here, NOT evidence the link is dead.
 - **link in hackathon.md → https://www.google.com/url?q=https://www.spotify.com/us/legal/end-user-agreement/&source=gmail&ust=…**
   - ran: `nothing that can settle it`
   - why: the URL is elided in the prose (contains an ellipsis), so it cannot be fetched as written
@@ -93,40 +87,40 @@ _Nothing._
 - **docs/READINESS.md:477 cites `documents.ts:61`**
   - ran: `sed -n '61p' convex/documents.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:636 cites `mail.ts:114`**
+- **docs/READINESS.md:695 cites `mail.ts:114`**
   - ran: `sed -n '114p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:636 cites `mail.ts:850`**
+- **docs/READINESS.md:695 cites `mail.ts:850`**
   - ran: `sed -n '850p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:636 cites `convex/change.ts:145`**
+- **docs/READINESS.md:695 cites `convex/change.ts:145`**
   - ran: `sed -n '145p' convex/change.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:649 cites `mail.ts:114`**
+- **docs/READINESS.md:708 cites `mail.ts:114`**
   - ran: `sed -n '114p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:651 cites `mail.ts:850`**
+- **docs/READINESS.md:710 cites `mail.ts:850`**
   - ran: `sed -n '850p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:652 cites `change.ts:145`**
+- **docs/READINESS.md:711 cites `change.ts:145`**
   - ran: `sed -n '145p' convex/change.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:680 cites `convex/mail.ts:709`**
+- **docs/READINESS.md:739 cites `convex/mail.ts:709`**
   - ran: `grep -nF 'if (args.recheckOf !== null)' convex/mail.ts`
   - why: `if (args.recheckOf !== null)` is at L749, 40 lines from the cited L709 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:681 cites `convex/mail.ts:788`**
+- **docs/READINESS.md:740 cites `convex/mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
   - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:682 cites `convex/mail.ts:788`**
+- **docs/READINESS.md:741 cites `convex/mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
   - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:683 cites `mail.ts:597`**
+- **docs/READINESS.md:742 cites `mail.ts:597`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
   - why: `recheckOf: null` is at L609, 12 lines from the cited L597 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:683 cites `mail.ts:788`**
+- **docs/READINESS.md:742 cites `mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
   - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:688 cites `mail.ts:829`**
+- **docs/READINESS.md:747 cites `mail.ts:829`**
   - ran: `grep -nF 'by_url' convex/mail.ts`
   - why: `by_url` is at L882, 53 lines from the cited L829 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
 - **dated counts inside hackathon.md and docs/READINESS.md**
@@ -138,7 +132,7 @@ _Nothing._
 
 - **production claim: prod exposes only read-only queries**
   - ran: `node scripts/gate.mjs`
-  - got: 17 functions, 2 public, all queries
+  - got: 18 functions, 2 public, all queries
 - **production claim: the site serves the app document**
   - ran: `node scripts/gate.mjs`
   - got: HTTP 200, 3524 bytes, bundle referenced
@@ -150,13 +144,13 @@ _Nothing._
   - got: 35 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 6.6h ago, 6 documents stamped
+  - got: last sweep 0.6h ago, 6 documents stamped
 - **production claim: no document is failing its re-check**
   - ran: `node scripts/gate.mjs`
-  - got: 14 documents, none carrying a watch error
+  - got: 15 documents, none carrying a watch error
 - **production claim: every sender identity is a bare address**
   - ran: `node scripts/gate.mjs`
-  - got: 26 threads, 1 distinct senders, all bare addresses
+  - got: 28 threads, 2 distinct senders, all bare addresses
 - **P1 claimed shipped — README.md — "P1–P3 — the inbox, the parser, the extractor and the cit…"**
   - ran: `gh pr list --state merged --json number,title | grep 'P1'`
   - got: #13 P1: the front door — forwarded mail becomes a cited-ready document
@@ -229,6 +223,9 @@ _Nothing._
 - **link in docs/ASSESSMENT.md → READINESS.md**
   - ran: `test -e docs/READINESS.md`
   - got: docs/READINESS.md exists
+- **link in docs/probe-universal.md → https://www.healthcare.gov/sbc-glossary/#deductible**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.healthcare.gov/sbc-glossary/#deductible'`
+  - got: HTTP 200
 - **link in docs/READINESS.md → https://www.paypal.com/us/legalhub/useragreement-full**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/legalhub/useragreement-full'`
   - got: HTTP 200
@@ -273,6 +270,9 @@ _Nothing._
   - got: HTTP 200
 - **link in hackathon.md → https://vibeapps.dev/s/still-true**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://vibeapps.dev/s/still-true'`
+  - got: HTTP 200
+- **link in hackathon.md → https://www.att.com/howtocancel**
+  - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.att.com/howtocancel'`
   - got: HTTP 200
 - **link in hackathon.md → https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US**
   - ran: `curl -sL -o /dev/null -w '%{http_code}' 'https://www.paypal.com/us/webapps/mpp/ua/upcoming-policies-full?locale.x=en_US'`
@@ -370,31 +370,31 @@ _Nothing._
 - **docs/READINESS.md:485 cites `convex/mail.ts:862`**
   - ran: `grep -nF 'text: v.array(v.string())' convex/mail.ts`
   - got: `text: v.array(v.string())` (rarest token, 1 occurrence(s)) is at L862, 0 line(s) from the cited L862 — the citation points at the right code
-- **docs/READINESS.md:498 cites `convex/mail.ts:374`**
+- **docs/READINESS.md:557 cites `convex/mail.ts:374`**
   - ran: `grep -nF 'readString(message, "text")' convex/mail.ts`
   - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L374, 0 line(s) from the cited L374 — the citation points at the right code
-- **docs/READINESS.md:498 cites `mail.ts:427`**
+- **docs/READINESS.md:557 cites `mail.ts:427`**
   - ran: `grep -nF 'readString(message, "text")' convex/mail.ts`
   - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L427, 0 line(s) from the cited L427 — the citation points at the right code
-- **docs/READINESS.md:519 cites `convex/http.ts:26`**
+- **docs/READINESS.md:578 cites `convex/http.ts:26`**
   - ran: `grep -nF '@typescript-eslint/no-unnecessary-type-assertion' convex/http.ts`
   - got: `@typescript-eslint/no-unnecessary-type-assertion` (rarest token, 1 occurrence(s)) is at L26, 0 line(s) from the cited L26 — the citation points at the right code
-- **docs/READINESS.md:704 cites `change.ts:75`**
+- **docs/READINESS.md:763 cites `change.ts:75`**
   - ran: `grep -nF 'U' convex/change.ts`
   - got: `U` (rarest token, 2 occurrence(s)) is at L75, 0 line(s) from the cited L75 — the citation points at the right code
-- **docs/READINESS.md:734 cites `convex/reply.ts:308`**
+- **docs/READINESS.md:793 cites `convex/reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:736 cites `reply.ts:308`**
+- **docs/READINESS.md:795 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:736 cites `reply.ts:308`**
+- **docs/READINESS.md:795 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:737 cites `reply.ts:308`**
+- **docs/READINESS.md:796 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:742 cites `package.json:9`**
+- **docs/READINESS.md:801 cites `package.json:9`**
   - ran: `grep -nF 'convex/' package.json`
   - got: `convex/` (rarest token, 1 occurrence(s)) is at L9, 0 line(s) from the cited L9 — the citation points at the right code
 - **hackathon.md is reachable**
