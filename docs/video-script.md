@@ -77,8 +77,9 @@ body:    https://impressive-marten-163.convex.site/watch-test/lease.html
          What's the late fee and how much notice do I have to give?
 ```
 
-Beat C says the question was asked days ago. Send it days ago and the sentence
-is true. Nothing else in the video depends on when it was sent.
+Beat C's narration says the question was asked once and then left alone. Send
+it well before you record and the sentence is true. Nothing else in the video
+depends on when it was sent.
 
 **Note which questions the reply asks** — lease keys or universal keys. Beat C's
 recovery path below depends on knowing it, and it costs one glance.
@@ -109,9 +110,10 @@ claim about a rendering, and only looking at it settles that.
 Not the order it appears in.
 
 1. Deploy, then send the fixture forward (steps 1 and 2 above), days ahead.
-2. **The day before the shoot**, deploy the fixture edit and then leave it alone.
-   The 11:17 UTC cron finds it overnight. **No deploy happens on shoot day** —
-   see *The change happens the day before* under beat C.
+2. **The fixture edit went out 2026-09-11**, and the 11:17 UTC cron found it the
+   morning of 2026-09-12. That notice in the inbox is the receipt. **No deploy
+   happens on shoot day** — no edit precedes this shoot — see *The change
+   happened before the shoot, and that is the point* under beat C.
 3. **Shoot B** — the live send and the receipt. It is the only beat with a
    stopwatch in it and the one most likely to need takes.
 4. **Shoot A** — the board. It needs nothing live and it is easier once you have
@@ -125,10 +127,10 @@ Not the order it appears in.
 
 ## A — what it never says · 0:00–0:30
 
-**On screen:** the public board, cold. No preamble, no logo, no product name
-read aloud. The health plan card is first and it opens with four refusals.
+**On screen:** the public board, cold. No preamble, no logo, no product name.
+The health plan card is first and it opens with four refusals.
 
-**Say:**
+**Narration:**
 
 > You can read a document once. You cannot notice what it does not say, because
 > there is nothing there to notice.
@@ -138,7 +140,7 @@ read aloud. The health plan card is first and it opens with four refusals.
 > Something read every line to be able to say that, and I opened the source PDF
 > and checked it by hand.
 
-Let the four refusals sit on screen while you say it. Do not scroll yet.
+Let the four refusals sit on screen for the whole shot; do not scroll.
 
 **Two things this wording is careful about**, both changed on 09-10. The screen
 says *"no single line states it"*, so the narration says the same thing —
@@ -170,20 +172,20 @@ citations were opened by hand and held 21 of 21, and you will spot a bad answer
 in a second rather than a minute. It is still a live send, and it still
 re-extracts.
 
-**Say, over the wait:**
+**Narration, over the wait:**
 
 > So here is the same thing, live, on a document you can go read yourself. No
 > app, no upload, no account. I forwarded it to an email address.
 
-The reply lands in under thirty seconds. Say the number out loud only after the
-timestamp is visible, and say whatever it actually was.
+The reply lands in under thirty seconds; read the number off the timestamp when
+you fill `[N]`, and write whatever it actually was.
 
 **Then the receipt:**
 
 > Every claim comes with a sentence from the document and the line it came from.
 
-Read the late-charge finding aloud, **switch to the lease, and find it** with
-`Ctrl+F`. Do not cut. A judge watching find-in-page land on the exact sentence is
+Open the late-charge finding, switch to the lease, and find it with `Ctrl+F`.
+Do not cut. A judge watching find-in-page land on the exact sentence is
 the most convincing four seconds available to this project.
 
 > The plain-English line is the model's summary. The sentence under it is not.
@@ -218,13 +220,24 @@ ago with the notice already in it.
 
 **Nothing in this beat is done on camera. Changed 2026-09-10** — the edit, the
 deploy and the detection all happen before the shoot, and the beat is the
-consequence rather than the procedure. See *The change happens the day before*
-below for why that is stronger and not weaker.
+consequence rather than the procedure. See *The change happened before the
+shoot, and that is the point* below for why that is stronger and not weaker.
 
-**Say the honest line first, exactly as before:**
+**Narration, the honest line first, exactly as before:**
 
 > This page is a fixture I control. I changed it yesterday, on purpose, and I am
 > telling you that so the next part means something.
+
+The spoken version of this beat lives in `docs/vo-script.md`; the block above is
+the reasoning record, not the narration track.
+
+**What was actually rendered, 2026-09-13:** *"I changed it, on purpose, **before
+the watch's next run**."* The "yesterday" was dropped because the edit went out
+2026-09-11 and the cron found it on the 12th — so by any shoot day after the
+12th, "yesterday" is false, and it is the kind of relative-time word this script
+already banned in beat A. `docs/shoot-card.md` and `docs/vo-script.md` carry the
+rendered wording; this block is kept as written because the reasoning is what it
+is for.
 
 The change is **$400 to $600** (source line 72, quoted by **L3a**) and **ninety
 days to thirty** (source line 158, quoted by **L4a**). Both strings were checked
@@ -250,6 +263,14 @@ ago.
 > That arrived at 11:17 UTC. I did not run it. It is a daily job, and it found
 > this while nobody was looking.
 
+**What was actually rendered, 2026-09-13:** *"That arrived at **6:18 in the
+morning**."* Same instant, read off the screen instead of converted: the notice
+shows `Sat, Sep 12, 6:18 AM` in the mail client, and a narrator saying a UTC
+figure the viewer cannot see on screen is asking to be taken on trust — which is
+the one thing this beat exists not to do. **11:17 UTC remains correct everywhere
+it names the cron's schedule**, which is what the four other references in this
+file are doing.
+
 Point at the timestamp while saying it. It is on screen and it is checkable,
 which is the only kind of claim this video makes.
 
@@ -268,7 +289,7 @@ without saying it:**
 > exact clause it quoted is gone from the document. Both gates are string
 > comparisons. Neither asks the model a second time.
 
-### The change happens the day before, and that is the point
+### The change happened before the shoot, and that is the point
 
 The earlier version had the shooter edit the fixture on camera, publish, and run
 `watch:sweep` by hand. Three problems, and the third is the real one:
@@ -284,9 +305,9 @@ The earlier version had the shooter edit the fixture on camera, publish, and run
    you ask for it. The cron asking instead makes *unprompted* literally true and
    puts a timestamp on screen that proves it.
 
-So: edit and deploy on Friday, let the 11:17 UTC cron find it Saturday morning,
-shoot Saturday afternoon. Nothing is faked and nothing is hidden — the narration
-says out loud that the change was made deliberately, the day before.
+So: deployed 2026-09-11, the 11:17 UTC cron found it 2026-09-12, and the shoot
+happens any day after that. Nothing is faked and nothing is hidden — the
+narration says the change was made deliberately.
 
 **The change is consumable.** Once a change is detected and published, the new
 reading becomes the baseline and the next read finds nothing. So a rehearsal that
@@ -348,7 +369,7 @@ built and already tested:
 It is also free: the no-document branch runs ahead of both spend gates, so this
 take costs no rate-limit token however many times you shoot it.
 
-**Say:**
+**Narration:**
 
 > When it cannot do the job it says so, and it does not invent a document to
 > talk about.
@@ -370,6 +391,25 @@ against itself, and it is the one thing no rival can copy in two weeks.
 
 Do not recite the score trajectory. It means nothing to a stranger and it eats
 eight seconds. One sentence that changed, and why, is the whole beat.
+
+**Added 2026-09-13: the beat also names H6, and that is deliberate.** As written
+above, D showed only a flag that is *closed* — H5's refusal wording. The one
+high-severity flag still open, **an answer can out-run the line it cites**, went
+unmentioned, and it is the first thing a judge who opens `docs/READINESS.md`
+finds. Naming it turns a discoverable gap into a point on the board, which is
+the move this project has made all week.
+
+**It is shown from `docs/READINESS.md`, not from the board.** The production
+instance is on `probe-v4/contradiction.html`, checked 2026-09-13 and still
+live — `L3a` answers *"The late fee is $50.00."* citing *"Dollars ($50.00) for
+that month."* But that document is `isPublic: false`, so it is not on the public
+board and cannot be filmed there. The H6 entry in the readiness file carries the
+same rendering and is filmable today. The narration says only what that entry
+supports: the quote is genuinely in the document, and the line it points at can
+still fail to state the answer by itself.
+
+The spoken version of this beat lives in `docs/vo-script.md`; the block above is
+the reasoning record, not the narration track.
 
 ---
 
@@ -419,8 +459,8 @@ submitted.
 - [ ] The health plan card confirmed first on the deployed board, and its
       current refusal count noted
 - [ ] Every reply read against its source before the take is kept (**H6**)
-- [ ] The fixture edit deployed **the day before**, and not touched since
-- [ ] The overnight change notice is in the thread, and the diff actually fired:
+- [ ] The fixture edit deployed **2026-09-11**, and not touched since
+- [ ] The 2026-09-12 change notice is in the thread, and the diff actually fired:
       the fixture's `kind` plus the **question keys** of the findings carrying a
       `changedAt`, read with one read-only query. **`kind` must be `"lease"` and
       `changed` must contain `L3a`** — `L4a` too, and `L2` carried over from
@@ -430,6 +470,7 @@ submitted.
 - [ ] Recovery command ready if it is 0 — `watch:recheck` on the one document,
       **never `watch:sweep`**
 - [ ] Screen at a readable size. The quotes are the whole point and they are long
+- [ ] The settings-lock render is done, and `vo/` holds beats A, D and E
 
 ## The things that will go wrong
 
@@ -439,7 +480,7 @@ show whatever it shows. This is why beat A says "every line" and not a figure.
 
 **An answer out-runs its line.** H6, open, unfixable before this shoot because
 its fix bumps the parser. Read the reply before keeping the take. If it happens
-on a take you like, forward again rather than talking around it.
+on a take you like, forward again rather than writing around it.
 
 **You get five forwards, then one every six minutes.** The ingest limiter is a
 token bucket: rate 10 per hour, capacity 5. Reshooting beat B by forwarding again
@@ -456,8 +497,8 @@ while the page sits unchanged, a read takes the early exit and never
 reclassifies. So there is exactly one coin flip.
 
 **It is no longer at the worst moment, and that is the point of moving beat C off
-shoot day.** The flip now resolves overnight, and you read the result before the
-camera is on rather than discovering it in a take. **If the cron mailed nothing:
+shoot day.** The flip resolved overnight on 2026-09-12, and you read the result
+before the camera is on rather than discovering it in a take. **If the cron mailed nothing:
 edit again, $600 to $700, deploy, and run `watch:recheck` on that one document.**
 The second pass diffs against the reading the first pass just published, so it
 converges — and all of it is off camera.
@@ -468,17 +509,18 @@ model run, and patches its timestamps. That is what makes the split-screen shot
 work — but the Livonia receipts afterwards are new ones, not the 21 that were
 opened by hand. Read the card between B and A.
 
-**The change notice arrives at 11:17 UTC and not before**, which is exactly why
-the edit goes out the day before. Nothing is run by hand on shoot day and there
-is no wait to film — the notice is in the thread when you sit down.
+**The change notice arrived at 11:17 UTC on 2026-09-12 and not before**, which is
+exactly why the edit went out on 2026-09-11, the day before. Nothing is run by
+hand on shoot day and there is no wait to film — the notice is in the thread
+when you sit down.
 
 **Two notices will be in that thread, not one.** Friday's proving run on the
 entry notice mails into the same thread as Saturday's cron run on the late charge
 and the termination notice. That is honest and it is arguably better footage — it
 happened twice, unprompted, on a schedule — but **know which one you are pointing
 at** before the take, and read the timestamps. Friday's was triggered by hand with
-`watch:recheck`; Saturday's was not, and Saturday's is the one with 11:17 UTC on
-it.
+`watch:recheck`; Saturday's was not, and Saturday's is the one with 11:17 UTC
+(local: 6:18 AM) on it.
 
 **`watch:sweep` is never run by hand.** It re-reads every url-backed document in
 the deployment, forwarded ones included. `watch:recheck` takes one `documentId`
@@ -506,15 +548,13 @@ install.
    laptop. The quotes are long, and this matters more than anything else here.
 3. **The inbox is on camera.** Search Gmail for `still-true` first, so the list
    shows only these threads and not every subject line in the account.
-4. **Test the mic.** Voice Recorder, ten seconds, play it back. Bad audio loses
-   more demo videos than bad video does.
 
 ### Rehearse once with recording OFF
 
-Read the script aloud while clicking through. Two sentences will not fit your
-mouth. **Change them.** It is your script, and the constraint is that every claim
-stays checkable, not that the wording is mine. If a line feels like recitation,
-it is — say the point to a friend instead and keep whatever comes out.
+Walk the clicks silently and watch the hands: unintended scrolls, a stalled
+cursor, a miscue in the order. There is no audio to rehearse — the narration is
+rendered from `docs/vo-script.md` afterward — so a rehearsal take is judged on
+hands alone.
 
 ### Record shot by shot, not in one take
 
@@ -523,21 +563,27 @@ Save as `A.mp4`, `B.mp4`, and so on. Redo any shot as often as you like.
 
 Nobody records a good first take. The third is usually fine.
 
-- **B** — the wait is real, 25 to 30 seconds, and the narration is what fills it.
-  Fluffed a line? Forward again with a slightly different subject and reshoot,
-  inside the five-forward budget above. Scroll slowly, or better, use `Ctrl+F` to
-  find the quote.
-- **A** — screen and voice only, once you have seen the reply come back and read
-  the Livonia card it changed.
-- **C** — the only shot with a real cost, because deploying the edit changes the
-  page for good. **Shoot A and B first and confirm they are good.** If C goes
-  wrong it can be redone: edit the clause again, $600 → $700, deploy, sweep.
+- **B** — the wait is real, and it is filled in the edit. Bad take? Re-forward
+  only for a bad answer (**H6**) or a bad shot, inside the five-forward budget
+  above. Scroll slowly, or better, use `Ctrl+F` to find the quote.
+- **A** — screen only, once you have seen the reply come back and read the
+  Livonia card it changed.
+- **C** — among the cheapest shots now: nothing on camera is live, and no edit
+  precedes this shoot. If it goes wrong it can be redone off camera:
+  `bash scripts/recheck-fixture.sh`.
 - **D and E** — leave until last, when warmed up.
 
 ### Stitch it in Clipchamp
 
 Search Clipchamp in Start. New project → import the clips → drag them onto the
 timeline in order → trim the dead air off each head and tail → export 1080p.
+
+**Add the audio track.** Drag the rendered segments from `vo/` onto an audio
+track, each one under its matching shot. Cut silence in under beat C — nothing
+is said on camera while the fixture history is shown, so there is nothing to lay
+under it. If the round trip in B gets trimmed for time, put the real unedited
+duration on screen as a caption rather than letting the cut imply it was
+shorter.
 
 **No music and no transitions.** A hard cut between shots is correct; anything
 else reads as a product video, which is the register this whole thing is arguing

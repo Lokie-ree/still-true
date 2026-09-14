@@ -2894,6 +2894,100 @@ gate, and in the logs, on a deployment that retains no failure log for long — 
 a document that is failing is now a thing you can see rather than a thing you
 find out about when somebody asks why they never got told.
 
+## 2026-09-13 — the narration is generated, and the first script was the struck draft
+
+Decided today: the voiceover is ElevenLabs text-to-speech under silent screen
+takes, not a performance recorded live. The reason was the anxiety, not the
+building. A take that is judged on hands — an unintended scroll, a stalled
+cursor — is a fairer test of this project than a take judged on delivery, and
+a silent take can be reshot for free in a way a flubbed line never could. The
+pauses this video needs now come from the timeline, not from a model: beat
+C's silence gets cut in, not spoken into.
+
+### The first VO script was the struck first draft
+
+It is committed that way on purpose, for the same reason the 09-09 opening is
+still in this file struck through — so the log keeps what was wrong before it
+was right. It was written from memory rather than from `docs/shoot-card.md`,
+and the distance showed up exactly where memory is worst: it re-introduced the
+documents-are-long opening this project struck on 09-10, and it carried four
+numbers that are wrong or retracted — a "$50 late fee" stated as the reply's
+answer rather than as H6's counterexample, a "174 lines" count frozen out of
+the parser churn this log already logged as non-deterministic (M6), a score
+trajectory the shoot card already says not to recite, and a "six checks" gate
+count when H4 made it seven on 09-08. None of the four is a typo; each is a
+number that used to be true, or was never quite true, surviving in a script
+written by recall instead of by reading the page that is supposed to be the
+only source for it. The fix is structural rather than a rewrite: every spoken
+line now has to exist on `docs/shoot-card.md` already, or be a bracket —
+`docs/vo-script.md` says so at the top of the file.
+
+### The ElevenLabs numbers, checked rather than recalled
+
+The 09-12 draft said Starter was $5 a month for 10,000 credits. Read off the
+pricing page on 09-13: Starter is **$6** a month for **30,000** credits, and
+it is the tier that lists a Commercial License — Free does not. The settings
+name is `voice_settings.similarity_boost`, not `similarity`; the API accepts
+the wrong name and silently ignores it, so a script that got this wrong would
+have rendered anyway, with a default value, and nobody would have been told.
+
+### A step the key could not take
+
+The spec called for `GET /v1/models` before the first render, to confirm the
+model id existed. Tried against the real key: **HTTP 401**, because the key
+is scoped to Text-to-Speech only — which is what the same spec instructs.
+Widening the key to pass a confirmation step is backwards, so the step was
+deleted instead of the key. One five-character render stood in for it: **HTTP
+200, 13,836 bytes**, which proves the key, the voice, the model id and the
+parameter names all at once — a stronger receipt than a models list would
+have been, and the one the settings-lock render now carries alone.
+
+### Two parser defects found by running the code, both caught before anything shipped
+
+Plan review, not code review, found the first two. A whole-file bracket abort
+would have made every pre-shoot render impossible, because A, D and E can
+only be rendered while B and C still hold their brackets — the fix lets
+naming beats select a subset and checks only that subset. And the parser had
+no beat terminator: a non-beat heading left the previous beat active, so the
+blockquotes under *Delivery notes* kept parsing as segments of whichever beat
+came last, carrying no bracket, and would have rendered and billed in silence.
+A third, smaller one was closed after code review instead: a doubled
+blockquote marker — a pasted quoted reply — left a literal `>` in the spoken
+text, also with no bracket to catch it before it billed.
+
+### `CLAUDE.md` undercounted its own rule
+
+It said `docs/video-script.md` has four sections describing shoot mechanics.
+It has five. The fifth, "How to actually record it," held the mic test and
+three instructions to talk while recording, and the project's own four-item
+count had stood unchallenged long enough to survive several passes. Three
+further live-narration lines had also survived as prose inside beats A and
+B themselves — "while you say it," "say the number out loud," "read the
+late-charge finding aloud" — and an earlier sweep for exactly this class would
+have waved them through, because its acceptance rule was "inside a beat"
+rather than "inside a quoted block," which is precisely where they were
+hiding.
+
+### Beat D now names H6
+
+It had shown only H5 — the refusal wording, fixed. The one high-severity flag
+still open, an answer can out-run the line it cites, went unmentioned, and it
+is the first thing a judge who opens `docs/READINESS.md` finds. It is shown
+from the readiness file, not the board: `probe-v4/contradiction.html` was
+re-checked 2026-09-13 and is still live on production — `L3a` answers *"The
+late fee is $50.00."* citing *"Dollars ($50.00) for that month."* — but that
+document is `isPublic: false`, so the shot the struck draft described was
+never filmable. The H6 entry carries the same rendering and is filmable
+today.
+
+### Final measurements
+
+From `node scripts/render-vo.mjs --list`: the full script is **24 segments,
+2,767 characters**. The pre-shoot set — beats A, D and E, everything with no
+bracket — is **12 segments, 1,564 characters**. At one character per credit
+on `eleven_multilingual_v2`, a full render costs about a tenth of Starter's
+monthly allowance: about ten full renders in the month.
+
 ## 2026-09-14 — the fifteen seconds was the fastest quarter, and the data said so all along
 
 The board told every visitor the reply lands in about fifteen seconds. It does
@@ -2967,3 +3061,28 @@ data the deployment had already stored, with no model call, no scrape and no
 mail sent. The 09-06 sweep taught the same lesson through `lastCheckedAt` —
 *where a claim can be asked of the data instead of the logs, ask the data*. It
 turns out that also holds where the alternative is asking the code.
+### 2026-09-14 — the shoot files, reconciled against the video that actually shipped
+
+A review of the finished cut against the five shoot files found the card and
+`docs/vo-script.md` already correct — they carry *"before the watch's next run"*
+and *"6:18 in the morning"*, which is what the narration says. `main` does not;
+`main` still carries *"I changed it yesterday"* and *"That arrived at 11:17 UTC"*,
+because the corrections live on the branch that has not merged. **That is not
+three defects, it is one unmerged PR**, and the review that reported three was
+reading `main`.
+
+What was genuinely still drifted is `docs/video-script.md`, which quotes both
+beat-C narration lines in their pre-render wording. Those blocks are annotated
+rather than rewritten: the file says in place that they are *"the reasoning
+record, not the narration track"*, and overwriting a reasoning record to match
+the outcome is how a log stops being worth reading. Each now carries what was
+actually rendered and why it changed.
+
+**"Yesterday" was dropped because it is a relative-time word**, which beat A
+already banned for exactly this reason: the edit went out 09-11 and the cron
+found it on the 12th, so on any shoot day after the 12th the word is false.
+**"11:17 UTC" became "6:18 in the morning" because the viewer can see 6:18 on
+the screen** and cannot see the UTC conversion — a narrator naming a figure that
+is not on screen is asking to be taken on trust, which is the one thing beat C
+exists not to do. Both are the same instant. 11:17 UTC stays everywhere it names
+the cron's schedule, which is what the file's four other references do.

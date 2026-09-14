@@ -6,6 +6,17 @@ Two days. The card is [`shoot-card.md`](shoot-card.md); the script is
 
 ---
 
+**Note, 2026-09-13.** The schedule below was written for live narration and a
+same-week shoot. Narration is now generated, not performed: the takes are
+silent, and the audio is laid under them afterward. The shoot itself happens
+on a later day than this schedule assumes, against the 2026-09-12 change
+notice rather than against a Saturday that follows it by one night. The
+runbook for the new pipeline is [`docs/voiceover.md`](voiceover.md); read it
+before shoot day. The schedule below is left intact — it is the record of
+what was planned.
+
+---
+
 ## Tonight, before anything else
 
 **Forward the fixture.** It is the only item on the list with a deadline you

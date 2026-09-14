@@ -68,21 +68,26 @@ receipt is not worth reading.
 
 ## The shoot, until it is shot
 
-Four files, and they are not interchangeable:
+Five files, and they are not interchangeable:
 
 - **`docs/shoot-card.md`** — the only thing that goes next to the camera. Order,
   the lines, one rule, and an `IF THIS HAPPENS` table. Keep it scannable; detail
   belongs elsewhere.
 - **`docs/video-script.md`** — the full script and the reasoning behind each
-  beat. **It has four sections that describe shoot mechanics** (the shoot order,
-  beat C, the recording checklist, the things that will go wrong). A change to
-  how a beat is shot has to reach all four; fixing one and leaving the others is
-  the same second-renderer defect this project has logged twice.
+  beat. **It has five sections that describe shoot mechanics** (the shoot order,
+  beat C, the recording checklist, the things that will go wrong, and how to
+  actually record it). A change to how a beat is shot has to reach all five;
+  fixing one and leaving the others is the same second-renderer defect this
+  project has logged twice, and undercounting the list at four is that defect
+  a third time.
+- **`docs/vo-script.md`** — the spoken words, derived from the card. A change
+  to a card line has to reach it too.
 - **`docs/rehearsal.md`** — the dated 09-10 to 09-12 schedule.
 - **`docs/handoff-2026-09-10.md`** — the pre-shoot review, its §9 status block,
   and what only Randall can close.
 
-**No deploy happens on shoot day.** The fixture edit goes out the day before and
-the 11:17 UTC cron finds it; `watch:sweep` is never run by hand, because
-`watch:recheck` takes one `documentId` and the sweep fans out over private
-forwards.
+**No deploy happens on shoot day.** The edit went out 2026-09-11 and the
+11:17 UTC cron found it the next morning; the notice in the thread is the
+receipt on any later day. `watch:sweep` is never run by hand,
+because `watch:recheck` takes one `documentId` and the sweep fans out over
+private forwards.
