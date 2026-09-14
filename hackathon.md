@@ -3093,6 +3093,14 @@ code**. No scrape, no model call, no forward, no deploy. The score goes
 **62 → 27**, the lowest this project has recorded, on a morning when
 `npm run gate` reads 7/7 against production.
 
+*(Amended later on 09-14, after M15 took it to 22: `docs/READINESS.md` now
+carries a section saying what that number measures. Short version — the formula
+has no term for how much has been built, so it falls when somebody looks harder
+rather than when something breaks, and the bare integer is not worth quoting to
+anyone who has not read the entries under it. The flags all stand; the arithmetic
+over them was being read as a verdict on the product, including by the person who
+wrote it.)*
+
 Both of those are true at once, and the gap between them is the entry. The gate
 asks whether the promises being made today are being kept. The score asks what is
 waiting to break one. Every one of these nine has been shipping for days — four

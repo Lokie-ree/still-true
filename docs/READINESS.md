@@ -68,6 +68,48 @@ same morning this was written. That gap is the finding: **the gate is green and
 the score is 22**, and both are true, because the gate asks whether the promises
 being made today are being kept and the score asks what is waiting to break one.
 
+## What the score measures, and what it does not
+
+Added 2026-09-14, because the number moved forty points in one afternoon and its
+own author misread it. Every flag below stands exactly as written; this section
+changes none of them. It says what the arithmetic over them is worth.
+
+**The score counts open findings by severity and nothing else.**
+`100 − 15/high − 5/medium − 1/low`. There is no term in it for how much has been
+built, how much works, or how many people it has served correctly.
+
+**So it can only go down, and it goes down when somebody looks harder.** A
+repository with no code scores 100. This one scored 92 on 09-07 with H4 and M5
+already shipping and already broken — the flags existed, nobody had found them
+yet. It scored 22 on the evening of 09-14 against code byte-identical to the code
+that scored 62 that morning. **Nothing happened to the product in between except
+six audit passes.** The score is a reading of inspection effort as much as of
+quality, and on a file whose own thesis this week was that a method finds the
+defects it is shaped to find, that should have been obvious from the start.
+
+**A green gate and a low score are the expected shape, not a contradiction.**
+They answer different questions. `npm run gate` asks whether the promises being
+made to people *today* are being kept, against production, with credentials. The
+score asks how much is known to be waiting. A project nobody has audited has a
+high score and an unknown number of the same defects.
+
+**What the number is actually good for**, and it is worth keeping for these three
+things only:
+
+1. **A delta that is auditable.** The formula is printed, so a change from 62 to
+   22 can be checked line by line rather than believed.
+2. **An order.** Severity is how the fix order at the bottom of this file gets
+   sorted, and that ordering has been right more often than not.
+3. **A record that closing is not the same as unreachable.** H4 reopened H2's
+   cost bound; H9 reopened H8 through a second door. The arithmetic is what makes
+   those visible as regressions in reasoning rather than as new discoveries.
+
+**What it is not good for:** comparison with anything. No other project is scored
+on this scale, so there is no denominator and no peer. **Quoting the bare integer
+to somebody who has not read the entries beneath it tells them nothing true** —
+which is the same defect as a quote without its line number, and this file should
+not commit it about itself.
+
 **M13 is the flag to read first, and it is not the worst one.** It says the
 sweep check in `npm run gate` can be satisfied by somebody running a probe by
 hand. That makes it the one flag on this list that is about the instrument rather
