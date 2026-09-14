@@ -231,6 +231,14 @@ shoot, and that is the point* below for why that is stronger and not weaker.
 The spoken version of this beat lives in `docs/vo-script.md`; the block above is
 the reasoning record, not the narration track.
 
+**What was actually rendered, 2026-09-13:** *"I changed it, on purpose, **before
+the watch's next run**."* The "yesterday" was dropped because the edit went out
+2026-09-11 and the cron found it on the 12th — so by any shoot day after the
+12th, "yesterday" is false, and it is the kind of relative-time word this script
+already banned in beat A. `docs/shoot-card.md` and `docs/vo-script.md` carry the
+rendered wording; this block is kept as written because the reasoning is what it
+is for.
+
 The change is **$400 to $600** (source line 72, quoted by **L3a**) and **ninety
 days to thirty** (source line 158, quoted by **L4a**). Both strings were checked
 against production and against the deployed file on 09-11, and both are inside
@@ -254,6 +262,14 @@ ago.
 >
 > That arrived at 11:17 UTC. I did not run it. It is a daily job, and it found
 > this while nobody was looking.
+
+**What was actually rendered, 2026-09-13:** *"That arrived at **6:18 in the
+morning**."* Same instant, read off the screen instead of converted: the notice
+shows `Sat, Sep 12, 6:18 AM` in the mail client, and a narrator saying a UTC
+figure the viewer cannot see on screen is asking to be taken on trust — which is
+the one thing this beat exists not to do. **11:17 UTC remains correct everywhere
+it names the cron's schedule**, which is what the four other references in this
+file are doing.
 
 Point at the timestamp while saying it. It is on screen and it is checkable,
 which is the only kind of claim this video makes.

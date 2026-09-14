@@ -3061,3 +3061,28 @@ data the deployment had already stored, with no model call, no scrape and no
 mail sent. The 09-06 sweep taught the same lesson through `lastCheckedAt` —
 *where a claim can be asked of the data instead of the logs, ask the data*. It
 turns out that also holds where the alternative is asking the code.
+### 2026-09-14 — the shoot files, reconciled against the video that actually shipped
+
+A review of the finished cut against the five shoot files found the card and
+`docs/vo-script.md` already correct — they carry *"before the watch's next run"*
+and *"6:18 in the morning"*, which is what the narration says. `main` does not;
+`main` still carries *"I changed it yesterday"* and *"That arrived at 11:17 UTC"*,
+because the corrections live on the branch that has not merged. **That is not
+three defects, it is one unmerged PR**, and the review that reported three was
+reading `main`.
+
+What was genuinely still drifted is `docs/video-script.md`, which quotes both
+beat-C narration lines in their pre-render wording. Those blocks are annotated
+rather than rewritten: the file says in place that they are *"the reasoning
+record, not the narration track"*, and overwriting a reasoning record to match
+the outcome is how a log stops being worth reading. Each now carries what was
+actually rendered and why it changed.
+
+**"Yesterday" was dropped because it is a relative-time word**, which beat A
+already banned for exactly this reason: the edit went out 09-11 and the cron
+found it on the 12th, so on any shoot day after the 12th the word is false.
+**"11:17 UTC" became "6:18 in the morning" because the viewer can see 6:18 on
+the screen** and cannot see the UTC conversion — a narrator naming a figure that
+is not on screen is asking to be taken on trust, which is the one thing beat C
+exists not to do. Both are the same instant. 11:17 UTC stays everywhere it names
+the cron's schedule, which is what the file's four other references do.
