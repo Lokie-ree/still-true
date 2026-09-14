@@ -3296,3 +3296,13 @@ corpus. The sentence the README uses to explain its own central claim was
 carrying a number that stopped being true ten days ago. **And the README had
 never named the inbox address**: `grep -c "agentmail.to" README.md` returned 0,
 so a judge could read the whole file and have no way to try the product.
+
+### 2026-09-14 — twenty-six open flags pointed at the wrong lines
+
+`scripts/reconcile.sh` found every `file:line` in today's ten new flags off by
+21 to 59 lines. The cause is the `recordSend` fix in the same day's other PR: it
+added 23 lines near the top of `mail.ts`, and the flags were written against the
+file as it stood before that merged. **A dated log entry citing a stale line is a
+known and accepted cost here; an OPEN flag citing one is not**, because its whole
+job is to send the next person to the code. Corrected from the reconciler's own
+output: DRIFTED 26 → 0, CONFIRMED 81 → 105.
