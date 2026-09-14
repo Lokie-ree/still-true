@@ -8,9 +8,11 @@ by the A5 check written to confirm that fix on production. **M10 opened 2026-09-
 **M11 and L7 opened and closed 2026-09-14 midday**, both found by subtracting two
 timestamps nobody had subtracted; they move nothing.
 **Fifth pass 2026-09-14 evening — ten flags opened, and it was a code audit that
-found them.** Score **22/100**, the lowest this file has ever recorded:
-`100 − 15(H6) − 15(H9) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 5(M15) − 1×8(L3,L4,L5,L8,L9,L10,L11,L12)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22** (09-03, 09-05,
+found them.** That pass scored **22/100**, the lowest this file has ever
+recorded. **H9, L8 and L12 closed 2026-09-14 night**, the first three off that list,
+and the score is **39/100**:
+`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 5(M15) − 1×6(L3,L4,L5,L9,L10,L11)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 39** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
 09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
 09-14 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
@@ -19,7 +21,8 @@ closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 op
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
 where H8, M9 and L6 all opened and closed inside one day and move nothing — and
 then **0** on 09-14 midday, where M11 and L7 did the same, and then
-`−15 H9, −5 M12, −5 M13, −5 M14, −5 M15, −1×5 (L8,L9,L10,L11,L12)` that evening.
+`−15 H9, −5 M12, −5 M13, −5 M14, −5 M15, −1×5 (L8,L9,L10,L11,L12)` that evening,
+and then `+15 H9 closed, +1 L8 closed, +1 L12 closed` that night (09-14 night).
 
 **The 09-14 pair was found by arithmetic on data this deployment had already
 stored**, which is a third way in, alongside the audits that find little and the
@@ -197,60 +200,6 @@ fix one unasked: read the fix order at the bottom and ask.
 found by the check written to confirm the third was fixed.
 
 ## Open
-
-### H9 — a re-forward re-classifies the document, and that silently ends the watch (high)
-
-`convex/mail.ts:709` (`priorKind` is set only inside `if (args.recheckOf !== null)`),
-`convex/mail.ts:788` (`classify` runs whenever `priorKind` is null), and
-`convex/mail.ts:788` (`patch(… kind: args.kind …)` on the existing row), reached
-with `recheckOf: null` from `ingest` (`mail.ts:597`) and `probe` (`mail.ts:788`).
-
-**This is H8, through a door H8 did not close.** H8 pinned the checklist on the
-*re-check* path, and it is worth being exact about what that fix says: *"A
-re-check answers the checklist this document was FIRST answered against."* It
-does. But `attach` dedupes on `by_url` **by design** — `mail.ts:829` says so in
-as many words, *"two people forwarding the same terms page are asking about one
-document; they share the row, and therefore the watch"* — so **`ingest` reaches
-rows that already exist**, and it arrives with `recheckOf: null`. The pin is
-keyed on *how we got here*, not on *whether this document has been read before*.
-
-The trigger is not hypothetical, and H8 already measured it: on production the
-video fixture classified **`other` at 11:18 UTC and `lease` at 15:29**, one word
-of it changed and nothing else. So:
-
-1. A forwards `https://x/terms` → `kind: "tos"`, findings `T1a…T5`, and the
-   reply promises to re-read the page daily and mail them if any of those
-   clauses stops saying what it says today.
-2. Days later, anyone forwards the same link. `recheckOf` is null → `classify()`
-   runs → `"other"` → extraction against the UNIVERSAL checklist.
-3. `attach` finds the row, patches `kind`, and computes `diff(before, after)` —
-   which skips **every** finding, because `change.ts:75` treats a question the
-   previous reading never asked as a first answer rather than a change, and
-   across a checklist boundary every key is new at once.
-4. The `T` findings are deleted and replaced by `U` findings. `priorByKey`
-   matches nothing, so `changedAt` and `previousQuote` history is wiped with them.
-5. The cron then pins `other` forever — H8's fix working correctly, on a
-   baseline that is wrong.
-
-A is never told their arbitration clause moved. No error, no `watchError`, no
-notice. **H8's closing paragraph is the description of this flag** and can be
-read unchanged.
-
-**It also reaches the public board.** A stranger can flip a board card's `kind`
-and replace its published findings by forwarding a URL that is already on the
-board. That is not a disclosure — nothing private is shown — but it is
-unauthenticated mutation of the public surface by anyone who can send mail, on a
-deployment whose gate check exists to assert the write surface is closed.
-
-**Fix: pin on existence, not on `recheckOf`.** Resolve `url → kind` before
-`classify` and use it whenever a row is found. **The trap to avoid** is also
-taking the `contentHash` early exit on the mail path: it returns before `attach`,
-so the sender would get no reply and the thread would never get its
-`documentId`. Pin the checklist only.
-
-**Scored 15, the same as H8**, because it is the same defect with the same
-consequence and the same silence. Not scored higher for being a second instance:
-the score measures what is open, not how embarrassing it is.
 
 ### M12 — disclosure is derived from the absence of a thread id (medium)
 
@@ -564,14 +513,6 @@ H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
 
-- **L8** `convex/reply.ts:308` — `limitBody` is the only reply builder that does
-  not `escape()` its interpolated text. Every sibling does: `failureBody`
-  (`reply.ts:308`), `noDocumentBody` (`reply.ts:308`), `stoppedBody`
-  (`reply.ts:308`), and both `replyBody` and `changeBody` escape every field.
-  Not live — the string is built from constants plus `plural()` and
-  `humanDelay()`. It is a **trap, not a bug**: the day somebody adds the sender
-  or the document title to that body, it is HTML injection into an email, from
-  an address M14 says is attacker-controlled. One word.
 - **L9** `convex/schema.ts:172` — `findings.by_documentId_and_questionKey` is
   declared and never queried. The only reads are `by_documentId`
   (`documents.ts:61`, `mail.ts:794`, `mail.ts:991`), which the compound index
@@ -590,14 +531,6 @@ H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
   The sender is told the document *"came back too short to be the real thing, or
   could not be parsed"*, which is false about what happened. Today's corpus tops
   out at 2,007 lines, so this is a ceiling to name, not a fire.
-- **L12** `package.json:9` — `convex-helpers` is a declared dependency and is
-  imported nowhere. Confirmed by grep across `convex/`, `src/` and `scripts/`:
-  zero hits. **Do not "fix" it by finding a use for it** — `getManyFrom` would
-  replace `withIndex` calls that are already correct and already commented.
-  Delete the line. It is scored at all because `package.json` is a twenty-second
-  read, five of seventeen judges work at Convex, and a shipped-but-unused
-  first-party package reads as cargo-culting on a repository whose entire
-  argument is that an unverified claim does not count.
 
 
 ## Candidate — evidence too thin to score
@@ -684,6 +617,118 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **H9 (a re-forward re-classified the document and silently ended its watch)**
+  opened and closed 2026-09-14, twelve hours apart. The fix is the one the flag
+  named: `readAndPublish` now resolves `url → kind` through the same `by_url`
+  lookup `attach` dedupes on, and pins the checklist whenever a row is found —
+  so the pin is a statement about **whether this document has been read before**
+  rather than about which caller we arrived as. `priorKindForUrl` returns the
+  kind and deliberately not the hash: the early exit returns before `attach`, so
+  taking it on the mail path would have left the second sender with no reply and
+  their thread with no `documentId`. That trap was written into the flag before
+  the fix was written, and it is the reason this took one pass instead of two.
+
+  **H8 and H9 are one defect with two doors, and the general form is worth
+  keeping**: H8 pinned on `recheckOf !== null`, which is *how we got here*, when
+  the property that mattered was *does this row already exist*. A guard keyed on
+  the caller is defeated by a second caller. The board consequence closed with
+  it — a stranger can no longer flip a board card's `kind` and replace its
+  published findings by forwarding a URL already on the board.
+
+  **It also unblocks the listing.** Naming a document a judge can forward was
+  blocked on exactly this, including for a document *not* on the board, because
+  the second judge to forward the same suggested URL would hit it on the row the
+  first one created.
+
+- **L8 (`limitBody` did not escape its interpolated text)** closed 2026-09-14,
+  and **the flag undercounted it.** L8 said *"every sibling does: `failureBody`,
+  `noDocumentBody`, `stoppedBody`"* — `noDocumentBody` did not. Two builders were
+  unescaped, not one, and the finding's own evidence list is what hid the second.
+  Both now escape. Still not live, still a trap closed rather than a bug fixed:
+  every string in both is built from constants, `plural()` and `humanDelay()`.
+  **No test.** A test for a trap nothing can currently spring asserts that a
+  constant is a constant; the guard is that both bodies now match every sibling.
+
+- **L12 (`convex-helpers` declared and imported nowhere)** closed 2026-09-14.
+  `npm uninstall convex-helpers`, one line out of `package.json`, no import to
+  change because there was none. Not replaced with a use for it, for the reason
+  the flag gave.
+
+### H9, as it was written (the flag this closed)
+
+#### H9 — a re-forward re-classifies the document, and that silently ends the watch (high)
+
+`convex/mail.ts:709` (`priorKind` is set only inside `if (args.recheckOf !== null)`),
+`convex/mail.ts:788` (`classify` runs whenever `priorKind` is null), and
+`convex/mail.ts:788` (`patch(… kind: args.kind …)` on the existing row), reached
+with `recheckOf: null` from `ingest` (`mail.ts:597`) and `probe` (`mail.ts:788`).
+
+**This is H8, through a door H8 did not close.** H8 pinned the checklist on the
+*re-check* path, and it is worth being exact about what that fix says: *"A
+re-check answers the checklist this document was FIRST answered against."* It
+does. But `attach` dedupes on `by_url` **by design** — `mail.ts:829` says so in
+as many words, *"two people forwarding the same terms page are asking about one
+document; they share the row, and therefore the watch"* — so **`ingest` reaches
+rows that already exist**, and it arrives with `recheckOf: null`. The pin is
+keyed on *how we got here*, not on *whether this document has been read before*.
+
+The trigger is not hypothetical, and H8 already measured it: on production the
+video fixture classified **`other` at 11:18 UTC and `lease` at 15:29**, one word
+of it changed and nothing else. So:
+
+1. A forwards `https://x/terms` → `kind: "tos"`, findings `T1a…T5`, and the
+   reply promises to re-read the page daily and mail them if any of those
+   clauses stops saying what it says today.
+2. Days later, anyone forwards the same link. `recheckOf` is null → `classify()`
+   runs → `"other"` → extraction against the UNIVERSAL checklist.
+3. `attach` finds the row, patches `kind`, and computes `diff(before, after)` —
+   which skips **every** finding, because `change.ts:75` treats a question the
+   previous reading never asked as a first answer rather than a change, and
+   across a checklist boundary every key is new at once.
+4. The `T` findings are deleted and replaced by `U` findings. `priorByKey`
+   matches nothing, so `changedAt` and `previousQuote` history is wiped with them.
+5. The cron then pins `other` forever — H8's fix working correctly, on a
+   baseline that is wrong.
+
+A is never told their arbitration clause moved. No error, no `watchError`, no
+notice. **H8's closing paragraph is the description of this flag** and can be
+read unchanged.
+
+**It also reaches the public board.** A stranger can flip a board card's `kind`
+and replace its published findings by forwarding a URL that is already on the
+board. That is not a disclosure — nothing private is shown — but it is
+unauthenticated mutation of the public surface by anyone who can send mail, on a
+deployment whose gate check exists to assert the write surface is closed.
+
+**Fix: pin on existence, not on `recheckOf`.** Resolve `url → kind` before
+`classify` and use it whenever a row is found. **The trap to avoid** is also
+taking the `contentHash` early exit on the mail path: it returns before `attach`,
+so the sender would get no reply and the thread would never get its
+`documentId`. Pin the checklist only.
+
+**Scored 15, the same as H8**, because it is the same defect with the same
+consequence and the same silence. Not scored higher for being a second instance:
+the score measures what is open, not how embarrassing it is.
+
+### L8 and L12, as they were written
+
+- **L8** `convex/reply.ts:308` — `limitBody` is the only reply builder that does
+  not `escape()` its interpolated text. Every sibling does: `failureBody`
+  (`reply.ts:308`), `noDocumentBody` (`reply.ts:308`), `stoppedBody`
+  (`reply.ts:308`), and both `replyBody` and `changeBody` escape every field.
+  Not live — the string is built from constants plus `plural()` and
+  `humanDelay()`. It is a **trap, not a bug**: the day somebody adds the sender
+  or the document title to that body, it is HTML injection into an email, from
+  an address M14 says is attacker-controlled. One word.
+- **L12** `package.json:9` — `convex-helpers` is a declared dependency and is
+  imported nowhere. Confirmed by grep across `convex/`, `src/` and `scripts/`:
+  zero hits. **Do not "fix" it by finding a use for it** — `getManyFrom` would
+  replace `withIndex` calls that are already correct and already commented.
+  Delete the line. It is scored at all because `package.json` is a twenty-second
+  read, five of seventeen judges work at Convex, and a shipped-but-unused
+  first-party package reads as cargo-culting on a repository whose entire
+  argument is that an unverified claim does not count.
 
 - **M11 (the board generalised a best case into a typical case)** opened and
   closed 2026-09-14, found by subtracting two fields that had been sitting in

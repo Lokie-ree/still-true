@@ -437,7 +437,7 @@ export function limitBody(
       `<div style="font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#171b1a;max-width:640px">` +
       said
         .split("\n\n")
-        .map((p) => `<p style="margin:0 0 14px">${p}</p>`)
+        .map((p) => `<p style="margin:0 0 14px">${escape(p)}</p>`)
         .join("") +
       `</div>`,
   };
@@ -459,7 +459,7 @@ export function noDocumentBody(): { text: string; html: string } {
       `<div style="font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#171b1a;max-width:640px">` +
       said
         .split("\n\n")
-        .map((p) => `<p style="margin:0 0 14px">${p}</p>`)
+        .map((p) => `<p style="margin:0 0 14px">${escape(p)}</p>`)
         .join("") +
       `</div>`,
   };
