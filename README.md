@@ -21,6 +21,11 @@ Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 Live: **https://impressive-marten-163.convex.site**
 Demo: **https://youtu.be/HofqXKI8KJs** (2:42)
 Try it: forward a PDF or a link to **still-true@agentmail.to**
+**Check your spam folder the first time.** Measured 2026-09-14 across three
+Gmail accounts: two landed in the inbox and one went to spam. Which one is not
+predictable — the first reading of this was "an address with no history gets
+filtered" and the third account falsified it the same hour — so the instruction
+is unconditional rather than aimed at a group. ([C3](docs/READINESS.md).)
 
 ## Why it can be trusted
 

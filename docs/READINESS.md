@@ -494,6 +494,97 @@ one constant in a deploy that is happening anyway. The limiter waits.
 
 ## Candidate — evidence too thin to score
 
+### C3 — the reply sometimes lands in spam, and which time is not predictable
+
+**Measured 2026-09-14 night, three Gmail accounts, same sender and
+near-identical replies. Two inbox, one spam.**
+
+| account | history with this address | result |
+|---|---|---|
+| the author's own | dozens of read and replied-to exchanges | `INBOX`, `IMPORTANT`, zero spam in 7 days |
+| a second account | none | **spam** |
+| a third account | none | `INBOX` |
+
+**The first reading of this was wrong and the third account falsified it inside
+the hour.** With two accounts in hand the obvious mechanism was *a reader with no
+history with the sender gets filtered*, and it fit both points exactly. It is not
+what is happening: the third account had no history either and was delivered.
+
+**What survives is weaker and more useful.** Delivery to someone who has not
+written here before is **not predictable**. That is worse than a rule, not
+better: a rule tells you which readers to warn, and this tells you there is no
+such group. It is also the reason the mitigation below is stated unconditionally
+rather than aimed at first-time readers, which is how it was written an hour ago.
+
+**Deliberately NOT expressed as a rate.** One in two cold accounts is not a
+frequency, and putting "about half" on the board would be M11 exactly — a
+two-sample result promoted to a standing claim — committed in the paragraph that
+exists because of M11. The honest form of a two-sample split is *it happens*, and
+nothing more.
+
+**Authentication is not the cause and can be ruled out from the headers**, read
+off the delivered message rather than assumed:
+
+```
+dkim=pass   header.i=@agentmail.to
+dkim=pass   header.i=@amazonses.com
+spf=pass    mail.agentmail.to designates 24.110.104.197
+dmarc=pass  (p=REJECT sp=REJECT) header.from=agentmail.to
+```
+
+In-Reply-To and References are set correctly, so Gmail sees a genuine reply to a
+thread the recipient started. That is as clean as a sender gets.
+
+**What is left is reputation and shape, and all three signals are the vendor's.**
+Every reply leaves over Amazon SES's shared pool
+(`i104-197.smtp-out.amazonses.com`), carries `List-Unsubscribe` and
+`List-Unsubscribe-Post: One-Click`, and ends with AgentMail's branded footer —
+which is a UTM-tagged campaign link (`utm_medium=email&utm_campaign=branded-footer`)
+in every single message. Shared IP, bulk headers, a campaign-tagged link, and a
+recipient with no history is the standard filtered profile. None of the three is
+ours to remove.
+
+**Why this stays a Candidate, and why that is now a closer call than it was.**
+It did not reproduce, so the version of this flag that would have been a high —
+*every new reader is filtered* — is dead. What is left cannot be scored the
+normal way: the failure is real and was seen once, but it is intermittent, and
+this file's rule is that a plausible finding is listed and does not move the
+score. It stays off the number.
+
+**It is a closer call because intermittent is not rare.** Seventeen judges is not
+one sample. A defect that fires unpredictably still fires, and the thing that
+makes this un-scoreable is also what makes it un-plannable — there is no
+configuration to check and no reader to warn specifically.
+
+**What would actually settle it** is more samples than one evening affords, and
+across providers rather than three accounts at one provider — every data point
+here is Gmail, so nothing at all is known about Outlook, Yahoo or a corporate
+gateway. That is a real coverage gap and it is named in *Coverage* rather than
+pretended away here.
+
+**The half that is ours shipped anyway, and the falsification made it MORE
+clearly right rather than less.** Until tonight nothing on the board, in the
+README, in the listing or in the video description told a reader to look in spam.
+The product promised a reply in under a minute and said nothing about the folder.
+If the rule had held, that line could have been aimed at new readers only; since
+it did not hold, it has to be told to everyone, which is what now ships.
+
+It reduces the blast radius and **does not close this finding** — a reader who
+never sees the mail and never reads the board is helped by neither.
+
+**Not fixable by a custom domain in the time left, and worth writing down so the
+next session does not try.** A new domain starts at zero reputation and needs
+warm-up; five days before a deadline it is likelier to do worse than
+`agentmail.to`, which at least has DMARC at `p=REJECT` and a functioning SES
+pool behind it.
+
+**One thing found while reading the headers, unrelated and unscored:** the
+`List-Unsubscribe` one-click endpoint is AgentMail's, not ours. A reader who
+uses it is unsubscribed at the vendor and `threads.stopped` never learns, so the
+watch believes it is still enrolled. M4's STOP reply is the only path this
+system can see.
+
+
 **An HTML-only message's STOP is not an unsubscribe, and its link is not a
 document.** `convex/mail.ts:374` (link extraction) and `mail.ts:427` (the STOP
 test) both read `readString(message, "text")` and fall back to `""`. Nothing in
@@ -1177,6 +1268,16 @@ Documented decisions with named upgrade paths:
   code, not actionable.
 
 ## Coverage — what the audit could not see
+
+**Deliverability is measured at one provider only (2026-09-14).** Every data
+point behind C3 is Gmail — three accounts, one evening, two inbox and one spam.
+**Nothing is known about Outlook, Yahoo, iCloud or any corporate gateway**, and
+Microsoft in particular is stricter than Gmail with shared relay pools, so the
+one provider that was tested is not the conservative case. A judge reading mail
+at work is outside every measurement this file contains.
+
+This is a gap, not a flag: it cannot be closed by reading code, and closing it
+needs addresses at other providers rather than another pass over `mail.ts`.
 
 Log evidence has been thin since 09-03 and mostly still is: prod log reads are
 refused by the read-only MCP selector, and dev retains zero entries. "No failures

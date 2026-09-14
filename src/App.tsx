@@ -387,9 +387,30 @@ export default function App() {
             would be a number moving with no cause a reader can see, which is
             M6's complaint about `lineCount`. This is a bound, re-measured by
             hand when the pipeline changes. */}
+        {/* 2026-09-14. "Check spam" is not a disclaimer, it is the missing
+            half of the instruction. Three Gmail accounts the same evening, same
+            sender and near-identical replies: the author's own, with dozens of
+            prior exchanges, INBOX; one cold account, SPAM; a second cold
+            account, INBOX.
+
+            The first reading of that was "no history with the sender gets you
+            filtered", and the third account falsified it within the hour. What
+            survives is weaker and more useful: delivery to someone who has not
+            written here before is NOT PREDICTABLE, so there is no set of
+            readers who can safely be told nothing.
+
+            Deliberately NOT a number. One filtered out of two cold accounts is
+            not a rate, and a board that puts "about half" on this would be
+            repeating M11 — promoting a two-sample result to a standing claim —
+            in the same paragraph that exists because of M11.
+
+            Authentication is not the cause and was ruled out from the delivered
+            headers: SPF, both DKIM signatures and DMARC all pass, DMARC at
+            p=REJECT, and the reply is correctly threaded. See C3. */}
         <p className="mt-2 text-[0.78rem] leading-5 text-muted">
           A PDF attachment or a link in the body. The reply lands in under a
-          minute. Nothing you forward appears on this page.
+          minute — check spam the first time, it sometimes goes there. Nothing
+          you forward appears on this page.
         </p>
       </div>
 
