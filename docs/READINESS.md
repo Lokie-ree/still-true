@@ -4,18 +4,22 @@ Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
 opened the same day by the probe-v4 playtest, which is not an audit either —
 it is the product being used; **H5 and M7 closed the same evening**, together,
 by an invariant rather than by two patches — and **H6 opened the same evening**,
-by the A5 check written to confirm that fix on production. **M10 opened 2026-09-11**, and it is the only flag today that is not also closed
-today. **M11 and L7 opened and closed 2026-09-14**, both found by subtracting two
-timestamps nobody had subtracted. Score **62/100**, unmoved:
-`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 1×3(L3,L4,L5)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62** (09-03, 09-05,
+by the A5 check written to confirm that fix on production. **M10 opened 2026-09-11**.
+**M11 and L7 opened and closed 2026-09-14 midday**, both found by subtracting two
+timestamps nobody had subtracted; they move nothing.
+**Fifth pass 2026-09-14 evening — ten flags opened, and it was a code audit that
+found them.** Score **22/100**, the lowest this file has ever recorded:
+`100 − 15(H6) − 15(H9) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 5(M15) − 1×8(L3,L4,L5,L8,L9,L10,L11,L12)`.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
-09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
+09-14 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
 where H8, M9 and L6 all opened and closed inside one day and move nothing — and
-then **0** on 09-14, where M11 and L7 did the same.
+then **0** on 09-14 midday, where M11 and L7 did the same, and then
+`−15 H9, −5 M12, −5 M13, −5 M14, −5 M15, −1×5 (L8,L9,L10,L11,L12)` that evening.
 
 **The 09-14 pair was found by arithmetic on data this deployment had already
 stored**, which is a third way in, alongside the audits that find little and the
@@ -24,6 +28,94 @@ eleven days of the board promising a number derived from exactly that. **Where a
 claim can be asked of the data instead of the code, ask the data** — the same
 lesson the 09-06 sweep taught about `lastCheckedAt`, arriving by a different
 road.
+
+**Amended 2026-09-14: the thesis of this file was wrong, and an audit is what
+falsified it.** Twenty lines below, in the entry written on 09-09, this file
+says: *"Both drops came from running the product, and neither came from
+re-reading the code — which is the only generalisable finding this file
+contains."* It said that after five consecutive passes where auditing found
+little and forwarding mail found a lot, and it was an honest reading of five
+data points.
+
+The sixth pass found **ten flags, including a high, by reading code.** Not one
+of them needed a scrape, a model call, a forward, or a deploy. **H9 is the one
+that settles it**: a re-forward re-classifies a document and silently ends its
+watch — which is H8, the flag this file used on 09-11 as its proof that *"nothing
+that reads code was ever going to find this."* H8 was closed on the re-check path
+and left open on the mail path, and the thing that noticed was a code audit.
+
+**What was actually true, and is narrower.** The four discovery modes this file
+accumulated — send mail, compare two renderings, compare a claim to its pipeline,
+run it on real hardware — all find defects that live in the *relationship between
+a run and its output*. A code audit cannot see those, and that part stands. What
+does not stand is the inverse: **five audits finding little was a fact about
+those audits, not a law about auditing.** The earlier passes were looking for the
+class the mail was already finding. This one was pointed at the paths nobody
+forwards down — the second forward of a URL already known, a re-check whose row
+was deleted mid-flight, a gate check satisfied by something other than the thing
+it names.
+
+**The generalisable finding, restated:** a method finds the defects it is shaped
+to find, and a run of passes that all find nothing is evidence the method has
+been aimed at a corner that is already clean. Six of today's ten are on paths
+that **no amount of forwarding documents would ever exercise**, because they need
+a second arrival, a deletion, a forged header, or an empty part.
+
+**22 is the honest number and it is not a regression.** Nothing broke on 09-14.
+Every one of these ten has been shipping for days, four of them since P1, and
+production answered mail correctly throughout — `npm run gate` reads 7/7 on the
+same morning this was written. That gap is the finding: **the gate is green and
+the score is 22**, and both are true, because the gate asks whether the promises
+being made today are being kept and the score asks what is waiting to break one.
+
+## What the score measures, and what it does not
+
+Added 2026-09-14, because the number moved forty points in one afternoon and its
+own author misread it. Every flag below stands exactly as written; this section
+changes none of them. It says what the arithmetic over them is worth.
+
+**The score counts open findings by severity and nothing else.**
+`100 − 15/high − 5/medium − 1/low`. There is no term in it for how much has been
+built, how much works, or how many people it has served correctly.
+
+**So it can only go down, and it goes down when somebody looks harder.** A
+repository with no code scores 100. This one scored 92 on 09-07 with H4 and M5
+already shipping and already broken — the flags existed, nobody had found them
+yet. It scored 22 on the evening of 09-14 against code byte-identical to the code
+that scored 62 that morning. **Nothing happened to the product in between except
+six audit passes.** The score is a reading of inspection effort as much as of
+quality, and on a file whose own thesis this week was that a method finds the
+defects it is shaped to find, that should have been obvious from the start.
+
+**A green gate and a low score are the expected shape, not a contradiction.**
+They answer different questions. `npm run gate` asks whether the promises being
+made to people *today* are being kept, against production, with credentials. The
+score asks how much is known to be waiting. A project nobody has audited has a
+high score and an unknown number of the same defects.
+
+**What the number is actually good for**, and it is worth keeping for these three
+things only:
+
+1. **A delta that is auditable.** The formula is printed, so a change from 62 to
+   22 can be checked line by line rather than believed.
+2. **An order.** Severity is how the fix order at the bottom of this file gets
+   sorted, and that ordering has been right more often than not.
+3. **A record that closing is not the same as unreachable.** H4 reopened H2's
+   cost bound; H9 reopened H8 through a second door. The arithmetic is what makes
+   those visible as regressions in reasoning rather than as new discoveries.
+
+**What it is not good for:** comparison with anything. No other project is scored
+on this scale, so there is no denominator and no peer. **Quoting the bare integer
+to somebody who has not read the entries beneath it tells them nothing true** —
+which is the same defect as a quote without its line number, and this file should
+not commit it about itself.
+
+**M13 is the flag to read first, and it is not the worst one.** It says the
+sweep check in `npm run gate` can be satisfied by somebody running a probe by
+hand. That makes it the one flag on this list that is about the instrument rather
+than the product, and this file has argued since 09-05 that a judgement call
+standing in for a measurement is the root failure. A measurement that can be
+satisfied by the wrong thing is that failure wearing the costume of its own fix.
 
 **Three flags in one day, all three found by sending mail.** H4, M5 and M6 were
 all produced by forwarding documents and reading what came back — none by
@@ -105,6 +197,146 @@ fix one unasked: read the fix order at the bottom and ask.
 found by the check written to confirm the third was fixed.
 
 ## Open
+
+### H9 — a re-forward re-classifies the document, and that silently ends the watch (high)
+
+`convex/mail.ts:688` (`priorKind` is set only inside `if (args.recheckOf !== null)`),
+`convex/mail.ts:729` (`classify` runs whenever `priorKind` is null), and
+`convex/mail.ts:829` (`patch(… kind: args.kind …)` on the existing row), reached
+with `recheckOf: null` from `ingest` (`mail.ts:576`) and `probe` (`mail.ts:767`).
+
+**This is H8, through a door H8 did not close.** H8 pinned the checklist on the
+*re-check* path, and it is worth being exact about what that fix says: *"A
+re-check answers the checklist this document was FIRST answered against."* It
+does. But `attach` dedupes on `by_url` **by design** — `mail.ts:802` says so in
+as many words, *"two people forwarding the same terms page are asking about one
+document; they share the row, and therefore the watch"* — so **`ingest` reaches
+rows that already exist**, and it arrives with `recheckOf: null`. The pin is
+keyed on *how we got here*, not on *whether this document has been read before*.
+
+The trigger is not hypothetical, and H8 already measured it: on production the
+video fixture classified **`other` at 11:18 UTC and `lease` at 15:29**, one word
+of it changed and nothing else. So:
+
+1. A forwards `https://x/terms` → `kind: "tos"`, findings `T1a…T5`, and the
+   reply promises to re-read the page daily and mail them if any of those
+   clauses stops saying what it says today.
+2. Days later, anyone forwards the same link. `recheckOf` is null → `classify()`
+   runs → `"other"` → extraction against the UNIVERSAL checklist.
+3. `attach` finds the row, patches `kind`, and computes `diff(before, after)` —
+   which skips **every** finding, because `change.ts:100` treats a question the
+   previous reading never asked as a first answer rather than a change, and
+   across a checklist boundary every key is new at once.
+4. The `T` findings are deleted and replaced by `U` findings. `priorByKey`
+   matches nothing, so `changedAt` and `previousQuote` history is wiped with them.
+5. The cron then pins `other` forever — H8's fix working correctly, on a
+   baseline that is wrong.
+
+A is never told their arbitration clause moved. No error, no `watchError`, no
+notice. **H8's closing paragraph is the description of this flag** and can be
+read unchanged.
+
+**It also reaches the public board.** A stranger can flip a board card's `kind`
+and replace its published findings by forwarding a URL that is already on the
+board. That is not a disclosure — nothing private is shown — but it is
+unauthenticated mutation of the public surface by anyone who can send mail, on a
+deployment whose gate check exists to assert the write surface is closed.
+
+**Fix: pin on existence, not on `recheckOf`.** Resolve `url → kind` before
+`classify` and use it whenever a row is found. **The trap to avoid** is also
+taking the `contentHash` early exit on the mail path: it returns before `attach`,
+so the sender would get no reply and the thread would never get its
+`documentId`. Pin the checklist only.
+
+**Scored 15, the same as H8**, because it is the same defect with the same
+consequence and the same silence. Not scored higher for being a second instance:
+the score measures what is open, not how embarrassing it is.
+
+### M12 — disclosure is derived from the absence of a thread id (medium)
+
+`convex/mail.ts:827` — `isPublic: args.threadRowId === null`, on the insert
+branch. `watch.recheck` passes `threadRowId: null` for **every** url-backed
+document (`watch.ts:169`), private forwards included, because a re-check is
+genuinely not an answer to anybody's message.
+
+So a private document stays private across a re-check only because the `by_url`
+lookup at `mail.ts:806` never misses. Let it miss once — the row deleted between
+the workpool enqueueing the re-check and `attach` running, and the pool retries
+at 0s, 60s and 120s — and the row is re-created **public**, carrying the title
+that fell back to the sender's own subject line. That is H1's leak, arriving
+through a door H1 did not use.
+
+It also contradicts the rule written two fields above it in `schema.ts:69` —
+*"the safe direction for a field that gates disclosure"*. Here the default is the
+unsafe direction, and it is unsafe by omission rather than by decision.
+
+**Nothing has been observed.** No public row on production came from a forward;
+the gate's board check asserts that on every run. This is scored for the
+consequence rather than for a sighting, and the fix is small enough that the
+argument about likelihood does not need settling: make `isPublic` an explicit
+argument of `attach` — `true` from `probe`, `false` from `ingest`, `false` from
+`recheck`. Two lines, and the leak stops being contingent on a lookup.
+
+### M13 — the gate's sweep receipt can be minted by hand, and by a stranger (medium)
+
+`scripts/gate.mjs:161` takes `Math.max` over every public document's
+`lastCheckedAt`; `convex/mail.ts:835` stamps that field on **every** re-read of
+an existing row — which includes an inbound forward and a hand-run `mail:probe`,
+not only the watch.
+
+Two weaknesses that compound. `Math.max` means **one fresh document hides
+thirteen stale ones**. And because a forward stamps the field, the cron can be
+dead while `npm run gate` reports *"the watch has swept"* for the next 48 hours,
+on the strength of somebody running a probe during a rehearsal.
+
+The check's own comment concedes the smaller half — *"a green check still only
+means the sweep ran"* — and not the larger one, that the sweep is not the only
+thing that sets it.
+
+**This is scored higher than its blast radius** because of what it is. Nothing
+published is wrong; no answer is stale; no promise has failed. What is degraded
+is the instrument this repository points at when it says a thing is true.
+`CLAUDE.md` is explicit that a claim the gate could have checked and did not is
+not a claim — a check that can be satisfied without the thing it names being
+true is worse than the absence of the check, because the absence is visible.
+
+**Fix, and both halves are cheap:** `Math.min` over the documents, so the check
+means every watched document is fresh rather than at least one; and keep the
+watch's stamp distinct from a read's, so only `checked`/`recheck` set
+`lastCheckedAt` and the mail path does not.
+
+### M14 — `From` is attacker-controlled, and three gates key on it (medium)
+
+`convex/mail.ts:380` parses the sender; `stopFor` (`mail.ts:283`), the burst
+limiter key (`mail.ts:425`) and the 25-document cap (`mail.ts:431`) all key on
+the result. Svix verifies the **webhook**; nothing verifies the **sender**.
+Confirmed absent: `dkim`, `spf`, `dmarc` and `authentication_results` appear
+nowhere in `convex/`.
+
+H4 made `fromEmail` a correctly parsed mailbox. It did not make it an
+authenticated one, and H4's own reasoning already took header forgery seriously
+— *"taking the first would let an attacker's STOP silence a victim"* — so this
+is that same threat one level up, where the whole header is chosen rather than
+one mailbox inside it.
+
+Three abuses, none needing more than an SMTP client:
+
+- `From: victim@x.com` with a body of `STOP` → `stopFor` silences every thread
+  that victim has. Their watch is over and the confirmation goes to them.
+- Twenty-five forwards as `victim@x.com` → their cap is exhausted, and their
+  next real forward is answered with `limitBody`.
+- One forward as `victim@x.com` of a URL the attacker chose → we mail that
+  person findings they never asked for.
+
+**First step is free and nobody has taken it:** read AgentMail's inbound message
+object and see whether it carries a verification verdict. If it does, refusing to
+honour a `STOP` from a message that failed is a two-line guard. If it does not,
+that is a ceiling to write down here rather than leave implied.
+
+**Scored 5, not 15**, and the line is deliberate: H4 was high because it broke
+for people who had done nothing but own two mail clients. This one requires
+somebody to decide to do it. That is a real difference in who gets hurt by
+accident, and it is the difference this file has used before.
 
 ### H6 — an answer can out-run the line it cites (high)
 
@@ -277,6 +509,48 @@ nobody is looking.
 **Not scheduled before the video.** The backoff ships tonight only because it is
 one constant in a deploy that is happening anyway. The limiter waits.
 
+### M15 — four comments still describe the Firecrawl design this project rejected, and one of them is false (medium)
+
+`convex/mail.ts:499-503`, `mail.ts:114`, `mail.ts:850`, `convex/change.ts:145`.
+
+`README.md:57` tells the world that Firecrawl's own `changeTracking` **is not
+used**, because the signal is consumable and reading it spends it — the single
+best sponsor finding this repository contains. The code still explains itself the
+other way round:
+
+- **`mail.ts:499-503`** — the docstring **directly above the only Firecrawl call
+  in the codebase**: *"What Firecrawl says about this URL since the last time OUR
+  team scraped it… **This is the watch's whole gate: it is computed by Firecrawl
+  from the two texts**."* The watch's gate is a SHA-256 over our own parsed lines
+  (`lines.ts`, `fingerprint`), stored on our own row. Firecrawl computes nothing
+  for us; the scrape requests `formats: ["markdown"]` and nothing else.
+- **`mail.ts:114`** — *"a change is only ever computed when Firecrawl reports the
+  source text moved."* It is computed when **our** hash moves.
+- **`mail.ts:850`** — *"Only when Firecrawl says the text moved."* Same.
+- **`change.ts:145`** — *"the added lines out of Firecrawl's git-diff, **which the
+  scrape already requests** and nothing yet reads."* The scrape does not request
+  it. This one is not merely stale, it is **false about the request body sitting
+  forty lines away**, and it is written as a suggestion for where a future
+  session should start — so it is a false claim aimed at whoever picks this up.
+
+**This is H7's class, in the code rather than on the page**, and it is the fourth
+discovery mode doing its job: *compare a claim about the pipeline to the
+pipeline*. It is also the second-renderer defect this project has now logged four
+times — a decision was reversed in one place and left standing in three others.
+
+**Scored 5 rather than 1 because of who reads it.** One of seventeen judges works
+at Firecrawl. He opens one file — the one containing the Firecrawl call — and the
+docstring above it contradicts the headline Firecrawl claim in the README. The
+strongest sponsor finding in the repository is undercut by the comment nearest to
+the thing it is about.
+
+**Not scored 15**, because nothing a user receives is wrong and no behaviour
+changes. The gate is correct; only its explanation is.
+
+Fix: rewrite four comments to describe the hash gate, and keep the rejected
+design as history where it belongs rather than as present tense. Belongs in the
+H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
+
 ### Low
 
 - **L3** `convex/documents.ts:28` — `recent` orders by `_creationTime`, but a
@@ -290,7 +564,88 @@ one constant in a deploy that is happening anyway. The limiter waits.
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
 
+- **L8** `convex/reply.ts:439` — `limitBody` is the only reply builder that does
+  not `escape()` its interpolated text. Every sibling does: `failureBody`
+  (`reply.ts:399`), `noDocumentBody` (`reply.ts:462`), `stoppedBody`
+  (`reply.ts:494`), and both `replyBody` and `changeBody` escape every field.
+  Not live — the string is built from constants plus `plural()` and
+  `humanDelay()`. It is a **trap, not a bug**: the day somebody adds the sender
+  or the document title to that body, it is HTML injection into an email, from
+  an address M14 says is attacker-controlled. One word.
+- **L9** `convex/schema.ts:172` — `findings.by_documentId_and_questionKey` is
+  declared and never queried. The only reads are `by_documentId`
+  (`documents.ts:61`, `mail.ts:868`, `mail.ts:953`), which the compound index
+  also covers, so one of the two is dead whichever way it is resolved. `attach`
+  deletes and re-inserts the whole finding set on every re-read and pays index
+  maintenance on both.
+- **L10** `convex/crons.ts:19` — `crons.daily(…)` where
+  `convex/_generated/ai/guidelines.md` says to use `crons.interval` or
+  `crons.cron` and *not* the `hourly`/`daily`/`weekly` helpers.
+  `crons.cron("17 11 * * *", …)` is the same line and the same 11:17.
+- **L11** `convex/mail.ts:809` — `text: v.array(v.string())` carries the whole
+  document as a mutation argument, and a Convex array is capped at **8,192
+  elements**. `MAX_PROMPT_CHARS` is 600,000, so a document averaging under ~73
+  characters a line — which markdown from a PDF usually is, being mostly short
+  lines and blanks — passes extraction and then dies at `attach`'s validator.
+  The sender is told the document *"came back too short to be the real thing, or
+  could not be parsed"*, which is false about what happened. Today's corpus tops
+  out at 2,007 lines, so this is a ceiling to name, not a fire.
+- **L12** `package.json:22` — `convex-helpers` is a declared dependency and is
+  imported nowhere. Confirmed by grep across `convex/`, `src/` and `scripts/`:
+  zero hits. **Do not "fix" it by finding a use for it** — `getManyFrom` would
+  replace `withIndex` calls that are already correct and already commented.
+  Delete the line. It is scored at all because `package.json` is a twenty-second
+  read, five of seventeen judges work at Convex, and a shipped-but-unused
+  first-party package reads as cargo-culting on a repository whose entire
+  argument is that an unverified claim does not count.
+
+
 ## Candidate — evidence too thin to score
+
+**An HTML-only message's STOP is not an unsubscribe, and its link is not a
+document.** `convex/mail.ts:353` (link extraction) and `mail.ts:406` (the STOP
+test) both read `readString(message, "text")` and fall back to `""`. Nothing in
+`mail.ts` reads an `html` part — grepped, and `html` appears only on the
+outbound side. If AgentMail ever delivers a message whose text part is absent or
+empty, `documentUrl("")` returns null and a real forwarded link is answered with
+*"I did not find a document in that message"* — and, worse, `isStop("")` is
+false, so somebody replying **STOP** is told to forward a file and goes on
+receiving change notices.
+
+That would be **M4's promise failing for a class of mail client rather than for
+an edge case**, which is H4's argument exactly, and it would be scored high if
+it were confirmed. It is not confirmed, and the missing half is the only half
+that matters: **nobody has checked whether AgentMail ever delivers a text-less
+message to this inbox.** Twenty-six threads are stored on production.
+
+**Confirm before acting, and it is free:** read the stored inbound payloads and
+count how many have an empty or absent `text`. If the answer is zero the flag is
+a ceiling to name; if it is more than zero it is an open high. Until that number
+exists, this is a guess about a vendor's behaviour, and this file does not score
+those.
+
+**`npm run lint` failed twice on `convex/http.ts:26`, and then would not do it
+again.** On 2026-09-14 the lint step failed with *"Unused eslint-disable
+directive (no problems were reported from
+`@typescript-eslint/no-unnecessary-type-assertion`)"* — twice, both times
+immediately after a branch operation, on two different branches whose `http.ts`
+is byte-identical. It then passed three consecutive runs, and passed again after
+touching the convex sources to force a rebuild. **It could not be reproduced on
+demand.**
+
+The plausible mechanism is `tsc -b` incremental state changing what the
+type-aware rule sees, which flips whether that `eslint-disable` is "unused" — but
+that is a hypothesis, and it is written here as one.
+
+**Why it is worth a candidate entry rather than a shrug:** `npm run lint` is the
+first third of `npm run gate`, and the gate is what this repository points at
+when it says a thing is true. A spurious red is an afternoon. The same
+non-determinism producing a spurious **green** is the failure `CLAUDE.md` was
+written against. **Confirm before acting:** run `npm run gate` immediately after
+each branch switch for a week and record the result, or pin the eslint run to a
+clean `tsc` by ordering them explicitly. Do not "fix" the disable comment — it is
+load-bearing when the rule fires, and deleting it would trade an intermittent red
+for an intermittent one in the other direction.
 
 **A ranging question refused on a document made of answers.** On production
 2026-09-09, `probe-v4/fee-schedule.html` — thirty-three rows of prices — refused
@@ -803,8 +1158,62 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L5).** M5, H5, M7, H8, M9
-and L6 are closed.
+**Rewritten 2026-09-14. The freeze is over and nine flags joined the list.**
+
+**H9 (+M15) → M13 → (L12, L8) → M12 → the two free reads → M8 → (measure H6 again) →
+M10 → M2 → M6 → (L3, L4, L9, L10, L11).**
+M5, H5, M7, H8, M9, L6, M11 and L7 are closed.
+
+**The freeze is lifted, and that is the single largest change to this file
+today.** The clause that stood here said *"nothing in this fix order happens
+before the video is shot."* **The video was shot on 2026-09-13** — 2:42, and the
+11:17 UTC cron found the fixture edit on the morning of 09-12, which is the
+receipt beat C is built on. The reason for the freeze was specific and it has
+expired: M8 bumps `PARSER_VERSION`, and a bump between the enrolment and the edit
+would have made `attach` re-baseline and swallow the change the video exists to
+show. There is no longer a change waiting to be shown.
+
+**One consequence to carry rather than discover:** if any beat is ever
+**re-shot**, it must be re-shot *before* M8 ships, not after. A re-render of the
+narration is free; a re-baselined corpus is not.
+
+**H9 goes first, and it is not because it is the newest high.** It is because it
+is H8 arriving through a second door, and this file has already paid once for
+believing a closed flag was unreachable — H4 defeated H2's cost bound and
+narrowed M4 after both were closed. The fix is small (pin `kind` on the row's
+existence rather than on `recheckOf`), it bumps no parser version, it sends no
+mail, and it is the only high on this list whose fix is understood well enough
+to write today.
+
+**M13 goes second because it is the instrument.** Every other line in this file
+is a claim about the product; M13 is a claim about the thing that checks the
+claims. Both halves are cheap — `Math.min` instead of `Math.max`, and stop
+stamping `lastCheckedAt` from the mail path — and until they ship, the sweep
+check can be satisfied by somebody running a probe by hand. Fixing a defect
+while the detector for it is unreliable is how the next one goes unnoticed.
+
+**L12 and L8 are ten minutes together** and belong in the H9 PR rather than in a
+queue: delete an unused dependency, add one `escape()`. Neither is worth its own
+branch and both are the kind of thing that never gets done if it waits.
+
+**The two free reads come before anything that costs money**, and neither has
+been taken:
+1. **Does AgentMail's inbound object carry an SPF/DKIM verdict?** M14's whole
+   fix depends on the answer and reading it costs one payload.
+2. **Has AgentMail ever delivered a text-less message to this inbox?** Twenty-six
+   threads are stored. If the count is zero, the HTML-only candidate is a ceiling
+   to name; if it is not zero, it is an open high and it jumps this queue.
+
+A third free read sits with M10 and has been unclaimed since 09-11: **read the
+actual Firecrawl per-minute limit off the plan.** Every sizing decision for the
+limiter depends on a number this project has only ever seen quoted back to it
+inside an error message.
+
+**M8 keeps its place ahead of the H6 re-measurement**, for the reason recorded on
+09-09 night and unchanged: the answer that out-ran its line did so because reflow
+had orphaned the amount onto a line of its own. Fix the parser, re-run the same
+document, and H6 either disappears or becomes real. It has simply stopped being
+first, because H9 and M13 are now ahead of it and neither existed on 09-11.
 
 **M10 sits behind the H6 measurement and ahead of M2** because its first step is
 free and nobody has taken it: read the actual Firecrawl per-minute limit off the
@@ -817,11 +1226,6 @@ It is still a measurement, but it is now the measurement that decides whether
 H6 is a class or a single parser artefact — the answer that out-ran its line did
 so because reflow had orphaned the amount onto a line of its own. Fix the parser,
 re-run the same document, and H6 either disappears or becomes real.
-
-**The freeze still applies.** M8 bumps `PARSER_VERSION`, and a bump between the
-enrolment and the edit makes `attach` re-baseline and swallow the change the
-video exists to show. **Nothing in this fix order happens before the video is
-shot.**
 
 H5 and M7 went first and went together, because both published something false
 and both were instances of one class. They were fixed as the class: the two

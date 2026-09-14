@@ -3086,3 +3086,197 @@ the screen** and cannot see the UTC conversion — a narrator naming a figure th
 is not on screen is asking to be taken on trust, which is the one thing beat C
 exists not to do. Both are the same instant. 11:17 UTC stays everywhere it names
 the cron's schedule, which is what the file's four other references do.
+## 2026-09-14 — the audit that found something, and what that costs this file's thesis
+
+Nine flags opened today, one of them high, and **every one was found by reading
+code**. No scrape, no model call, no forward, no deploy. The score goes
+**62 → 27**, the lowest this project has recorded, on a morning when
+`npm run gate` reads 7/7 against production.
+
+*(Amended later on 09-14, after M15 took it to 22: `docs/READINESS.md` now
+carries a section saying what that number measures. Short version — the formula
+has no term for how much has been built, so it falls when somebody looks harder
+rather than when something breaks, and the bare integer is not worth quoting to
+anyone who has not read the entries under it. The flags all stand; the arithmetic
+over them was being read as a verdict on the product, including by the person who
+wrote it.)*
+
+Both of those are true at once, and the gap between them is the entry. The gate
+asks whether the promises being made today are being kept. The score asks what is
+waiting to break one. Every one of these nine has been shipping for days — four
+since P1 — while production answered mail correctly the whole time.
+
+### The thesis in `READINESS.md` was wrong, and an audit is what falsified it
+
+Written on 09-09, after five consecutive passes:
+
+> Both drops came from running the product, and neither came from re-reading the
+> code — which is the only generalisable finding this file contains.
+
+That was an honest reading of five data points and it is now false. The sixth
+pass read code and found nine.
+
+**H9 is what settles it, because H9 is H8.** On 09-11 this log used H8 — a
+re-check re-classifying a document and silently ending its watch — as the proof
+that *"nothing that reads code was ever going to find this."* H8 was fixed on the
+re-check path. `attach` dedupes on `by_url` **by design**, so `ingest` reaches
+rows that already exist, and it arrives with `recheckOf: null` — which is exactly
+the condition H8's fix keys on. **A second forward of a URL already on the board
+re-classifies it, replaces every published finding, and ends its watch in
+silence.** The pin was keyed on how we got here rather than on whether this
+document has been read before.
+
+A code audit noticed. Three previous audits had read the same line.
+
+### What was actually true, and it is narrower
+
+The four discovery modes this project accumulated — send mail, compare two
+renderings, compare a claim to its pipeline, run it on real hardware — all find
+defects that live in the **relationship between a run and its output**. A code
+audit cannot see those. That half stands.
+
+What does not stand is the inverse. Five audits finding little was a fact about
+**those audits**, not a law about auditing. They were hunting the class the mail
+was already finding. This one was pointed somewhere else: at the paths nobody
+forwards down. **Six of today's nine need a second arrival, a deletion mid-flight,
+a forged header, or an empty message part** — and no quantity of forwarded
+documents would ever have produced one of them.
+
+So the generalisable finding, restated and weaker than the one it replaces: **a
+method finds the defects it is shaped to find, and a run of passes that all find
+nothing is evidence the method has been aimed at a corner that is already clean.**
+
+### The one that is about the instrument
+
+**M13: the gate's sweep receipt can be minted by hand.** `gate.mjs` takes
+`Math.max` over every public document's `lastCheckedAt`, and `mail.attach` stamps
+that field on every re-read of an existing row — including an inbound forward and
+a hand-run `mail:probe`. So one fresh document hides thirteen stale ones, and the
+cron can be dead while the gate reports the watch has swept, for 48 hours, on the
+strength of a probe somebody ran during a rehearsal.
+
+The check's own comment concedes the smaller half — *"a green check still only
+means the sweep ran"* — and not the larger one, that the sweep is not the only
+thing that sets it.
+
+This project has argued since 09-05 that a judgement call standing in for a
+measurement is the root failure. **A measurement that can be satisfied by the
+wrong thing is that same failure wearing the costume of its own fix**, and it is
+worse, because the absence of a check is visible and a hollow one is not.
+
+### The freeze is over
+
+The fix order carried a clause since 09-09: *"nothing in this fix order happens
+before the video is shot."* The video was shot on 09-13. The reason was specific
+— M8 bumps `PARSER_VERSION`, and a bump between the enrolment and the edit would
+have made `attach` re-baseline and swallow the change beat C exists to show — and
+it has expired, because there is no longer a change waiting to be shown.
+
+One consequence worth writing down rather than rediscovering: **if a beat is ever
+re-shot, it must be re-shot before M8 ships.** Re-rendering narration is free. A
+re-baselined corpus is not.
+
+New order: **H9 → M13 → (L12, L8) → M12 → the two free reads → M8 → measure H6
+again → M10 → M2 → M6 → the rest.**
+
+### Three free reads, none of them taken
+
+Each one either closes a flag or converts a guess into a finding, and none costs
+a request to anybody's paid API:
+
+1. **Does AgentMail's inbound object carry an SPF/DKIM verdict?** M14's entire
+   fix depends on the answer. `From` is attacker-controlled today and three gates
+   key on it — `stopFor`, the burst limiter, and the 25-document cap — so a
+   spoofed `STOP` silences a stranger's watch.
+2. **Has AgentMail ever delivered a text-less message here?** Both the link
+   extraction and the STOP test read only the `text` part. Twenty-six threads are
+   stored on production; if the count is zero this is a ceiling to name, and if it
+   is not zero it is an open high, because it is M4's unsubscribe failing for a
+   class of mail client rather than for an edge case.
+3. **What is the actual Firecrawl per-minute limit?** Unclaimed since 09-11. Every
+   sizing decision for M10's limiter depends on a number this project has only
+   ever seen quoted back to it inside an error message.
+
+### And one that cost nothing to find
+
+`convex-helpers` has been a declared dependency, imported nowhere, for the life
+of the repository. Five of seventeen judges work at Convex and `package.json` is
+a twenty-second read. Logged as **L12**, and the fix is deleting the line — not
+finding a use for it.
+
+### Later the same day — M15, and the sponsor issues are not filable as written
+
+Two corrections to the plan written this morning, both from pointing a pass at
+the sponsor stack specifically.
+
+**The Firecrawl bug report cannot be filed as drafted, and filing it would have
+produced the opposite of what it is for.** `docs/sponsor-issues.md` §1 reports a
+byte-identical PDF parsing to 171/174/174/171 in one afternoon, with both
+SHA-256s and a clean `cmp`. The evidence holds. What the draft never states is
+the request configuration — and the setting most likely to explain the result is
+sitting in it: `parsers: [{ type: "pdf", mode: "auto", maxPages: 200 }]`
+(`mail.ts:523`). **`mode: "auto"` delegates the parser choice to Firecrawl by
+name.** If auto routes between paths per request, four different line counts are
+the documented behaviour of a setting we chose, not a defect, and the first reply
+will say so.
+
+Filing a non-determinism report that omits the non-determinism knob is the same
+failure this project retracted two production claims for. `mode` and `maxPages`
+appear nowhere in the draft, nowhere in this log, and nowhere in `READINESS.md`
+— confirmed by grep. The fix is thirty minutes (paste the request body, name the
+untested variable) or an hour (re-measure four reads with `mode` pinned and
+report whether it stabilises). The second turns a stability report into a
+diagnosis.
+
+**The AgentMail draft is accurate on mechanism and wrong on two details.** It
+says Convex 1.44; installed is **1.45.0**, and the mechanism still holds there —
+say "reproduced on 1.44 and still present on 1.45.0" and the easiest dismissal
+disappears. More importantly its suggested fix is incomplete: declaring the key
+in the component's `convex.config.ts` is necessary but not sufficient, because a
+bound env var is surfaced through the **`env` export from `_generated/server`**,
+not `process.env` — which this repository's own `guidelines.md:261` says in as
+many words. A maintainer who implements the draft as written still fails.
+
+### M15 — the code still explains the Firecrawl design we rejected
+
+`README.md:57` tells the world that `changeTracking` is **not** used, because the
+signal is consumable and reading it spends it. That is the best sponsor finding
+in this repository. Four comments still describe the architecture the other way
+round, and the worst of them is the docstring **directly above the only Firecrawl
+call in the codebase**:
+
+> What Firecrawl says about this URL since the last time OUR team scraped it…
+> **This is the watch's whole gate: it is computed by Firecrawl from the two
+> texts.**
+
+It is not. The gate is a SHA-256 over our own parsed lines, on our own row,
+precisely because of the finding the README leads with. `mail.ts:114` and
+`mail.ts:850` repeat it, and `change.ts:145` is **false rather than merely
+stale** — it points a future session at "the added lines out of Firecrawl's
+git-diff, which the scrape already requests", and the scrape requests
+`formats: ["markdown"]` and nothing else, forty lines away.
+
+**This is H7's class inside the code rather than on the page**, found by the
+fourth discovery mode — compare a claim about the pipeline to the pipeline — and
+it is the second-renderer defect for the fourth time: reversed in one place, left
+standing in three.
+
+Scored 5 for who reads it. One judge of seventeen works at Firecrawl, he opens
+the file with the Firecrawl call in it, and the comment nearest the call
+contradicts the claim the README leads with.
+
+**A note on how this was found, because it nearly was not.** The first grep for
+it searched the literal strings `changeTracking`, `changeStatus` and `git-diff`
+and returned **one** hit. Three of the four comments describe the rejected design
+in prose without naming the API, and a grep for the vocabulary of a decision does
+not find the places that decision is explained in English. Score **27 → 22**.
+
+### And one number that is not a flag
+
+`npm run gate` reads **26 threads, 1 distinct sender**. Every message this inbox
+has ever received came from the person who built it. The inbound path is real,
+signed, rate-limited and has answered twenty-six times — and it has never once
+been used by a stranger. That is not a defect and there is nothing to fix in
+code. It is worth writing down because this project's own record says that
+forwarding mail finds what reading code cannot, and the population of forwarders
+has been one person the entire time.
