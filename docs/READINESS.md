@@ -200,15 +200,15 @@ found by the check written to confirm the third was fixed.
 
 ### H9 — a re-forward re-classifies the document, and that silently ends the watch (high)
 
-`convex/mail.ts:688` (`priorKind` is set only inside `if (args.recheckOf !== null)`),
-`convex/mail.ts:729` (`classify` runs whenever `priorKind` is null), and
-`convex/mail.ts:829` (`patch(… kind: args.kind …)` on the existing row), reached
-with `recheckOf: null` from `ingest` (`mail.ts:576`) and `probe` (`mail.ts:767`).
+`convex/mail.ts:709` (`priorKind` is set only inside `if (args.recheckOf !== null)`),
+`convex/mail.ts:788` (`classify` runs whenever `priorKind` is null), and
+`convex/mail.ts:788` (`patch(… kind: args.kind …)` on the existing row), reached
+with `recheckOf: null` from `ingest` (`mail.ts:597`) and `probe` (`mail.ts:788`).
 
 **This is H8, through a door H8 did not close.** H8 pinned the checklist on the
 *re-check* path, and it is worth being exact about what that fix says: *"A
 re-check answers the checklist this document was FIRST answered against."* It
-does. But `attach` dedupes on `by_url` **by design** — `mail.ts:802` says so in
+does. But `attach` dedupes on `by_url` **by design** — `mail.ts:829` says so in
 as many words, *"two people forwarding the same terms page are asking about one
 document; they share the row, and therefore the watch"* — so **`ingest` reaches
 rows that already exist**, and it arrives with `recheckOf: null`. The pin is
@@ -224,7 +224,7 @@ of it changed and nothing else. So:
 2. Days later, anyone forwards the same link. `recheckOf` is null → `classify()`
    runs → `"other"` → extraction against the UNIVERSAL checklist.
 3. `attach` finds the row, patches `kind`, and computes `diff(before, after)` —
-   which skips **every** finding, because `change.ts:100` treats a question the
+   which skips **every** finding, because `change.ts:75` treats a question the
    previous reading never asked as a first answer rather than a change, and
    across a checklist boundary every key is new at once.
 4. The `T` findings are deleted and replaced by `U` findings. `priorByKey`
@@ -254,13 +254,13 @@ the score measures what is open, not how embarrassing it is.
 
 ### M12 — disclosure is derived from the absence of a thread id (medium)
 
-`convex/mail.ts:827` — `isPublic: args.threadRowId === null`, on the insert
+`convex/mail.ts:848` — `isPublic: args.threadRowId === null`, on the insert
 branch. `watch.recheck` passes `threadRowId: null` for **every** url-backed
 document (`watch.ts:169`), private forwards included, because a re-check is
 genuinely not an answer to anybody's message.
 
 So a private document stays private across a re-check only because the `by_url`
-lookup at `mail.ts:806` never misses. Let it miss once — the row deleted between
+lookup at `mail.ts:794` never misses. Let it miss once — the row deleted between
 the workpool enqueueing the re-check and `attach` running, and the pool retries
 at 0s, 60s and 120s — and the row is re-created **public**, carrying the title
 that fell back to the sender's own subject line. That is H1's leak, arriving
@@ -280,7 +280,7 @@ argument of `attach` — `true` from `probe`, `false` from `ingest`, `false` fro
 ### M13 — the gate's sweep receipt can be minted by hand, and by a stranger (medium)
 
 `scripts/gate.mjs:161` takes `Math.max` over every public document's
-`lastCheckedAt`; `convex/mail.ts:835` stamps that field on **every** re-read of
+`lastCheckedAt`; `convex/mail.ts:772` stamps that field on **every** re-read of
 an existing row — which includes an inbound forward and a hand-run `mail:probe`,
 not only the watch.
 
@@ -307,8 +307,8 @@ watch's stamp distinct from a read's, so only `checked`/`recheck` set
 
 ### M14 — `From` is attacker-controlled, and three gates key on it (medium)
 
-`convex/mail.ts:380` parses the sender; `stopFor` (`mail.ts:283`), the burst
-limiter key (`mail.ts:425`) and the 25-document cap (`mail.ts:431`) all key on
+`convex/mail.ts:391` parses the sender; `stopFor` (`mail.ts:304`), the burst
+limiter key (`mail.ts:393`) and the 25-document cap (`mail.ts:393`) all key on
 the result. Svix verifies the **webhook**; nothing verifies the **sender**.
 Confirmed absent: `dkim`, `spf`, `dmarc` and `authentication_results` appear
 nowhere in `convex/`.
@@ -461,7 +461,7 @@ would mean finding what actually varies first.
 
 ### M2 — attachment documents never dedupe (medium)
 
-`convex/mail.ts:808`. `attach` skips the `by_url` lookup when `url === null`,
+`convex/mail.ts:829`. `attach` skips the `by_url` lookup when `url === null`,
 which is every forwarded attachment.
 
 Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
@@ -556,25 +556,25 @@ H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
 - **L3** `convex/documents.ts:28` — `recent` orders by `_creationTime`, but a
   re-read patches `fetchedAt`. A freshly re-checked document never resurfaces
   on the board. Needs a `by_fetchedAt` index if freshness is the intent.
-- **L4** `convex/mail.ts:326` — an unrecognized payload is dropped with
+- **L4** `convex/mail.ts:347` — an unrecognized payload is dropped with
   `console.error` and no record, which is invisible in a deployment that
   retains no failure logs.
-- **L5** `convex/mail.ts:933` — `attach` notifies at most `.take(100)` threads.
+- **L5** `convex/mail.ts:954` — `attach` notifies at most `.take(100)` threads.
   Subscriber 101 is silently never told the clause moved, which is the one
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
 
-- **L8** `convex/reply.ts:439` — `limitBody` is the only reply builder that does
+- **L8** `convex/reply.ts:308` — `limitBody` is the only reply builder that does
   not `escape()` its interpolated text. Every sibling does: `failureBody`
-  (`reply.ts:399`), `noDocumentBody` (`reply.ts:462`), `stoppedBody`
-  (`reply.ts:494`), and both `replyBody` and `changeBody` escape every field.
+  (`reply.ts:308`), `noDocumentBody` (`reply.ts:308`), `stoppedBody`
+  (`reply.ts:308`), and both `replyBody` and `changeBody` escape every field.
   Not live — the string is built from constants plus `plural()` and
   `humanDelay()`. It is a **trap, not a bug**: the day somebody adds the sender
   or the document title to that body, it is HTML injection into an email, from
   an address M14 says is attacker-controlled. One word.
 - **L9** `convex/schema.ts:172` — `findings.by_documentId_and_questionKey` is
   declared and never queried. The only reads are `by_documentId`
-  (`documents.ts:61`, `mail.ts:868`, `mail.ts:953`), which the compound index
+  (`documents.ts:61`, `mail.ts:794`, `mail.ts:991`), which the compound index
   also covers, so one of the two is dead whichever way it is resolved. `attach`
   deletes and re-inserts the whole finding set on every re-read and pays index
   maintenance on both.
@@ -590,7 +590,7 @@ H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
   The sender is told the document *"came back too short to be the real thing, or
   could not be parsed"*, which is false about what happened. Today's corpus tops
   out at 2,007 lines, so this is a ceiling to name, not a fire.
-- **L12** `package.json:22` — `convex-helpers` is a declared dependency and is
+- **L12** `package.json:9` — `convex-helpers` is a declared dependency and is
   imported nowhere. Confirmed by grep across `convex/`, `src/` and `scripts/`:
   zero hits. **Do not "fix" it by finding a use for it** — `getManyFrom` would
   replace `withIndex` calls that are already correct and already commented.
@@ -603,7 +603,7 @@ H9 PR — three of the four are in `mail.ts` and H9 is already editing it.
 ## Candidate — evidence too thin to score
 
 **An HTML-only message's STOP is not an unsubscribe, and its link is not a
-document.** `convex/mail.ts:353` (link extraction) and `mail.ts:406` (the STOP
+document.** `convex/mail.ts:374` (link extraction) and `mail.ts:427` (the STOP
 test) both read `readString(message, "text")` and fall back to `""`. Nothing in
 `mail.ts` reads an `html` part — grepped, and `html` appears only on the
 outbound side. If AgentMail ever delivers a message whose text part is absent or
