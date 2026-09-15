@@ -4,19 +4,17 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes.
 - **Live app:** https://impressive-marten-163.convex.site
-- **Built as of 2026-09-06:** the inbox, the parser, the extractor and its grounding
-  guarantee, and the cited reply — **live on production**, which answered a forwarded link
-  in 15 s with six quoted findings and one refusal. The public board carries six documents;
-  the findings count is one `npm run gate` reads from production rather than from this
-  line. **The watch is built and proven on development**:
-  a sweep over four documents caught both clauses that were edited on a test fixture, each
-  quoted before and after with its line, and stamped nothing on the other 22 answered
-  findings — and **mailed the change to a real inbox**, unprompted, into the thread that
-  had asked about the document, 2 minutes 17 seconds after the clauses moved. **It is live
-  on production**, where the first sweep re-read all six board documents and stamped
-  nothing, and on 2026-09-06 the cron fired unattended. **The CC reply (P5) is not
-  built** — the CC/forward routing exists; reading the document out of the thread
-  history does not.
+- **Built as of 2026-09-15:** the inbox, the parser, the extractor and its grounding
+  guarantee, the cited reply, the daily watch and the CC reply — all **live on
+  production**, which has sent 20 real answers at a median of 20.4 s (the 15 s
+  first quoted here was the fast end of one event). The watch caught a fixture
+  edit on the morning of 2026-09-12 by cron, unattended, and mailed the change
+  into the thread that had asked; that receipt is what the 2:42 demo is built on.
+  The board carries six public documents and never a forwarded one; the corpus
+  on production is 16 url-backed documents, 6 public and 10 private. The findings
+  count is one `npm run gate` reads from production rather than from this line.
+  **Known open flags are scored in `docs/READINESS.md`** — 10/100 as of 09-15,
+  and the number goes down when somebody looks harder, which is what it is for.
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -25,7 +23,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-06
+- **Last updated:** 2026-09-15
 
 ## Log
 
@@ -3346,3 +3344,95 @@ with a reason attached; they now say it without one, to everybody. **All three
 samples are Gmail**, so nothing is known about Outlook or a work gateway — logged
 under Coverage.
 
+
+## 2026-09-15 — the interview closed, and the day was filing
+
+Nine rounds of a mock hostile-judge interview across 09-14 and 09-15, the last
+five shaped as questions a Convex engineer would ask: where the transaction
+boundary sits, what retries and at what granularity, whether the spend gates
+are atomic, what the cron overlaps, what the public surface returns for a
+private row. Every answer was traced in the code and, where it could be, read
+off production. Then the interview was closed and everything it produced was
+filed in one PR, with no more probing. Score 44 → 10.
+
+**Two highs, and both fell out of the first question.** H10: an upstream
+Firecrawl re-render of a PDF moves every PDF's hash at once, passes the
+re-baseline gate because that gate keys on *our* parser version, misses
+`stillSays`, and mails every subscriber that their lease changed. Nothing
+separates a re-render from a deletion. H11: `send` is one POST with no retry,
+`notify` skips any thread whose first reply never recorded, and the hash is
+committed in the same transaction that schedules the notices — so a send that
+fails once ends the watch for that thread forever, and nothing reads the error
+it leaves. Neither has happened on production. Both have been shipping since
+P4.
+
+**The thesis this file recorded on 09-14 held for one more day and then had a
+fourth exception.** Audits find little, forwards find a lot, arithmetic on stored
+data found the 09-14 pair — and being interviewed found these. What all four
+share is that somebody asked what happens when the call in the middle fails,
+which is the question the code's own comments never ask, because each comment
+is written from inside the function it describes.
+
+**M8 was wrong about itself.** Filed as "the wrap lands after a numeral"; the
+measurement across all sixteen enrolled documents found 45 of those and 476
+wraps where the next line starts with a capital, which the continuation guard
+rejects. The residual is the guard, by a factor of ten. The H6 wrap was
+authored into the fixture, six of seven live ToS pages have no wraps at all,
+and wrapped table cells do not occur. Amended in place, score unchanged.
+
+**The decision, and it is the one that could still change the plan.** The
+prevention-shaped fix for H10 — record the change, do not send, let a
+sweep-completion step decide — moves the sends out of the transaction Q1 of the
+interview verified they live in: *a reply cannot be queued for findings that
+did not commit, and findings cannot commit with no reply queued behind them.*
+That is the strongest invariant in the system, and re-architecting it with
+five days left and a submitted video is not a trade this project makes.
+Declined.
+
+**What replaces it, and the evidence it rests on.** Change notices — not
+replies — scheduled with a delay instead of `runAfter(0)`, their scheduled ids
+written on the thread row, and a settle step that cancels them when the sweep's
+flip count crosses a threshold. Checked against Convex's own docs rather than
+inferred:
+
+- `ctx.scheduler.runAfter` returns an `Id<"_scheduled_functions">`, storable
+  as `v.id("_scheduled_functions")`. `ctx.scheduler.cancel(id)` from a mutation
+  is a database write, so it commits with the settle step or not at all.
+- The documented semantics: *"If the function has not started, it will not run.
+  If it has started, it will continue running, but any functions it schedules
+  will not execute."* `send` schedules nothing — it calls `runMutation`, not
+  the scheduler — so a `send` that has already started completes normally, and
+  cancel is only good before the delay elapses.
+- **The window** is the delay minus the sweep's worst case. Sixteen documents,
+  two wide, each up to 120 s of Firecrawl plus two model calls plus at most
+  180 s of retry backoff, is under thirty minutes. A delay of two hours leaves
+  the settle step ninety minutes of margin, and a daily watch that says so two
+  hours late has lost nothing.
+- **The retry door is covered.** The workpool's retry runs inside the same
+  sweep — attempts at 0, 60 and 120 s — so the notices its second `attach`
+  schedules carry the same delay and fall inside the same window. The
+  condition is that `attach` records the flip on the document row (a
+  `hashMovedAt`), so the settle step can count flips rather than infer them.
+- **What cancel does not cover, and has to be said before it is built.** First:
+  `attach` has already replaced the findings with `changedAt` and
+  `previousQuote` stamps, so cancelling the mail leaves the public board saying
+  "changed" on every PDF. The settle step has to clear those stamps too, or
+  `attach` has to defer stamping; the board is a second renderer of the same
+  false claim. Second: a single PDF's non-deterministic parse (M6) flips one
+  document and never crosses a corpus threshold, so it still notifies — that is
+  M6's fix, not H10's. Third: a notice raised by a forward, not a sweep, should
+  stay immediate, so `attach` needs to know which caller it has.
+
+**Verdict:** real, and the smaller change. One delay constant, one field on
+the thread row, one field on the document row, one settle mutation scheduled
+by `sweep`. The invariant survives as *scheduled, or cancelled by a recorded
+decision*, which is the same sentence with one more clause. Not built today.
+It is the one thing that gets built before 09-22.
+
+**Copy corrected in the same PR.** The README now says the summary is free
+text and the only thing stopping quote-shaped prose in it is one prompt line
+(`extract.ts:198`) — H7 had removed the false sentence on 09-10 without saying
+what the true one was. The `418` the README quotes is now dated and named, and
+carries M6's warning that a PDF's count can move. The cap comment at
+`mail.ts:280` said 25 exactly and now says 25 plus a burst, with the reason.
+The private-forward count is stated as 10, which is what production holds.

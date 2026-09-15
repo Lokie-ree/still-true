@@ -8,7 +8,10 @@ and by when, with **every claim quoted from the source and the line it came
 from**. Where the document is silent, it says so and tells you how many lines it
 searched — and since 2026-09-09 it says that precisely. A fact stated **across
 two lines** cannot be cited under a one-line contract, so the refusal claims
-only what it can know: *"Searched all 418 lines. No single line states it."* It
+only what it can know: *"Searched all 418 lines. No single line states it."* —
+418 being the Livonia lease's count on the board as of 2026-09-15, and for a PDF
+that number can move without the document changing
+([M6](docs/READINESS.md)). It
 said *"This document does not state it"* until a playtest caught that being
 false on a document that states the fact twice
 ([H5](docs/READINESS.md), closed).
@@ -39,7 +42,10 @@ So the system cannot show you a quote that is not in your document — the quote
 
 It is a guarantee about the quote, and only about the quote. The summary above
 it is model prose, which is why it sits above the receipt rather than instead of
-one.
+one. **The summary is free text.** Nothing on the server stops the model from
+copying document words into it; the only thing asking it not to is one line of
+the prompt (`convex/extract.ts:198`). So a summary that reads like a quote is
+still a summary, and the receipt is the line under it, never the sentence above.
 
 It can still cite a true line that does not answer the question. That is why
 every citation is visible and one click from its source.
@@ -65,9 +71,19 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-14
+## Status — 2026-09-15
 
 **Live on production and answering real mail. The demo is recorded.**
+
+**2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
+interview, five of them Convex-shaped, closed and were filed in one sitting:
+two highs, four lows and one re-measured medium in
+[`docs/READINESS.md`](docs/READINESS.md), score 44 → 10. Nothing was built and
+nothing broke; every one of them has been shipping for days. One thing will be
+built before submission: a sweep-level breaker so that an upstream re-render of
+a PDF cannot mail every subscriber a change that did not happen (H10). The
+corpus on production is **16 url-backed documents — 6 public, 10 private
+forwards** — plus emailed attachments, which are never watched.
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and

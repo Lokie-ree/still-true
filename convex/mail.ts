@@ -277,8 +277,14 @@ const limiter = new RateLimiter(components.rateLimiter, {
 
 // Distinct documents one address may have. Twenty-five is well past any real
 // forwarding session and far short of a bill worth noticing: a sender at the
-// cap costs at most 25 scrapes a day, and the unchanged ones stop before the
-// model runs.
+// cap costs about 25 scrapes a day plus one burst, and the unchanged ones stop
+// before the model runs.
+//
+// "Plus one burst" because the count below reads threads whose ingest has
+// FINISHED — `attach` sets `documentId` after the scrape and two model calls —
+// so messages admitted inside that window do not count against each other. A
+// sender at 24 who mails five distinct URLs at once lands at 29. The limiter
+// above bounds the overshoot to its capacity. L13 in docs/READINESS.md.
 const DOCUMENT_CAP = 25;
 
 // M4. Who a STOP silences.
