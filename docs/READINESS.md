@@ -10,12 +10,20 @@ timestamps nobody had subtracted; they move nothing.
 **Fifth pass 2026-09-14 evening — ten flags opened, and it was a code audit that
 found them.** That pass scored **22/100**, the lowest this file has ever
 recorded. **H9, M15, L8 and L12 closed 2026-09-14 night**, the first four off that
-list, and the score is **44/100**:
-`100 − 15(H6) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×6(L3,L4,L5,L9,L10,L11)`.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44** (09-03, 09-05,
+list, and the score was **44/100**.
+**Interview filing 2026-09-15 — nine rounds of a mock judge interview, closed
+and filed in one sitting.** Two highs (H10, H11), four lows (L13–L16) and one
+amended medium (M8, re-measured), then **L17 the same evening** on review of the
+filing, and the score is **9/100**:
+`100 − 15(H6) − 15(H10) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
+Nothing was built on 09-15 and nothing broke; every one of these has been
+shipping for days. The corpus on production that day: **16 url-backed documents,
+6 public and 10 private forwards**, plus emailed attachments that are never
+watched.
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
 09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
-09-14 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-14 evening, 09-14 night, 09-15, 09-15 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
@@ -23,7 +31,18 @@ where H8, M9 and L6 all opened and closed inside one day and move nothing — an
 then **0** on 09-14 midday, where M11 and L7 did the same, and then
 `−15 H9, −5 M12, −5 M13, −5 M14, −5 M15, −1×5 (L8,L9,L10,L11,L12)` that evening,
 and then `+15 H9 closed, +5 M15 closed, +1 L8 closed, +1 L12 closed` that
-night (09-14 night).
+night (09-14 night), and then `−15 H10, −15 H11, −1×4 (L13,L14,L15,L16)` on
+09-15, where the interview's findings were filed after it closed rather than
+during it, and `−1 L17` that evening, when the review of the filing found an
+item that had been left in session memory instead of in this file.
+
+**The 09-15 flags came from a fourth way in: being interviewed.** Five of the
+nine rounds asked Convex-shaped questions — where the transaction boundary
+sits, what retries, what is atomic, what the cron overlaps, what the public
+surface returns for a private row — and every answer was traced in the code
+and, where it could be, read off production. H10 and H11 both fell out of the
+first question. Neither needed a scrape, a forward or a deploy. What they needed
+was somebody asking what happens when the network call in the middle fails.
 
 **The 09-14 pair was found by arithmetic on data this deployment had already
 stored**, which is a third way in, alongside the audits that find little and the
@@ -202,6 +221,105 @@ found by the check written to confirm the third was fixed.
 
 ## Open
 
+### H10 — an upstream re-render mails every PDF subscriber a change that did not happen (high)
+
+`convex/mail.ts:946` — the re-baseline gate keys on `PARSER_VERSION`, which is
+**our** parser's version and nobody else's. `convex/change.ts:72` — `stillSays`
+is an exact substring test. `convex/mail.ts:1005` — the notify loop runs inside
+`attach`, per document. `convex/watch.ts:117` — `sweep` enqueues sixteen
+independent work items and never looks at them again.
+
+**The mechanism.** Firecrawl changes how it renders a PDF: a dash, a pipe, where
+a table cell breaks. Every PDF's `contentHash` moves in the same sweep.
+`parserVersion` matches, because the parser that changed is not ours, so the
+re-baseline that H3 built does not fire. `diff` runs, `stillSays` misses on the
+re-rendered clause, every answered finding reports `moved` or `gone`, and every
+subscriber of every PDF is mailed that their lease changed. **Nothing in the
+system separates a re-render from a deletion**: both arrive as "the quoted
+clause is no longer in the text", and the notice is worded for the second.
+
+**Two doors, and the breaker has to stand where both pass.** The daily sweep is
+the obvious one. The other is the workpool's retry after a committed `attach`,
+on a PDF whose parse is not deterministic (**M6**): `attach` commits hash H1,
+the action is killed before it returns, the retry scrapes H2 ≠ H1, extract
+runs again, `attach` diffs against H1, and the same false notices go out.
+Both doors end in `attach`; the only place the whole corpus is in one scope is
+`watchable`, before any scrape, which is too early to count anything.
+
+**Not observed on production.** Nobody has been mailed. The evidence is
+indirect and it is all this file's own: M6 measured four line counts from one
+unchanged PDF in one afternoon, and the `parserVersion` gate exists because
+**our** parser did exactly this three times (H3). Scored by the H4 test: every
+PDF subscriber is hurt at once, by nobody's action, and the message they get
+is the one message this product promises never to send falsely. Three of the
+six public documents are PDFs; how many private forwards are is not counted.
+
+**Direction, one line:** a sweep-level breaker that counts hash flips per sweep
+and holds the notices when the count says "upstream", not "edited". This is the
+one thing that gets built before submission; see the fix order.
+
+**The n=1 hole, added 2026-09-15 evening, and it is this flag's, not M6's.**
+The first draft of this entry handed "a single PDF flips and never crosses a
+corpus threshold" to M6. That was wrong. M6 is scored as *not* a broken
+guarantee — every churn it measured left the quotes intact and sent no mail.
+The case where **one** PDF re-renders with a changed character *inside* a
+quoted clause is this mechanism exactly, at n=1, and a breaker that counts
+flips across the corpus does not see it. Three PDFs are on the public board.
+**H10 does not close on a threshold alone.** Either the build covers n=1, or
+H10 closes narrowly with this residual stated in the closed entry and the
+README does not say otherwise.
+
+What covers n=1 is not a count. It is the thing
+`firecrawl-pdf-parse-nondeterministic` already concluded on 09-08: **hash the
+source bytes.** For a url-backed PDF, fetch the file and SHA-256 it beside the
+parse. Bytes unchanged and parse moved is a re-render, at any n, and is not a
+change; bytes changed is an edit and diffs as today. One fetch per PDF per
+sweep, no Firecrawl call, one field on the row. Whether it ships inside the
+same build is decided on 09-16 against the two days it has; what is decided now
+is that it is the second half of H10, not a different flag.
+
+### H11 — a failed send silently ends the watch for that thread, and nothing repairs it (high)
+
+`convex/mail.ts:164` — `send` is one POST with no retry, and `recordSend` runs
+after it. `mail.ts:126` — `notify` returns when `repliedAt === null`.
+`mail.ts:1005–1023` — the notify loop is inside the transaction that commits the
+new `contentHash`. `mail.ts:750–762` — the early exit on a matching hash.
+
+Three cases with one consequence:
+
+1. **The reply POST fails.** `threads.error` is set, `repliedAt` stays null. The
+   sender never gets an answer, and because `notify` skips every thread with
+   `repliedAt: null`, never gets a change notice either. The `ponytail:` note at
+   `mail.ts:160` says *"a failure here writes to `threads.error` and is visible,
+   which is the property that actually matters."* Visible, and nothing reads
+   it, and nothing acts on it.
+2. **The reply POST succeeds and `recordSend` never runs** — the action dies
+   between the fetch and the mutation. The person has the answer, with the
+   WATCH paragraph in it, and is excluded from every notice forever, with no
+   error on the row to say so.
+3. **A change notice POST fails.** `threads.error` is set. The change was
+   committed with the new hash in the same transaction that scheduled the send,
+   so the next sweep hashes identical, takes the early exit, and never revisits.
+   That subscriber was promised exactly this notice and misses exactly it, while
+   the other subscribers of the same document got theirs.
+
+**Not observed.** 0 of the 29 threads on production carry a send error, read
+2026-09-15. The trigger is ordinary rather than exotic: Firecrawl 429s arrive in
+batches (M10), and on 09-04 a reply AgentMail never accepted was recorded as
+sent — the `repliedAt` history in `schema.ts` is the record of a send failing
+for real once already.
+
+**Scored 15 by the same test as H4: the person did nothing.** The disclosed
+guarantee is *"tells you when the specific thing you asked about changes"*, and
+this is the path where the system loses the ability to keep it and does not
+know that it has. The "listed, not scored" entry for `send`'s no-retry is
+withdrawn into this flag: its stated mitigation was that the failure is visible,
+and visibility with no repair is what this flag is.
+
+**Direction, one line:** write the notice owed on the thread row before the send
+is scheduled, and retry the send with an idempotency key. Not built before
+submission.
+
 ### M12 — disclosure is derived from the absence of a thread id (medium)
 
 `convex/mail.ts:901` — `isPublic: args.threadRowId === null`, on the insert
@@ -347,7 +465,34 @@ receipt is still a real sentence a reader can find. Not scored lower because the
 answer above it was wrong, on production, in a reply a person would have acted
 on.
 
-### M8 — reflow leaves a sentence broken when the wrap lands after a numeral (medium)
+### M8 — reflow leaves a sentence broken when the continuation starts with a capital (medium)
+
+**Amended 2026-09-15 with the measurement, and the numeral is not where the
+breaks are.** Sixteen enrolled URLs on prod, scraped once through the mail
+path's own Firecrawl request and run through the real `toLines` (artifacts in
+`~/.claude/handoffs/still-true-m8-measurement/`; the scraped text was not kept,
+because ten of the sixteen are private forwards).
+
+| what was counted | corpus-wide |
+|---|---|
+| wrap after a digit, the case this flag was filed on | **45** (10 would be out-run by an answer) |
+| wrap where the next line starts with a capital, which the continuation guard rejects | **476** |
+
+The residual is the capital-continuation guard, not the trailing digit, by a
+factor of ten. Livonia alone carries 79 of the 476; the Las Vegas handbook 33;
+the IPW rulebook 60. Two facts that narrow the fix: **the H6 wrap was authored
+into the fixture's HTML** — six of the seven live web ToS pages (AT&T, PayPal,
+Facebook, Spotify, Verizon, Pandora, Forever 21) have zero wraps of either
+kind, and the seventh, Grindr, is hard-wrapped at source with 283; so this is
+a PDF defect with one web exception, not a web defect. And **wrapped table
+cells do not occur in this corpus**: the SBC's 102 table rows have 0
+continuation rows, so a fix does not have to protect tables from itself.
+
+The fix is still not one character, for the reason below, and it is now
+bigger than filed: a candidate that joins 476 places has to leave *"07.
+Payments Are ⏎ Non-Refundable."* as two lines and join *"described in ⏎
+Section 1"* as one, and both start with a capital. Score unchanged; the flag
+now says what was measured. **As filed 2026-09-09:**
 
 `convex/lines.ts`, `reflow`. A wrapped line is joined only when the previous line
 ends `[a-z,;:)]` **and** the next starts `[a-z("']`. A money clause breaks both
@@ -490,6 +635,53 @@ one constant in a deploy that is happening anyway. The limiter waits.
   The sender is told the document *"came back too short to be the real thing, or
   could not be parsed"*, which is false about what happened. Today's corpus tops
   out at 2,007 lines, so this is a ceiling to name, not a fire.
+
+- **L13** `convex/mail.ts:452–461` — the 25-document cap counts threads whose
+  `documentId` is already set, and `attach` sets it after the scrape and two
+  model calls. Messages admitted inside that window count zero against each
+  other, so a sender holding 24 documents who mails five distinct URLs in one
+  burst reaches 29. The limiter bounds the overshoot to one burst — capacity 5,
+  then ten an hour — so the real ceiling is **25 plus a burst**, and the comment
+  at `mail.ts:280` said *"at most 25 scrapes a day"* until this PR. The check
+  is keyed on the wrong event: count admitted threads, not completed ones.
+- **L14** `convex/documents.ts:38` — `recent` is `take(50)` on the public index.
+  The 51st public document drops off the board silently, and the board's
+  last-sweep stamp, reduced over those rows in `App.tsx`, then reports the
+  newest of fifty rather than the corpus. Six public today; the ceiling is
+  **50 public documents**.
+- **L15** `convex/watch.ts:83` — `watchable` is `db.query("documents").take(200)`
+  with no index, over public, private and attachment rows alike. At **200 total
+  rows** the enrolled documents past the page stop being swept, with no
+  `watchError`, no gate failure and no signal of any kind. Moved here from
+  "listed, not scored" on 2026-09-15: the `ponytail:` note names the upgrade
+  but not that the failure is silent, and the sweep is the promise. Prod holds
+  16 url-backed rows plus attachments.
+- **L16** `convex/mail.ts:905–1003` — a stranger forwarding a URL that is
+  already on the public board reaches the existing row, re-runs extract, and
+  replaces every published finding with their own model run, bumping
+  `fetchedAt`. The hash matches so no notice goes out, and `title` and
+  `isPublic` are untouched, so nothing leaks. The answers can still differ —
+  2 of 47 cells on 09-04 with the documents standing still — so one email
+  re-rolls a public receipt. An influence channel, not a leak.
+- **L17** `convex/extract.ts:408` — the grounding guarantee the README calls
+  structural is one call: `excerpt(lines[lineNo - 1], claim.support_quote)`.
+  Nothing downstream re-checks it. `attach` (`mail.ts:868`) receives the full
+  `text` and every finding and never asserts that `quote` is a substring of
+  `text[lineNo - 1]` before inserting. And **nothing runs the tests between a
+  push and a deploy**: no `.github/workflows`, no `.husky`, no `hooksPath`, no
+  `prepare` script. `npm run gate` is a habit, not a gate. A one-line edit to
+  `excerpt` that broke the guarantee would reach production if the person
+  deploying skipped the habit once. Filed 2026-09-15 evening; raised in round
+  one of the interview and left in memory rather than here until it was pointed
+  out that memory is not the artifact a judge reads. Direction: the substring
+  assertion in `attach` is one line and makes the guarantee two lines instead of
+  one; a workflow that runs `npm run lint && npm test` on push is the other.
+
+**Noted 2026-09-15, not scored:** `sweep` enqueues each document in its own
+transaction (`watch.ts:127`), so a `sweep` killed after document *k* leaves the
+rest un-enqueued until tomorrow's cron, with nothing recorded. Nothing retries
+`sweep`. The cron runs again in 24 hours, which is the promised cadence, so this
+is a one-day gap at worst and it is named here rather than scored.
 
 
 ## Candidate — evidence too thin to score
@@ -1256,8 +1448,11 @@ Documented decisions with named upgrade paths:
   Svix-verified.
 - The two `as unknown as` casts against `@agentmail/convex` 0.1.0
   (`http.ts`, `mail.ts`), both carrying `ponytail:` comments.
-- `watch.watchable`'s `take(200)` and `mail.send`'s no-retry, both with a
-  `ponytail:` note naming the upgrade.
+- ~~`watch.watchable`'s `take(200)` and `mail.send`'s no-retry, both with a
+  `ponytail:` note naming the upgrade.~~ **Withdrawn 2026-09-15.** The
+  `take(200)` is **L15**: its failure is silent, which the note did not say.
+  The no-retry is inside **H11**: its stated mitigation was that the failure is
+  visible on the row, and nothing reads the row.
 - The document cap's `take(200)` over one sender's threads in `mail.received`.
   An address past 200 threads could undercount its own distinct documents; the
   limiter above it caps arrivals at ten an hour, so it cannot get there quickly,
@@ -1322,14 +1517,47 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**Rewritten 2026-09-14. The freeze is over and nine flags joined the list.**
+**Rewritten 2026-09-15, after the interview. Five days remain, the video is
+submitted, and one thing gets built.**
 
-**Updated 2026-09-14 night: H9, M15, L12 and L8 shipped together and are
-closed.** What is left, in order:
-
-**M13 → M12 → the three free reads → M8 → (measure H6 again) → M10 → M2 → M6 →
-(L3, L4, L9, L10, L11).**
+**H10's breaker → then nothing else before submission.** Everything below it is
+the order for after 09-22, carried forward unchanged:
+**M13 → M12 → the three free reads → H11 → M8 → (measure H6 again) → M10 → M2 →
+M6 → (L3, L4, L9, L10, L11, L13, L14, L15, L16).**
 M5, H5, M7, H8, M9, L6, M11, L7, H9, M15, L8 and L12 are closed.
+
+**Why H10 and not H11, when both are 15.** H11's fix is understood — a notice
+owed on the row, a retried send with an idempotency key — and it is not small,
+because a retry on `send` is only safe once the send is idempotent toward
+AgentMail, which it is not today. H10's breaker is one new mutation and one
+delay, and its design question was settled on 09-15 (see the entry dated that
+day in `hackathon.md`): change notices scheduled with a delay, their ids written
+on the thread row, cancelled by a settle step when the sweep's flip count says
+"upstream". That keeps the sends inside the transaction Q1 of the interview
+verified they live in. **The prevention-shaped alternative — moving the sends
+out of `attach` into a second phase — was considered and declined**: it
+re-architects the strongest invariant in the system with five days left, and
+this file has already recorded twice what a change to a load-bearing path costs
+the week it ships.
+
+**H11's direction has a side effect worth naming:** the ids H10's breaker writes
+on the thread row are the "notice owed" record H11 asks for. The breaker does
+not close H11, but it lays the field H11's fix reads.
+
+**The schedule, with the slack where it belongs (2026-09-15 evening).** Build
+09-16 and 09-17. Deploy the evening of 09-17 if the gate is green, else the
+morning of 09-18; nothing is run by hand after it. The 11:17 UTC cron on 09-18
+is the first receipt and 09-19 the second. Docs, the H10 closed entry with its
+residual named, and the score re-derived on 09-19. **Submit 09-20. The 21st is
+the day that is not needed.** The fallback is decided now rather than on the
+day: if the 09-18 receipt shows the breaker misbehaving, 09-18 is the fix and
+09-19 the retest; if 09-19 fails too, the breaker is reverted, H10 stays open
+with a dated note saying what was tried, and the submission goes out without
+it. **Nothing else is built before 09-22.** Everything else this week is
+documentation of what is true.
+
+**Before the rewrite, as it stood 09-14 night:** M13 → M12 → the three free
+reads → M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L9, L10, L11).
 
 **The freeze is lifted, and that is the single largest change to this file
 today.** The clause that stood here said *"nothing in this fix order happens
