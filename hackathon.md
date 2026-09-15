@@ -3436,3 +3436,17 @@ what the true one was. The `418` the README quotes is now dated and named, and
 carries M6's warning that a PDF's count can move. The cap comment at
 `mail.ts:280` said 25 exactly and now says 25 plus a burst, with the reason.
 The private-forward count is stated as 10, which is what production holds.
+
+**Same evening, on review of the filing — three corrections, score 10 → 9.**
+First, the entry above handed the single-PDF flip to M6, and that was the
+wrong flag: M6 is scored as *not* a broken guarantee because its quotes
+survived, while one PDF re-rendering a character inside a quoted clause is H10
+at n=1, which a corpus threshold cannot see. The H10 entry now says so, says
+H10 does not close on a threshold alone, and names the cover — hash the PDF's
+source bytes beside the parse, which is what the 09-08 non-determinism memory
+already concluded. Second, the round-one item about the grounding guarantee
+being one `excerpt` call with no CI between push and deploy was in session
+memory and not in the readiness file, and memory is not the artifact a judge
+reads. Filed as L17. Third, the schedule: submit is 09-20, and the 21st is the
+day that is not needed; the fallback if the breaker misbehaves on both cron
+receipts is to revert it and submit with H10 open and a dated note.

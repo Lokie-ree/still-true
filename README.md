@@ -77,8 +77,8 @@ used: the signal is consumable, so reading it spends it. See
 
 **2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
 interview, five of them Convex-shaped, closed and were filed in one sitting:
-two highs, four lows and one re-measured medium in
-[`docs/READINESS.md`](docs/READINESS.md), score 44 → 10. Nothing was built and
+two highs, five lows and one re-measured medium in
+[`docs/READINESS.md`](docs/READINESS.md), score 44 → 9. Nothing was built and
 nothing broke; every one of them has been shipping for days. One thing will be
 built before submission: a sweep-level breaker so that an upstream re-render of
 a PDF cannot mail every subscriber a change that did not happen (H10). The

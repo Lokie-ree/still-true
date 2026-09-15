@@ -13,16 +13,17 @@ recorded. **H9, M15, L8 and L12 closed 2026-09-14 night**, the first four off th
 list, and the score was **44/100**.
 **Interview filing 2026-09-15 — nine rounds of a mock judge interview, closed
 and filed in one sitting.** Two highs (H10, H11), four lows (L13–L16) and one
-amended medium (M8, re-measured), and the score is **10/100**:
-`100 − 15(H6) − 15(H10) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×10(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16)`.
+amended medium (M8, re-measured), then **L17 the same evening** on review of the
+filing, and the score is **9/100**:
+`100 − 15(H6) − 15(H10) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
 Nothing was built on 09-15 and nothing broke; every one of these has been
 shipping for days. The corpus on production that day: **16 url-backed documents,
 6 public and 10 private forwards**, plus emailed attachments that are never
 watched.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10** (09-03, 09-05,
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
 09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
-09-14 evening, 09-14 night, 09-15). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-14 evening, 09-14 night, 09-15, 09-15 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
@@ -32,7 +33,8 @@ then **0** on 09-14 midday, where M11 and L7 did the same, and then
 and then `+15 H9 closed, +5 M15 closed, +1 L8 closed, +1 L12 closed` that
 night (09-14 night), and then `−15 H10, −15 H11, −1×4 (L13,L14,L15,L16)` on
 09-15, where the interview's findings were filed after it closed rather than
-during it.
+during it, and `−1 L17` that evening, when the review of the filing found an
+item that had been left in session memory instead of in this file.
 
 **The 09-15 flags came from a fourth way in: being interviewed.** Five of the
 nine rounds asked Convex-shaped questions — where the transaction boundary
@@ -255,6 +257,26 @@ six public documents are PDFs; how many private forwards are is not counted.
 **Direction, one line:** a sweep-level breaker that counts hash flips per sweep
 and holds the notices when the count says "upstream", not "edited". This is the
 one thing that gets built before submission; see the fix order.
+
+**The n=1 hole, added 2026-09-15 evening, and it is this flag's, not M6's.**
+The first draft of this entry handed "a single PDF flips and never crosses a
+corpus threshold" to M6. That was wrong. M6 is scored as *not* a broken
+guarantee — every churn it measured left the quotes intact and sent no mail.
+The case where **one** PDF re-renders with a changed character *inside* a
+quoted clause is this mechanism exactly, at n=1, and a breaker that counts
+flips across the corpus does not see it. Three PDFs are on the public board.
+**H10 does not close on a threshold alone.** Either the build covers n=1, or
+H10 closes narrowly with this residual stated in the closed entry and the
+README does not say otherwise.
+
+What covers n=1 is not a count. It is the thing
+`firecrawl-pdf-parse-nondeterministic` already concluded on 09-08: **hash the
+source bytes.** For a url-backed PDF, fetch the file and SHA-256 it beside the
+parse. Bytes unchanged and parse moved is a re-render, at any n, and is not a
+change; bytes changed is an edit and diffs as today. One fetch per PDF per
+sweep, no Firecrawl call, one field on the row. Whether it ships inside the
+same build is decided on 09-16 against the two days it has; what is decided now
+is that it is the second half of H10, not a different flag.
 
 ### H11 — a failed send silently ends the watch for that thread, and nothing repairs it (high)
 
@@ -641,6 +663,19 @@ one constant in a deploy that is happening anyway. The limiter waits.
   `isPublic` are untouched, so nothing leaks. The answers can still differ —
   2 of 47 cells on 09-04 with the documents standing still — so one email
   re-rolls a public receipt. An influence channel, not a leak.
+- **L17** `convex/extract.ts:408` — the grounding guarantee the README calls
+  structural is one call: `excerpt(lines[lineNo - 1], claim.support_quote)`.
+  Nothing downstream re-checks it. `attach` (`mail.ts:868`) receives the full
+  `text` and every finding and never asserts that `quote` is a substring of
+  `text[lineNo - 1]` before inserting. And **nothing runs the tests between a
+  push and a deploy**: no `.github/workflows`, no `.husky`, no `hooksPath`, no
+  `prepare` script. `npm run gate` is a habit, not a gate. A one-line edit to
+  `excerpt` that broke the guarantee would reach production if the person
+  deploying skipped the habit once. Filed 2026-09-15 evening; raised in round
+  one of the interview and left in memory rather than here until it was pointed
+  out that memory is not the artifact a judge reads. Direction: the substring
+  assertion in `attach` is one line and makes the guarantee two lines instead of
+  one; a workflow that runs `npm run lint && npm test` on push is the other.
 
 **Noted 2026-09-15, not scored:** `sweep` enqueues each document in its own
 transaction (`watch.ts:127`), so a `sweep` killed after document *k* leaves the
@@ -1508,6 +1543,18 @@ the week it ships.
 **H11's direction has a side effect worth naming:** the ids H10's breaker writes
 on the thread row are the "notice owed" record H11 asks for. The breaker does
 not close H11, but it lays the field H11's fix reads.
+
+**The schedule, with the slack where it belongs (2026-09-15 evening).** Build
+09-16 and 09-17. Deploy the evening of 09-17 if the gate is green, else the
+morning of 09-18; nothing is run by hand after it. The 11:17 UTC cron on 09-18
+is the first receipt and 09-19 the second. Docs, the H10 closed entry with its
+residual named, and the score re-derived on 09-19. **Submit 09-20. The 21st is
+the day that is not needed.** The fallback is decided now rather than on the
+day: if the 09-18 receipt shows the breaker misbehaving, 09-18 is the fix and
+09-19 the retest; if 09-19 fails too, the breaker is reverted, H10 stays open
+with a dated note saying what was tried, and the submission goes out without
+it. **Nothing else is built before 09-22.** Everything else this week is
+documentation of what is true.
 
 **Before the rewrite, as it stood 09-14 night:** M13 → M12 → the three free
 reads → M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L9, L10, L11).
