@@ -1544,16 +1544,21 @@ the week it ships.
 on the thread row are the "notice owed" record H11 asks for. The breaker does
 not close H11, but it lays the field H11's fix reads.
 
-**The schedule, with the slack where it belongs (2026-09-15 evening).** Build
-09-16 and 09-17. Deploy the evening of 09-17 if the gate is green, else the
-morning of 09-18; nothing is run by hand after it. The 11:17 UTC cron on 09-18
-is the first receipt and 09-19 the second. Docs, the H10 closed entry with its
-residual named, and the score re-derived on 09-19. **Submit 09-20. The 21st is
-the day that is not needed.** The fallback is decided now rather than on the
-day: if the 09-18 receipt shows the breaker misbehaving, 09-18 is the fix and
-09-19 the retest; if 09-19 fails too, the breaker is reverted, H10 stays open
-with a dated note saying what was tried, and the submission goes out without
-it. **Nothing else is built before 09-22.** Everything else this week is
+**The schedule, with the slack where it belongs (2026-09-15 evening; corrected
+the same night).** Build 09-16 and 09-17. **Deploy by the evening of 09-17**,
+because the receipt is the 11:17 UTC cron and a "morning" deploy on the 18th
+only counts if it lands before 11:17 UTC, which is before 07:00 anywhere in the
+US. Nothing is run by hand after the deploy. The 09-18 cron is the first
+receipt and 09-19 the second. Docs, the H10 closed entry with its residual
+named, and the score re-derived on 09-19. **Submit 09-20 (Sunday). The 21st is
+the day that is not needed.** If the build slips, the deploy waits for the
+evening of 09-18, the receipts are 09-19 and 09-20, and the submission goes
+out the evening of 09-20; any later than that and the breaker does not ship.
+The fallback is decided now rather than on the day: if the first receipt shows
+the breaker misbehaving, that day is the fix and the next cron the retest; if
+the second receipt fails too, the breaker is reverted, H10 stays open with a
+dated note saying what was tried, and the submission goes out without it.
+**Nothing else is built before 09-22.** Everything else this week is
 documentation of what is true.
 
 **Before the rewrite, as it stood 09-14 night:** M13 → M12 → the three free
