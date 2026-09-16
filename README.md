@@ -138,9 +138,9 @@ forwards** — plus emailed attachments, which are never watched.
   thread now; apologies, rate-limit notices and unsubscribe confirmations go to
   whoever wrote.
 
-The public board carries six documents, 35 answered findings and 12 refusals, as
-of the `npm run gate` run on 2026-09-14. It said 36 and 11 on 09-07, 37 and 10
-the day before that, and 35 and 12 the day before that. The counts move on their own: two deployments reading
+The public board carries six documents, 36 answered findings and 11 refusals, as
+of the `npm run gate` run on 2026-09-15. It said 35 and 12 on 09-14, 36 and 11 on
+09-07, 37 and 10 the day before that, and 35 and 12 the day before that. The counts move on their own: two deployments reading
 these same six documents hours apart on 09-04 disagreed on 2 of 47 cells with
 nothing about the documents changing, so a cell crossing between answered and
 refused overnight is the expected amount of drift, not a finding. This system
@@ -150,7 +150,7 @@ to put beside it.
 
 Which is why this paragraph is the least trustworthy thing on the page, and why
 `npm run gate` reads the numbers off production rather than believing it. It has
-now caught this sentence drifting three times.
+now caught this sentence drifting four times.
 
 - Build log and every decision, including the ones that were reversed: [`hackathon.md`](hackathon.md)
 - **Known open issues, scored, with a fix order: [`docs/READINESS.md`](docs/READINESS.md)**
@@ -188,8 +188,12 @@ Runnable by hand against a deployment:
 
 ```sh
 npx convex run mail:probe '{"url":"https://example.com/terms"}'   # read one URL into the public corpus
-npx convex run watch:sweep                                        # re-check every watched document now
+npx convex run watch:recheck '{"documentId":"...","url":"...","title":"..."}'   # re-check ONE document now
 ```
+
+`watch:sweep` is deliberately not listed. It fans out over every watched
+document, including strangers' private forwards, and the 11:17 UTC cron is the
+only thing that should call it. `recheck` is the hand-runnable unit.
 
 `AGENTMAIL_API_KEY`, `FIRECRAWL_API_KEY`, `OPENAI_API_KEY` and `OPENAI_MODEL`
 are Convex deployment environment variables, never files in this repository. Set

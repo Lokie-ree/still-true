@@ -226,7 +226,7 @@ found by the check written to confirm the third was fixed.
 `convex/mail.ts:946` — the re-baseline gate keys on `PARSER_VERSION`, which is
 **our** parser's version and nobody else's. `convex/change.ts:72` — `stillSays`
 is an exact substring test. `convex/mail.ts:1005` — the notify loop runs inside
-`attach`, per document. `convex/watch.ts:117` — `sweep` enqueues sixteen
+`attach`, per document. `convex/watch.ts:109` — `sweep` enqueues sixteen
 independent work items and never looks at them again.
 
 **The mechanism.** Firecrawl changes how it renders a PDF: a dash, a pipe, where
@@ -644,7 +644,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
   then ten an hour — so the real ceiling is **25 plus a burst**, and the comment
   at `mail.ts:280` said *"at most 25 scrapes a day"* until this PR. The check
   is keyed on the wrong event: count admitted threads, not completed ones.
-- **L14** `convex/documents.ts:38` — `recent` is `take(50)` on the public index.
+- **L14** `convex/documents.ts:23` — `recent` is `take(50)` on the public index.
   The 51st public document drops off the board silently, and the board's
   last-sweep stamp, reduced over those rows in `App.tsx`, then reports the
   newest of fifty rather than the corpus. Six public today; the ceiling is
@@ -678,7 +678,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
   one; a workflow that runs `npm run lint && npm test` on push is the other.
 
 **Noted 2026-09-15, not scored:** `sweep` enqueues each document in its own
-transaction (`watch.ts:127`), so a `sweep` killed after document *k* leaves the
+transaction (`watch.ts:109`), so a `sweep` killed after document *k* leaves the
 rest un-enqueued until tomorrow's cron, with nothing recorded. Nothing retries
 `sweep`. The cron runs again in 24 hours, which is the promised cadence, so this
 is a one-day gap at worst and it is named here rather than scored.
@@ -1501,6 +1501,16 @@ point of a log:
 - **Line numbers inside dated log entries** point into the tree as it stood that
   day. Whether one was right when written cannot be decided by reading today's
   file.
+- **A citation's verdict is decided by the rarest backticked token within four
+  lines of it (2026-09-15).** When one sentence names two loci in one file, that
+  token can belong to the other clause, and the verdict is then wrong about a
+  citation that is right. Four of the seven DRIFTED citations on the 09-15 run
+  were this: `change.ts:72`, `mail.ts:164`, `mail.ts:1005` and `mail.ts:868`
+  were each read with `sed -n` and left alone. The `watch.ts` pointer in H10 was
+  a real error, and after it was corrected to L109 it is flagged for the same
+  reason the other four are — so the run ends at five DRIFTED citations, all
+  five of them right. **A DRIFTED citation is an instruction to open the file,
+  not a defect on its own.**
 
 The general gap is unchanged and worth stating plainly: the reconciler checks a
 link for a **status code**, not for saying what the doc says it says. HTTP 200

@@ -3450,3 +3450,52 @@ memory and not in the readiness file, and memory is not the artifact a judge
 reads. Filed as L17. Third, the schedule: submit is 09-20, and the 21st is the
 day that is not needed; the fallback if the breaker misbehaves on both cron
 receipts is to revert it and submit with H10 open and a dated note.
+
+## 2026-09-15, night — the reconciler was right twice and wrong five times, and both halves are the finding
+
+`bash scripts/reconcile.sh` before touching anything: **CONFIRMED 106, DRIFTED
+7, UNVERIFIABLE 36.** All seven drifts were line-number citations in
+`docs/READINESS.md`, and reading them one at a time is what the report's own
+preamble asks for.
+
+**Two were real, and both pointed at the same wrong place.** H10 said `sweep`
+enqueues its work at `convex/watch.ts:117`; L117 is a comment inside `failed`,
+the M3 mutation. The *Noted, not scored* item under H10 said the per-document
+transaction was at `watch.ts:127`; L127 is `watchError: args.error.slice(0,
+500)`, also inside `failed`. The enqueue loop is `watch.ts:109–111`, and both
+now say so. L14's `documents.ts:38` moved to `:23`, where `recent` is defined,
+which is the locus the report named.
+
+**Five were the heuristic, not the doc.** A citation's verdict is decided by
+the rarest backticked token within four lines of it, so in a paragraph naming
+four loci in three files the deciding token routinely belongs to another
+clause. `change.ts:72` (`stillSays`), `mail.ts:164` (`send`), `mail.ts:1005`
+(the notify loop) and `mail.ts:868` (`attach`'s `text` arg) were each opened
+with `sed -n` and are each correct; `watch.ts:109` joins them now that its real
+error is fixed. Nothing was edited to make them pass. Splitting the H10 and H11
+paragraphs into one bullet per locus would clear two of the five and would be
+formatting written for a script, so it was not done. The limitation is now a
+bullet under *Coverage* instead.
+
+DRIFTED **7 → 5**. UNVERIFIABLE **36 → 40**, all four of them the file:line
+tokens that new Coverage bullet quotes — the count grows when the docs describe
+the code more precisely, which is why it is not a score.
+
+**And the gate caught the board paragraph a fourth time.** `npm run gate` on
+prod: 7/7, 16 documents, none failing a re-check, last sweep 12.8h ago. But
+**36 answered and 11 refusals**, against the 35 and 12 the README carried from
+09-14 — one cell crossed back overnight with the documents standing still,
+which is the drift that paragraph exists to describe. Updated, and its own
+tally of how many times it has been caught now reads four.
+
+Nothing was built. H10's breaker is still the one thing left.
+
+**Addendum, same night.** The README advertised `npx convex run watch:sweep`
+under *Runnable by hand*, which is the one thing the shoot rules say never to
+run by hand — it fans out over strangers' private forwards. Replaced with
+`watch:recheck`, and with a sentence saying why `sweep` is absent rather than
+leaving a gap a reader would fill by guessing. `recheck` takes
+`{documentId, url, title}`, not a bare `documentId`; `CLAUDE.md` says "takes one
+`documentId`", which is the shape of the idea and not the signature. No
+reconciler check reads a fenced command block, so nothing would have caught
+this — it was found by reading the page.
