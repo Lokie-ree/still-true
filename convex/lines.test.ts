@@ -4,7 +4,7 @@
 // in the product is an index into its output, so it gets the one check.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { toLines } from "./lines.ts";
+import { PARSER_VERSION, toLines, unchangedUpstream } from "./lines.ts";
 
 void test("rejoins a clause a PDF hard-wrapped at the visual column", () => {
   const lines = toLines(
@@ -153,4 +153,62 @@ void test("pipes are trimmed after reflow, so the join guard still holds", () =>
     "Fees, charges,",
     "rent | monthly",
   ]);
+});
+
+// H10. This predicate is the only thing standing between a vendor re-rendering
+// a PDF and every subscriber being told their lease changed, so each way it can
+// answer "yes" wrongly gets a line.
+void test("the upstream shortcut fires only on identical bytes and our own parser", () => {
+  const same = { sourceHash: "aa", priorSourceHash: "aa" };
+
+  // The one case it may suppress: same bytes, same parser.
+  assert.equal(
+    unchangedUpstream({ ...same, priorParserVersion: PARSER_VERSION }),
+    true,
+  );
+
+  // Bytes moved. Whatever that is, it is not this flag, and it diffs as always.
+  assert.equal(
+    unchangedUpstream({
+      sourceHash: "ab",
+      priorSourceHash: "aa",
+      priorParserVersion: PARSER_VERSION,
+    }),
+    false,
+  );
+
+  // OUR parser moved. The bytes are irrelevant: the stored quotes came out of a
+  // different `toLines` and the row owes the full re-baseline (H3).
+  assert.equal(
+    unchangedUpstream({ ...same, priorParserVersion: PARSER_VERSION - 1 }),
+    false,
+  );
+  assert.equal(unchangedUpstream({ ...same, priorParserVersion: null }), false);
+
+  // Absent on either side is never a match — a failed fetch and a row written
+  // before this field both have to read the way they read yesterday.
+  assert.equal(
+    unchangedUpstream({
+      sourceHash: null,
+      priorSourceHash: null,
+      priorParserVersion: PARSER_VERSION,
+    }),
+    false,
+  );
+  assert.equal(
+    unchangedUpstream({
+      sourceHash: "aa",
+      priorSourceHash: null,
+      priorParserVersion: PARSER_VERSION,
+    }),
+    false,
+  );
+  assert.equal(
+    unchangedUpstream({
+      sourceHash: null,
+      priorSourceHash: "aa",
+      priorParserVersion: PARSER_VERSION,
+    }),
+    false,
+  );
 });

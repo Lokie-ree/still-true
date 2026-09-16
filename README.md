@@ -71,17 +71,27 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-15
+## Status — 2026-09-16
 
 **Live on production and answering real mail. The demo is recorded.**
+
+**2026-09-16 — the last build, and it was one field.** A re-check now hashes the
+document's **source bytes** before the scrape and stops when they are the bytes
+it last read. That closes H10: an upstream renderer changing how it lays out a
+PDF — a dash, a pipe, where a table cell breaks — used to move every PDF's
+content hash in the same sweep and mail every subscriber that their lease had
+changed. Identical bytes cannot be a changed document, so it holds for one PDF
+as well as for all of them, which a corpus-wide flip count could not. Score
+9 → 24. **Verified on dev, not yet on production** — the receipt is the 11:17
+UTC cron, and this line says "dev" until that run exists.
 
 **2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
 interview, five of them Convex-shaped, closed and were filed in one sitting:
 two highs, five lows and one re-measured medium in
 [`docs/READINESS.md`](docs/READINESS.md), score 44 → 9. Nothing was built and
-nothing broke; every one of them has been shipping for days. One thing will be
-built before submission: a sweep-level breaker so that an upstream re-render of
-a PDF cannot mail every subscriber a change that did not happen (H10). The
+nothing broke; every one of them has been shipping for days. The one thing it
+said would be built before submission was H10, and it was built the next day —
+smaller than the design it had, because a measurement was run first. The
 corpus on production is **16 url-backed documents — 6 public, 10 private
 forwards** — plus emailed attachments, which are never watched.
 
@@ -169,7 +179,7 @@ now caught this sentence drifting four times.
 npm install
 npm run dev        # convex dev + vite
 npm run lint       # typecheck + eslint
-npm test           # 98 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword, the link unwrapper, the sender grammar
+npm test           # 99 tests, all pure: extraction, lines, change detection, reply wording, the unsubscribe keyword, the link unwrapper, the sender grammar, the upstream-bytes gate
 npm run gate       # lint + test, then seven read-only checks against production
 npm run deploy     # build, push functions, upload static files
 
