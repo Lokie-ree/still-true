@@ -15,15 +15,21 @@ list, and the score was **44/100**.
 and filed in one sitting.** Two highs (H10, H11), four lows (L13–L16) and one
 amended medium (M8, re-measured), then **L17 the same evening** on review of the
 filing, and the score is **9/100**:
-`100 − 15(H6) − 15(H10) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
+`100 − 15(H6) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
 Nothing was built on 09-15 and nothing broke; every one of these has been
 shipping for days. The corpus on production that day: **16 url-backed documents,
 6 public and 10 private forwards**, plus emailed attachments that are never
 watched.
-Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9** (09-03, 09-05,
+**H10 closed 2026-09-16 — the one build this file said was left.** Not by the
+breaker it designed on 09-15, but by the smaller thing the same entry named as
+covering the n=1 hole: hash the source bytes. A measurement run before any code
+found all four watched PDFs byte-identical across two fetches, which is what
+made the smaller fix the sufficient one. Score **9 → 24**.
+
+Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9 → 24** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
 09-09 midday, 09-09 afternoon, 09-09 evening, 09-09 night, 09-11, 09-14 midday,
-09-14 evening, 09-14 night, 09-15, 09-15 evening). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
+09-14 evening, 09-14 night, 09-15, 09-15 evening, 09-16). The deltas are `+15 H1 closed, +5 M1 closed, −5 M3, −5 M4, −1 L5`, then
 `+15 H2 closed`, then `+5 M4 closed, −15 H3 opened`, then `+15 H3 closed, +5 M3
 closed`, then `−15 H4 opened, −5 M5 opened`, then `+15 H4 closed, −5 M6 opened`,
 then `+5 M5 closed`, then `−15 H5, −5 M7, −5 M8`, then `+15 H5 closed, +5 M7 closed`, then `−15 H6`, then `−5 M10` — 2026-09-11,
@@ -34,7 +40,8 @@ and then `+15 H9 closed, +5 M15 closed, +1 L8 closed, +1 L12 closed` that
 night (09-14 night), and then `−15 H10, −15 H11, −1×4 (L13,L14,L15,L16)` on
 09-15, where the interview's findings were filed after it closed rather than
 during it, and `−1 L17` that evening, when the review of the filing found an
-item that had been left in session memory instead of in this file.
+item that had been left in session memory instead of in this file, and then
+`+15 H10 closed` on 09-16.
 
 **The 09-15 flags came from a fourth way in: being interviewed.** Five of the
 nine rounds asked Convex-shaped questions — where the transaction boundary
@@ -221,76 +228,19 @@ found by the check written to confirm the third was fixed.
 
 ## Open
 
-### H10 — an upstream re-render mails every PDF subscriber a change that did not happen (high)
-
-`convex/mail.ts:946` — the re-baseline gate keys on `PARSER_VERSION`, which is
-**our** parser's version and nobody else's. `convex/change.ts:72` — `stillSays`
-is an exact substring test. `convex/mail.ts:1005` — the notify loop runs inside
-`attach`, per document. `convex/watch.ts:109` — `sweep` enqueues sixteen
-independent work items and never looks at them again.
-
-**The mechanism.** Firecrawl changes how it renders a PDF: a dash, a pipe, where
-a table cell breaks. Every PDF's `contentHash` moves in the same sweep.
-`parserVersion` matches, because the parser that changed is not ours, so the
-re-baseline that H3 built does not fire. `diff` runs, `stillSays` misses on the
-re-rendered clause, every answered finding reports `moved` or `gone`, and every
-subscriber of every PDF is mailed that their lease changed. **Nothing in the
-system separates a re-render from a deletion**: both arrive as "the quoted
-clause is no longer in the text", and the notice is worded for the second.
-
-**Two doors, and the breaker has to stand where both pass.** The daily sweep is
-the obvious one. The other is the workpool's retry after a committed `attach`,
-on a PDF whose parse is not deterministic (**M6**): `attach` commits hash H1,
-the action is killed before it returns, the retry scrapes H2 ≠ H1, extract
-runs again, `attach` diffs against H1, and the same false notices go out.
-Both doors end in `attach`; the only place the whole corpus is in one scope is
-`watchable`, before any scrape, which is too early to count anything.
-
-**Not observed on production.** Nobody has been mailed. The evidence is
-indirect and it is all this file's own: M6 measured four line counts from one
-unchanged PDF in one afternoon, and the `parserVersion` gate exists because
-**our** parser did exactly this three times (H3). Scored by the H4 test: every
-PDF subscriber is hurt at once, by nobody's action, and the message they get
-is the one message this product promises never to send falsely. Three of the
-six public documents are PDFs; how many private forwards are is not counted.
-
-**Direction, one line:** a sweep-level breaker that counts hash flips per sweep
-and holds the notices when the count says "upstream", not "edited". This is the
-one thing that gets built before submission; see the fix order.
-
-**The n=1 hole, added 2026-09-15 evening, and it is this flag's, not M6's.**
-The first draft of this entry handed "a single PDF flips and never crosses a
-corpus threshold" to M6. That was wrong. M6 is scored as *not* a broken
-guarantee — every churn it measured left the quotes intact and sent no mail.
-The case where **one** PDF re-renders with a changed character *inside* a
-quoted clause is this mechanism exactly, at n=1, and a breaker that counts
-flips across the corpus does not see it. Three PDFs are on the public board.
-**H10 does not close on a threshold alone.** Either the build covers n=1, or
-H10 closes narrowly with this residual stated in the closed entry and the
-README does not say otherwise.
-
-What covers n=1 is not a count. It is the thing
-`firecrawl-pdf-parse-nondeterministic` already concluded on 09-08: **hash the
-source bytes.** For a url-backed PDF, fetch the file and SHA-256 it beside the
-parse. Bytes unchanged and parse moved is a re-render, at any n, and is not a
-change; bytes changed is an edit and diffs as today. One fetch per PDF per
-sweep, no Firecrawl call, one field on the row. Whether it ships inside the
-same build is decided on 09-16 against the two days it has; what is decided now
-is that it is the second half of H10, not a different flag.
-
 ### H11 — a failed send silently ends the watch for that thread, and nothing repairs it (high)
 
-`convex/mail.ts:164` — `send` is one POST with no retry, and `recordSend` runs
-after it. `mail.ts:126` — `notify` returns when `repliedAt === null`.
-`mail.ts:1005–1023` — the notify loop is inside the transaction that commits the
-new `contentHash`. `mail.ts:750–762` — the early exit on a matching hash.
+`convex/mail.ts:170` — `send` is one POST with no retry, and `recordSend` runs
+after it. `mail.ts:132` — `notify` returns when `repliedAt === null`.
+`mail.ts:1085–1103` — the notify loop is inside the transaction that commits the
+new `contentHash`. `mail.ts:788–830` — the early exit on a matching hash.
 
 Three cases with one consequence:
 
 1. **The reply POST fails.** `threads.error` is set, `repliedAt` stays null. The
    sender never gets an answer, and because `notify` skips every thread with
    `repliedAt: null`, never gets a change notice either. The `ponytail:` note at
-   `mail.ts:160` says *"a failure here writes to `threads.error` and is visible,
+   `mail.ts:166` says *"a failure here writes to `threads.error` and is visible,
    which is the property that actually matters."* Visible, and nothing reads
    it, and nothing acts on it.
 2. **The reply POST succeeds and `recordSend` never runs** — the action dies
@@ -322,13 +272,13 @@ submission.
 
 ### M12 — disclosure is derived from the absence of a thread id (medium)
 
-`convex/mail.ts:901` — `isPublic: args.threadRowId === null`, on the insert
+`convex/mail.ts:976` — `isPublic: args.threadRowId === null`, on the insert
 branch. `watch.recheck` passes `threadRowId: null` for **every** url-backed
 document (`watch.ts:169`), private forwards included, because a re-check is
 genuinely not an answer to anybody's message.
 
 So a private document stays private across a re-check only because the `by_url`
-lookup at `mail.ts:806` never misses. Let it miss once — the row deleted between
+lookup at `mail.ts:875` never misses. Let it miss once — the row deleted between
 the workpool enqueueing the re-check and `attach` running, and the pool retries
 at 0s, 60s and 120s — and the row is re-created **public**, carrying the title
 that fell back to the sender's own subject line. That is H1's leak, arriving
@@ -348,7 +298,7 @@ argument of `attach` — `true` from `probe`, `false` from `ingest`, `false` fro
 ### M13 — the gate's sweep receipt can be minted by hand, and by a stranger (medium)
 
 `scripts/gate.mjs:161` takes `Math.max` over every public document's
-`lastCheckedAt`; `convex/mail.ts:825` stamps that field on **every** re-read of
+`lastCheckedAt`; `convex/mail.ts:895` stamps that field on **every** re-read of
 an existing row — which includes an inbound forward and a hand-run `mail:probe`,
 not only the watch.
 
@@ -375,8 +325,8 @@ watch's stamp distinct from a read's, so only `checked`/`recheck` set
 
 ### M14 — `From` is attacker-controlled, and three gates key on it (medium)
 
-`convex/mail.ts:391` parses the sender; `stopFor` (`mail.ts:304`), the burst
-limiter key (`mail.ts:393`) and the 25-document cap (`mail.ts:393`) all key on
+`convex/mail.ts:397` parses the sender; `stopFor` (`mail.ts:310`), the burst
+limiter key (`mail.ts:399`) and the 25-document cap (`mail.ts:399`) all key on
 the result. Svix verifies the **webhook**; nothing verifies the **sender**.
 Confirmed absent: `dkim`, `spf`, `dmarc` and `authentication_results` appear
 nowhere in `convex/`.
@@ -556,7 +506,7 @@ would mean finding what actually varies first.
 
 ### M2 — attachment documents never dedupe (medium)
 
-`convex/mail.ts:878`. `attach` skips the `by_url` lookup when `url === null`,
+`convex/mail.ts:952`. `attach` skips the `by_url` lookup when `url === null`,
 which is every forwarded attachment.
 
 Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
@@ -609,17 +559,17 @@ one constant in a deploy that is happening anyway. The limiter waits.
 - **L3** `convex/documents.ts:28` — `recent` orders by `_creationTime`, but a
   re-read patches `fetchedAt`. A freshly re-checked document never resurfaces
   on the board. Needs a `by_fetchedAt` index if freshness is the intent.
-- **L4** `convex/mail.ts:347` — an unrecognized payload is dropped with
+- **L4** `convex/mail.ts:353` — an unrecognized payload is dropped with
   `console.error` and no record, which is invisible in a deployment that
   retains no failure logs.
-- **L5** `convex/mail.ts:1009` — `attach` notifies at most `.take(100)` threads.
+- **L5** `convex/mail.ts:1089` — `attach` notifies at most `.take(100)` threads.
   Subscriber 101 is silently never told the clause moved, which is the one
   thing the watch exists to do. Unlike the other bounded reads, this one
   carries no `ponytail:` note naming its ceiling.
 
-- **L9** `convex/schema.ts:172` — `findings.by_documentId_and_questionKey` is
+- **L9** `convex/schema.ts:189` — `findings.by_documentId_and_questionKey` is
   declared and never queried. The only reads are `by_documentId`
-  (`documents.ts:61`, `mail.ts:806`, `mail.ts:1046`), which the compound index
+  (`documents.ts:61`, `mail.ts:875`, `mail.ts:1126`), which the compound index
   also covers, so one of the two is dead whichever way it is resolved. `attach`
   deletes and re-inserts the whole finding set on every re-read and pays index
   maintenance on both.
@@ -627,7 +577,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
   `convex/_generated/ai/guidelines.md` says to use `crons.interval` or
   `crons.cron` and *not* the `hourly`/`daily`/`weekly` helpers.
   `crons.cron("17 11 * * *", …)` is the same line and the same 11:17.
-- **L11** `convex/mail.ts:862` — `text: v.array(v.string())` carries the whole
+- **L11** `convex/mail.ts:932` — `text: v.array(v.string())` carries the whole
   document as a mutation argument, and a Convex array is capped at **8,192
   elements**. `MAX_PROMPT_CHARS` is 600,000, so a document averaging under ~73
   characters a line — which markdown from a PDF usually is, being mostly short
@@ -636,13 +586,13 @@ one constant in a deploy that is happening anyway. The limiter waits.
   could not be parsed"*, which is false about what happened. Today's corpus tops
   out at 2,007 lines, so this is a ceiling to name, not a fire.
 
-- **L13** `convex/mail.ts:452–461` — the 25-document cap counts threads whose
+- **L13** `convex/mail.ts:458–467` — the 25-document cap counts threads whose
   `documentId` is already set, and `attach` sets it after the scrape and two
   model calls. Messages admitted inside that window count zero against each
   other, so a sender holding 24 documents who mails five distinct URLs in one
   burst reaches 29. The limiter bounds the overshoot to one burst — capacity 5,
   then ten an hour — so the real ceiling is **25 plus a burst**, and the comment
-  at `mail.ts:280` said *"at most 25 scrapes a day"* until this PR. The check
+  at `mail.ts:286` said *"at most 25 scrapes a day"* until this PR. The check
   is keyed on the wrong event: count admitted threads, not completed ones.
 - **L14** `convex/documents.ts:23` — `recent` is `take(50)` on the public index.
   The 51st public document drops off the board silently, and the board's
@@ -656,7 +606,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
   "listed, not scored" on 2026-09-15: the `ponytail:` note names the upgrade
   but not that the failure is silent, and the sweep is the promise. Prod holds
   16 url-backed rows plus attachments.
-- **L16** `convex/mail.ts:905–1003` — a stranger forwarding a URL that is
+- **L16** `convex/mail.ts:980–1083` — a stranger forwarding a URL that is
   already on the public board reaches the existing row, re-runs extract, and
   replaces every published finding with their own model run, bumping
   `fetchedAt`. The hash matches so no notice goes out, and `title` and
@@ -665,7 +615,7 @@ one constant in a deploy that is happening anyway. The limiter waits.
   re-rolls a public receipt. An influence channel, not a leak.
 - **L17** `convex/extract.ts:408` — the grounding guarantee the README calls
   structural is one call: `excerpt(lines[lineNo - 1], claim.support_quote)`.
-  Nothing downstream re-checks it. `attach` (`mail.ts:868`) receives the full
+  Nothing downstream re-checks it. `attach` (`mail.ts:942`) receives the full
   `text` and every finding and never asserts that `quote` is a substring of
   `text[lineNo - 1]` before inserting. And **nothing runs the tests between a
   push and a deploy**: no `.github/workflows`, no `.husky`, no `hooksPath`, no
@@ -778,7 +728,7 @@ system can see.
 
 
 **An HTML-only message's STOP is not an unsubscribe, and its link is not a
-document.** `convex/mail.ts:374` (link extraction) and `mail.ts:427` (the STOP
+document.** `convex/mail.ts:380` (link extraction) and `mail.ts:433` (the STOP
 test) both read `readString(message, "text")` and fall back to `""`. Nothing in
 `mail.ts` reads an `html` part — grepped, and `html` appears only on the
 outbound side. If AgentMail ever delivers a message whose text part is absent or
@@ -859,6 +809,52 @@ Confirm before acting: run
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
 ## Closed — do not re-flag
+
+- **H10 (an upstream re-render mailed every PDF subscriber a change that did
+  not happen)** opened 2026-09-15, closed 2026-09-16. **Not by the breaker this
+  file spent a day designing.** The fix is one field: `documents.sourceHash`,
+  a SHA-256 of the source bytes taken before the scrape, and a re-check that
+  stops when the bytes are the ones it last read and our own parser has not
+  moved. Identical bytes cannot be a changed document, so it holds at n=1 —
+  which is the half a corpus-wide flip count structurally could not see, and
+  the reason this flag was written as not closable on a threshold alone.
+
+  **The measurement that chose it, run 2026-09-16 before any code.** All four
+  watched PDFs returned byte-identical responses to two consecutive fetches;
+  none failed. Six of twelve HTML pages churned — session ids and timestamps —
+  which costs nothing, because the hash is only ever read to SUPPRESS. A hash
+  that differs, or is absent, falls through to exactly the behaviour that
+  shipped without it.
+
+  **What it did not cost.** The delay-and-cancel breaker moved change notices
+  out of the transaction that commits the findings, and the 09-15 entry
+  declined to re-architect the system's strongest invariant with five days
+  left. This does not touch it. It also does not owe the board-stamp cleanup
+  that design left open: nothing is stamped, because `attach` is never reached.
+
+  **The hole found by running it rather than reading it.** The first
+  implementation wrote `sourceHash` only in `attach`. A document that reads
+  identically stops at the `contentHash` gate and never reaches `attach`, so
+  the baseline would have first appeared on the very sweep where the parse
+  moved — one transaction after the notices went out, having suppressed
+  nothing, ever. `mail.checked` advances it too now. Caught on dev by reading
+  the row after a re-check, not by the type checker.
+
+  **Verified on dev `charming-kookabura-768` 2026-09-16, not on production.**
+  The proving run staged the flag's own condition: `toLines` perturbed to
+  append a character to every line *without* bumping `PARSER_VERSION` — same
+  bytes, moved parse, our parser unmoved, which is what a Firecrawl re-render
+  looks like from inside this system. `watch:recheck` on the Livonia lease
+  returned clean and left `contentHash` on `0f983ede…`, untouched. `recheck`
+  rethrows on failure, so the scrape succeeded; the only path that leaves
+  `contentHash` standing after a parse that provably differs is the new gate.
+  The perturbation was reverted and dev redeployed before commit.
+
+  **The residual, stated rather than scored.** HTML pages whose bytes churn get
+  no suppression from this — the hash never matches, so they behave exactly as
+  they did yesterday. H10 was written about PDFs and closes about PDFs. If a
+  vendor ever re-renders *HTML* corpus-wide, the flip-count breaker is still
+  the instrument for it, and its design is in the 09-15 log entry unspent.
 
 - **M15 (four comments described the Firecrawl design this project rejected)**
   closed 2026-09-14, in the H9 PR as the flag asked. All four rewritten: the
@@ -1440,6 +1436,63 @@ the score measures what is open, not how embarrassing it is.
 - Dev-only legacy rows lacking `isPublic` read as private and stay off the
   board. Safe direction, and not present on prod.
 
+### H10, as it was written (the flag this closed)
+
+`convex/mail.ts:946` — the re-baseline gate keys on `PARSER_VERSION`, which is
+**our** parser's version and nobody else's. `convex/change.ts:72` — `stillSays`
+is an exact substring test. `convex/mail.ts:1005` — the notify loop runs inside
+`attach`, per document. `convex/watch.ts:109` — `sweep` enqueues sixteen
+independent work items and never looks at them again.
+
+**The mechanism.** Firecrawl changes how it renders a PDF: a dash, a pipe, where
+a table cell breaks. Every PDF's `contentHash` moves in the same sweep.
+`parserVersion` matches, because the parser that changed is not ours, so the
+re-baseline that H3 built does not fire. `diff` runs, `stillSays` misses on the
+re-rendered clause, every answered finding reports `moved` or `gone`, and every
+subscriber of every PDF is mailed that their lease changed. **Nothing in the
+system separates a re-render from a deletion**: both arrive as "the quoted
+clause is no longer in the text", and the notice is worded for the second.
+
+**Two doors, and the breaker has to stand where both pass.** The daily sweep is
+the obvious one. The other is the workpool's retry after a committed `attach`,
+on a PDF whose parse is not deterministic (**M6**): `attach` commits hash H1,
+the action is killed before it returns, the retry scrapes H2 ≠ H1, extract
+runs again, `attach` diffs against H1, and the same false notices go out.
+Both doors end in `attach`; the only place the whole corpus is in one scope is
+`watchable`, before any scrape, which is too early to count anything.
+
+**Not observed on production.** Nobody has been mailed. The evidence is
+indirect and it is all this file's own: M6 measured four line counts from one
+unchanged PDF in one afternoon, and the `parserVersion` gate exists because
+**our** parser did exactly this three times (H3). Scored by the H4 test: every
+PDF subscriber is hurt at once, by nobody's action, and the message they get
+is the one message this product promises never to send falsely. Three of the
+six public documents are PDFs; how many private forwards are is not counted.
+
+**Direction, one line:** a sweep-level breaker that counts hash flips per sweep
+and holds the notices when the count says "upstream", not "edited". This is the
+one thing that gets built before submission; see the fix order.
+
+**The n=1 hole, added 2026-09-15 evening, and it is this flag's, not M6's.**
+The first draft of this entry handed "a single PDF flips and never crosses a
+corpus threshold" to M6. That was wrong. M6 is scored as *not* a broken
+guarantee — every churn it measured left the quotes intact and sent no mail.
+The case where **one** PDF re-renders with a changed character *inside* a
+quoted clause is this mechanism exactly, at n=1, and a breaker that counts
+flips across the corpus does not see it. Three PDFs are on the public board.
+**H10 does not close on a threshold alone.** Either the build covers n=1, or
+H10 closes narrowly with this residual stated in the closed entry and the
+README does not say otherwise.
+
+What covers n=1 is not a count. It is the thing
+`firecrawl-pdf-parse-nondeterministic` already concluded on 09-08: **hash the
+source bytes.** For a url-backed PDF, fetch the file and SHA-256 it beside the
+parse. Bytes unchanged and parse moved is a re-render, at any n, and is not a
+change; bytes changed is an edit and diffs as today. One fetch per PDF per
+sweep, no Firecrawl call, one field on the row. Whether it ships inside the
+same build is decided on 09-16 against the two days it has; what is decided now
+is that it is the second half of H10, not a different flag.
+
 ## Listed, deliberately NOT scored — leave them alone
 
 Documented decisions with named upgrade paths:
@@ -1507,10 +1560,21 @@ point of a log:
   citation that is right. Four of the seven DRIFTED citations on the 09-15 run
   were this: `change.ts:72`, `mail.ts:164`, `mail.ts:1005` and `mail.ts:868`
   were each read with `sed -n` and left alone. The `watch.ts` pointer in H10 was
-  a real error, and after it was corrected to L109 it is flagged for the same
-  reason the other four are — so the run ends at five DRIFTED citations, all
+  a real error, and after it was corrected to L109 it was flagged for the same
+  reason the other four were — so that run ended at five DRIFTED citations, all
   five of them right. **A DRIFTED citation is an instruction to open the file,
   not a defect on its own.**
+
+  **Two of those five survive on 09-16, and the other three stopped being
+  flagged without anyone touching them** — H10 closed, which took its two
+  citations out of the present tense, and L14's moved to where the report asked.
+  What is left is `mail.ts:170` (`send`, whose sentence also names
+  `repliedAt === null`, which lives 38 lines away) and `mail.ts:942` (`attach`'s
+  `text` arg, whose bullet also says `npm run gate`, which appears in a comment
+  500 lines away). Both were opened with `sed -n` again after the H10 build
+  renumbered them. The line numbers in this bullet are 09-16 numbers; the ones
+  in the sentence above are 09-15's, kept as written because that is what the
+  run said on the day.
 
 The general gap is unchanged and worth stating plainly: the reconciler checks a
 link for a **status code**, not for saying what the doc says it says. HTTP 200
@@ -1527,47 +1591,70 @@ asked of the data instead of the logs, ask the data.
 
 ## Fix order
 
-**Rewritten 2026-09-15, after the interview. Five days remain, the video is
-submitted, and one thing gets built.**
+**Rewritten 2026-09-15 after the interview; amended 2026-09-16, when the one
+thing got built.**
 
-**H10's breaker → then nothing else before submission.** Everything below it is
-the order for after 09-22, carried forward unchanged:
+**Nothing else before submission.** H10 closed on 09-16 — as a source-byte
+hash, not as the breaker — and what is left before 09-20 is deploying it to
+production and reading two cron receipts, 09-17 and 09-18 at 11:17 UTC. The
+fallback is unchanged and now cheaper than it was written: revert one field and
+one guard, and submit with H10 open and a dated note.
+
+Everything below is the order for after 09-22, carried forward unchanged:
 **M13 → M12 → the three free reads → H11 → M8 → (measure H6 again) → M10 → M2 →
 M6 → (L3, L4, L9, L10, L11, L13, L14, L15, L16).**
-M5, H5, M7, H8, M9, L6, M11, L7, H9, M15, L8 and L12 are closed.
+M5, H5, M7, H8, M9, L6, M11, L7, H9, H10, M15, L8 and L12 are closed.
 
 **Why H10 and not H11, when both are 15.** H11's fix is understood — a notice
 owed on the row, a retried send with an idempotency key — and it is not small,
 because a retry on `send` is only safe once the send is idempotent toward
-AgentMail, which it is not today. H10's breaker is one new mutation and one
-delay, and its design question was settled on 09-15 (see the entry dated that
-day in `hackathon.md`): change notices scheduled with a delay, their ids written
-on the thread row, cancelled by a settle step when the sweep's flip count says
-"upstream". That keeps the sends inside the transaction Q1 of the interview
-verified they live in. **The prevention-shaped alternative — moving the sends
-out of `attach` into a second phase — was considered and declined**: it
-re-architects the strongest invariant in the system with five days left, and
-this file has already recorded twice what a change to a load-bearing path costs
-the week it ships.
+AgentMail, which it is not today. H10 looked like the smaller one and was
+smaller still than it looked.
 
-**H11's direction has a side effect worth naming:** the ids H10's breaker writes
-on the thread row are the "notice owed" record H11 asks for. The breaker does
-not close H11, but it lays the field H11's fix reads.
+**And the design this paragraph used to name is not what shipped (amended
+2026-09-16).** It read: change notices scheduled with a delay, their ids written
+on the thread row, cancelled by a settle step when the sweep's flip count says
+"upstream" — four moving parts, chosen because it kept the sends inside the
+transaction Q1 of the interview verified they live in, and because the
+prevention-shaped alternative re-architects that invariant with five days left.
+All of that reasoning stands and none of it was needed. The flag's own n=1
+paragraph had already named the cover, and a ten-minute measurement said the
+cover was sufficient on its own: **every watched PDF is byte-stable, so the
+bytes answer the question the flip count was being built to guess at.** The
+breaker's design is not deleted — it is in the 09-15 `hackathon.md` entry, and
+it is the instrument if HTML ever re-renders corpus-wide.
+
+**What that costs H11, which is worth naming because it was a stated benefit.**
+The breaker would have written scheduled-notice ids on the thread row, and that
+field *was* the "notice owed" record H11's fix reads. **It does not exist now.**
+H11 opens at its full size and lays its own field.
 
 **The schedule, with the slack where it belongs (2026-09-15 evening; corrected
-the same night).** Build 09-16 and 09-17. **Deploy by the evening of 09-17**,
-because the receipt is the 11:17 UTC cron and a "morning" deploy on the 18th
-only counts if it lands before 11:17 UTC, which is before 07:00 anywhere in the
-US. Nothing is run by hand after the deploy. The 09-18 cron is the first
-receipt and 09-19 the second. Docs, the H10 closed entry with its residual
-named, and the score re-derived on 09-19. **Submit 09-20 (Sunday). The 21st is
-the day that is not needed.** If the build slips, the deploy waits for the
-evening of 09-18, the receipts are 09-19 and 09-20, and the submission goes
-out the evening of 09-20; any later than that and the breaker does not ship.
-The fallback is decided now rather than on the day: if the first receipt shows
-the breaker misbehaving, that day is the fix and the next cron the retest; if
-the second receipt fails too, the breaker is reverted, H10 stays open with a
-dated note saying what was tried, and the submission goes out without it.
+the same night, amended 09-16 when the build landed early).** Build 09-16 and
+09-17 — **built 09-16, in one sitting**, because the measurement shrank it from
+a four-part breaker to one field. **Deploy on 09-16, and the constraint the
+09-15 correction established is what makes that worth doing:** the receipt is
+the 11:17 UTC cron, and a deploy only counts toward a receipt if it lands before
+11:17 UTC that day — which is before 07:00 anywhere in the US, so "the morning
+of" is not a deploy window. Deploying 09-16 makes the 09-17 cron the first
+receipt and 09-18 the second, one clear day earlier than the original plan, and
+neither of them depends on beating a clock. Nothing is run by hand after the
+deploy. Docs, the H10 closed entry with its residual named, and the score
+re-derived — done in the build's own PR on 09-16 rather than left to 09-19,
+because a closed entry written three days after the close is a claim nobody can
+check against the session that made it. **Submit 09-20 (Sunday). The 21st is the
+day that is not needed.** If the deploy slips, it waits for the evening of
+09-17, the receipts are 09-18 and 09-19, and there is still a spare day; any
+later than 09-18 and the fix does not ship.
+
+**The fallback is decided now rather than on the day, and it is simpler than the
+one it was written for.** If the first receipt shows the gate misbehaving, that
+day is the fix and the next cron the retest; if the second fails too, the revert
+is one field and one guard — not a four-part breaker unpicked under time
+pressure — H10 re-opens with a dated note saying what was tried, and the
+submission goes out without it. **The failure to watch for is silence**: a
+genuine change that never mails. That is the direction this fix can fail in and
+the old behaviour could not, so a quiet receipt is not the same as a good one.
 **Nothing else is built before 09-22.** Everything else this week is
 documentation of what is true.
 

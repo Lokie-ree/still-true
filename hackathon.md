@@ -3499,3 +3499,96 @@ leaving a gap a reader would fill by guessing. `recheck` takes
 `documentId`", which is the shape of the idea and not the signature. No
 reconciler check reads a fenced command block, so nothing would have caught
 this — it was found by reading the page.
+## 2026-09-16 — H10 closed, and the day's real work was the ten minutes before the code
+
+The one build left. It shipped as **one field**, not as the four-part breaker
+this log designed on 09-15, and the reason is a measurement that cost ten
+minutes and was run before anything was written.
+
+**What the flag's own entry already said.** H10 could not close on a corpus-wide
+flip count alone, because one PDF re-rendering one character inside one quoted
+clause never crosses a threshold. The entry named the cover in the same
+paragraph — *hash the source bytes* — and left the question of whether it
+shipped in the same build to today.
+
+**The measurement, predeclared.** For source-hashing to be the whole fix, every
+watched PDF had to return bytes to a plain fetch and return the **same**
+SHA-256 twice; any PDF failing either meant the breaker was still required. All
+sixteen enrolled documents were fetched twice:
+
+```
+PDFs 4/16; stable 4; failed 0; churned 0
+html stable 6/12
+```
+
+Four of four. The six HTML churners are session ids and timestamps and cost
+nothing, because the hash is only ever read to **suppress** — a hash that
+differs falls through to exactly the behaviour that shipped without it. Two
+fetches failed on a local certificate store, which is this laptop and not
+Convex, and is recorded as such rather than as a finding.
+
+**So the breaker was not built.** Its whole job was to guess, from a flip count,
+at a question the bytes answer directly. Four moving parts — a delay constant, a
+field on the thread row, a field on the document row, a settle mutation — plus
+the board-stamp cleanup the 09-15 entry admitted it still owed, replaced by
+`documents.sourceHash` and one guard. It also never touches the transaction
+invariant the 09-15 entry declined to re-architect, because it never reaches
+`attach` at all. **The design is not deleted.** If a vendor ever re-renders
+HTML corpus-wide, the breaker is the instrument, and it is written out in
+yesterday's entry ready to build.
+
+**The hole, and it was found by running the thing rather than reading it.**
+First implementation wrote `sourceHash` in `attach` only. But a document that
+reads identically stops at the `contentHash` gate and never reaches `attach` —
+which is every document, most days. The baseline would have first appeared on
+the very sweep where the parse moved, one transaction after the notices went
+out, having suppressed nothing, ever. `mail.checked` advances it too now. The
+type checker was green across that bug; reading the row on dev after a re-check
+is what caught it. **That is the fourth time this project has been saved by
+looking at the data instead of the code**, and the first three are logged above.
+
+**The proving run, and it staged the flag's own condition.** On dev
+`charming-kookabura-768`: perturb `toLines` to append a character to every line
+*without* bumping `PARSER_VERSION` — same bytes, moved parse, our parser
+unmoved, which is exactly what a Firecrawl re-render looks like from inside this
+system. `watch:recheck` on the Livonia lease returned clean and left
+`contentHash` on `0f983ede…`, untouched. `recheck` rethrows on failure, so the
+scrape succeeded, and the only path that leaves `contentHash` standing after a
+parse that provably differs is the new gate. Perturbation reverted, dev
+redeployed, `git status` clean before the commit.
+
+Also confirmed on the first dev run, before the staging: `sourceHash` landed as
+`c79e3cb5…` — byte-identical to what the measurement script computed for the
+same PDF an hour earlier, from a different machine and a different code path.
+
+**What this PR's own change broke, and fixed.** Adding ~110 lines to `mail.ts`
+and `lines.ts` moved every line number the live docs cite. `scripts/reconcile.sh`
+went from 7 DRIFTED to 21. They were remapped from the diff hunks rather than
+from the reconciler's rarest-token guess — the script names a locus, but a
+mechanical shift is answered by the shift, not by a heuristic. Down to 4, of
+which two are fixed on the open reconcile branch and two are the known
+token-attribution false positives.
+
+**Not on production.** The gate is 7/7 and the fix is verified on dev only. The
+receipt is the 11:17 UTC cron, and the failure to watch for is **silence** — a
+genuine change that never mails — which is the direction this fix can fail in
+and the old behaviour could not.
+
+**Addendum — the rebase, because `main` had moved.** PR #60 landed while this
+was being built and it rewrote the same schedule paragraph: *deploy by the
+evening of 09-17, because the receipt is the 11:17 UTC cron and a "morning"
+deploy on the 18th only counts if it lands before 11:17 UTC, which is before
+07:00 anywhere in the US.* That constraint is load-bearing and it survived the
+merge intact — the amendment only moves the dates up, since building on 09-16
+makes the 09-17 cron the first receipt and nothing has to beat a clock. Two
+other seams: #61's correction of H10's `watch.ts` pointer was carried into the
+archived copy of the flag rather than lost with it, and the remap that renumbered
+the citations had left four ranges with a shifted start and an unshifted end
+(`mail.ts:1085–1023`, a range that runs backwards). Fixed, and the endpoints
+checked by reading them.
+
+Reconciler after the rebase: **CONFIRMED 109, DRIFTED 2, UNVERIFIABLE 52.** The
+two are the known token-attribution false positives and both were re-opened with
+`sed -n` after the renumbering. Three of the five that survived on 09-15 stopped
+being flagged without anyone touching them — H10 closing took two of them out of
+the present tense.
