@@ -180,3 +180,72 @@ export async function fingerprint(lines: readonly string[]): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
+
+// H10. The fingerprint of the bytes UPSTREAM, before anything of ours touches
+// them — the answer to a question `fingerprint` structurally cannot answer.
+//
+// `contentHash` is a hash of the lines a vendor's parser produced for us. When
+// Firecrawl changes how it renders a PDF — a dash, a pipe, where a table cell
+// breaks — every PDF's `contentHash` moves at once, `parserVersion` still
+// matches because the parser that moved is not ours, and every subscriber of
+// every PDF is mailed that their lease changed. Nothing downstream can separate
+// that from a deletion: both arrive as "the quoted clause is no longer in the
+// text".
+//
+// The source bytes can. Identical bytes cannot be a changed document, at any
+// number of documents — which is the half of H10 a corpus-wide flip count
+// cannot see, because one PDF re-rendering one character inside one quoted
+// clause never crosses a threshold.
+//
+// Measured 2026-09-15 across the 16 enrolled documents: all four watched PDFs
+// returned byte-identical responses on two consecutive fetches. Six of twelve
+// HTML pages did not — session ids and timestamps — which costs nothing,
+// because this value is only ever used to SUPPRESS a notice. A hash that
+// differs falls through to exactly today's behaviour.
+//
+// Null on anything at all going wrong: a failed fetch must leave the watch
+// working the way it worked yesterday, never suppress and never notify on its
+// own account.
+export async function sourceFingerprint(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, { redirect: "follow" });
+    if (!response.ok) return null;
+    // ponytail: a bounded read, because this fetches whatever a stranger
+    // forwarded. 32 MB is past every PDF in the corpus by a factor of eighteen;
+    // raise it when something real is refused rather than in anticipation.
+    const declared = Number(response.headers.get("content-length") ?? "0");
+    if (declared > 32_000_000) return null;
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > 32_000_000) return null;
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(digest)]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return null;
+  }
+}
+
+// Whether a re-check can stop before the scrape: the bytes upstream are the
+// bytes we last read, and our own parser has not moved either.
+//
+// Both clauses are load-bearing and the second is the subtle one. Unchanged
+// bytes say the DOCUMENT did not change; they say nothing about what `toLines`
+// would make of them today. A row whose quotes were produced by an older parser
+// still owes the full re-read that re-baselines it (H3), so the shortcut is
+// refused there and the existing path handles it.
+//
+// Absent on either side is never a match. A row that predates this field has no
+// baseline to compare against and must be read the way it was read yesterday.
+export function unchangedUpstream(args: {
+  sourceHash: string | null;
+  priorSourceHash: string | null;
+  priorParserVersion: number | null;
+}): boolean {
+  return (
+    args.sourceHash !== null &&
+    args.priorSourceHash !== null &&
+    args.sourceHash === args.priorSourceHash &&
+    args.priorParserVersion === PARSER_VERSION
+  );
+}

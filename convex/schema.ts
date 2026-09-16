@@ -82,6 +82,23 @@ export default defineSchema({
     // which is treated as unchanged: the safe direction for a field that
     // decides whether a stranger gets an unsolicited email.
     contentHash: v.optional(v.string()),
+    // H10. SHA-256 of the SOURCE BYTES as they last read, before Firecrawl or
+    // `toLines` touched them.
+    //
+    // `contentHash` cannot tell a document that changed from a vendor that
+    // changed how it renders one. Firecrawl re-renders a PDF, every PDF's
+    // `contentHash` moves in the same sweep, `parserVersion` still matches
+    // because the parser that moved is not ours, and every subscriber is told
+    // their lease was rewritten. Identical source bytes rule that out at any
+    // number of documents, including one — which is the case a corpus-wide
+    // flip count structurally cannot see.
+    //
+    // Only ever used to SUPPRESS: bytes match and the parser has not moved, so
+    // the re-check stops before the scrape. A hash that differs, or is absent
+    // because the fetch failed or the row predates this field, falls through to
+    // exactly the behaviour that shipped without it. Optional for that reason —
+    // no backfill, and the first sweep after this deploy writes one.
+    sourceHash: v.optional(v.string()),
     // Which `toLines` produced the stored hash and the stored quotes.
     //
     // H3. `contentHash` answers "did the document move?" and it cannot tell a

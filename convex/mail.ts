@@ -15,7 +15,13 @@ import { requireEnv } from "./env";
 import { classify, extract } from "./extract";
 import { documentUrl, isStop } from "./link";
 import { senderAddress } from "./sender";
-import { fingerprint, PARSER_VERSION, toLines } from "./lines";
+import {
+  fingerprint,
+  PARSER_VERSION,
+  sourceFingerprint,
+  toLines,
+  unchangedUpstream,
+} from "./lines";
 import { CHECKLISTS, type DocumentKind } from "./questions";
 import {
   changeBody,
@@ -662,6 +668,10 @@ export const priorReading = internalQuery({
   returns: v.union(
     v.object({
       contentHash: v.union(v.string(), v.null()),
+      // H10. Both halves of the upstream check, read in the same query the
+      // early exit already makes rather than in a second round trip.
+      sourceHash: v.union(v.string(), v.null()),
+      parserVersion: v.union(v.number(), v.null()),
       kind: documentKind,
     }),
     v.null(),
@@ -669,7 +679,12 @@ export const priorReading = internalQuery({
   handler: async (ctx, args) => {
     const document = await ctx.db.get("documents", args.documentId);
     if (document === null) return null;
-    return { contentHash: document.contentHash ?? null, kind: document.kind };
+    return {
+      contentHash: document.contentHash ?? null,
+      sourceHash: document.sourceHash ?? null,
+      parserVersion: document.parserVersion ?? null,
+      kind: document.kind,
+    };
   },
 });
 
@@ -702,11 +717,27 @@ export const priorKindForUrl = internalQuery({
 });
 
 export const checked = internalMutation({
-  args: { documentId: v.id("documents") },
+  args: {
+    documentId: v.id("documents"),
+    // H10. A re-check that stops early is still a reading, and the baseline has
+    // to advance with it or it never arms at all.
+    //
+    // This is the whole difference between a field that works and a field that
+    // is always absent when it matters. A document that reads identically every
+    // day — which is every document, most days — stops at one of the two gates
+    // above and never reaches `attach`, so if only `attach` wrote this, the
+    // baseline would first appear on the very sweep where the parse moved, one
+    // transaction after the notices went out. Nothing would ever be suppressed.
+    //
+    // Null leaves the stored value standing: a failed fetch must not blank a
+    // baseline, because absent is the state that notifies.
+    sourceHash: v.union(v.string(), v.null()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch("documents", args.documentId, {
       lastCheckedAt: Date.now(),
+      ...(args.sourceHash === null ? {} : { sourceHash: args.sourceHash }),
       // H3. This runs only when the new parse hashed IDENTICALLY to the stored
       // one, which means this parser produced exactly the stored lines — so the
       // stored quotes already are what it would publish, and the row can be
@@ -740,6 +771,13 @@ export async function readAndPublish(
     recheckOf: Id<"documents"> | null;
   },
 ): Promise<null> {
+  // H10. The bytes upstream, hashed before the scrape — because the cheapest
+  // true answer to "did this document change?" is the one that does not ask a
+  // vendor's renderer. Null for an attachment (its signed URL expired minutes
+  // after it arrived) and null whenever the fetch fails, both of which fall
+  // through to the behaviour that shipped without this.
+  const sourceHash = args.url === null ? null : await sourceFingerprint(args.url);
+
   const lines = toLines(await scrape(args.source));
   const contentHash = await fingerprint(lines);
 
@@ -758,9 +796,40 @@ export async function readAndPublish(
     });
     if (prior !== null) {
       priorKind = prior.kind;
+      // H10. The same stop, one question earlier. The gate below asks whether
+      // the LINES read the same; this asks whether the bytes upstream are the
+      // bytes we last read, which a vendor re-rendering a PDF cannot fake and a
+      // corpus-wide flip count cannot see at n=1.
+      //
+      // It stands in front of the parsed comparison rather than beside it
+      // because the parse is the thing under suspicion: M6 measured four line
+      // counts from one unchanged PDF in an afternoon, and each of those would
+      // arrive here as a moved `contentHash` with nothing about the document
+      // changed. `checked` stamps `parserVersion`, which is honest only because
+      // `unchangedUpstream` already refused this shortcut for any row whose
+      // parser has moved — that row still owes the full re-baseline H3 built.
+      //
+      // ponytail: the fetch runs before the scrape, so this could skip the
+      // Firecrawl call too rather than only the two model calls. That is a cost
+      // win and not a correctness one, and it wants `priorReading` moved above
+      // the scrape — worth doing when the corpus is large enough to feel it.
+      if (
+        unchangedUpstream({
+          sourceHash,
+          priorSourceHash: prior.sourceHash,
+          priorParserVersion: prior.parserVersion,
+        })
+      ) {
+        await ctx.runMutation(internal.mail.checked, {
+          documentId: args.recheckOf,
+          sourceHash,
+        });
+        return null;
+      }
       if (prior.contentHash !== null && prior.contentHash === contentHash) {
         await ctx.runMutation(internal.mail.checked, {
           documentId: args.recheckOf,
+          sourceHash,
         });
         return null;
       }
@@ -817,6 +886,7 @@ export async function readAndPublish(
     lineCount: lines.length,
     findings,
     contentHash,
+    sourceHash,
     // The text, passed and never stored. `diff` searches it for the clause a
     // finding used to quote and refuses to report a change while that clause is
     // still there. Sent always: `attach` is the only place that knows whether
@@ -862,6 +932,10 @@ export const attach = internalMutation({
     // by us rather than read off a vendor's session state — see the note on
     // `fingerprint` in convex/lines.ts for the live run that forced that.
     contentHash: v.string(),
+    // H10. SHA-256 of the source bytes, or null when there was nothing to
+    // fetch (an attachment) or the fetch failed. Stored so the next sweep has a
+    // baseline to refuse to notify against; never itself a reason to notify.
+    sourceHash: v.union(v.string(), v.null()),
     // The document as it reads now. Passed, never stored: `diff` searches it
     // for the clause a finding used to quote, and refuses to report a change
     // while that clause is still in the document.
@@ -898,6 +972,7 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: null,
         contentHash: args.contentHash,
+        sourceHash: args.sourceHash ?? undefined,
         parserVersion: PARSER_VERSION,
         // The probe seeds the public corpus; inbound mail never does. Set once,
         // here, and deliberately NOT re-derived on the existing-row path below:
@@ -914,6 +989,11 @@ export const attach = internalMutation({
         fetchedAt: now,
         lastCheckedAt: now,
         contentHash: args.contentHash,
+        // H10. Only ever advanced by a reading that got this far, so a failed
+        // fetch leaves the last known baseline standing rather than blanking
+        // it — blanking would silently disarm the suppression on the next
+        // sweep, which is the direction that mails people.
+        sourceHash: args.sourceHash ?? existing.sourceHash,
         parserVersion: PARSER_VERSION,
         // M3, the other success path: a full re-read got all the way to
         // publishing findings, so the document is readable again.
