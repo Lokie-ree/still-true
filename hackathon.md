@@ -3489,3 +3489,13 @@ which is the drift that paragraph exists to describe. Updated, and its own
 tally of how many times it has been caught now reads four.
 
 Nothing was built. H10's breaker is still the one thing left.
+
+**Addendum, same night.** The README advertised `npx convex run watch:sweep`
+under *Runnable by hand*, which is the one thing the shoot rules say never to
+run by hand — it fans out over strangers' private forwards. Replaced with
+`watch:recheck`, and with a sentence saying why `sweep` is absent rather than
+leaving a gap a reader would fill by guessing. `recheck` takes
+`{documentId, url, title}`, not a bare `documentId`; `CLAUDE.md` says "takes one
+`documentId`", which is the shape of the idea and not the signature. No
+reconciler check reads a fenced command block, so nothing would have caught
+this — it was found by reading the page.

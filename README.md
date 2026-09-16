@@ -188,8 +188,12 @@ Runnable by hand against a deployment:
 
 ```sh
 npx convex run mail:probe '{"url":"https://example.com/terms"}'   # read one URL into the public corpus
-npx convex run watch:sweep                                        # re-check every watched document now
+npx convex run watch:recheck '{"documentId":"...","url":"...","title":"..."}'   # re-check ONE document now
 ```
+
+`watch:sweep` is deliberately not listed. It fans out over every watched
+document, including strangers' private forwards, and the 11:17 UTC cron is the
+only thing that should call it. `recheck` is the hand-runnable unit.
 
 `AGENTMAIL_API_KEY`, `FIRECRAWL_API_KEY`, `OPENAI_API_KEY` and `OPENAI_MODEL`
 are Convex deployment environment variables, never files in this repository. Set
