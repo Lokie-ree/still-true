@@ -1,6 +1,6 @@
 # Reconciliation report
 
-Generated `2026-09-14 18:46 UTC` by `bash scripts/reconcile.sh`, at commit `57b3176`.
+Generated `2026-09-16 00:10 UTC` by `bash scripts/reconcile.sh`, at commit `503a71d`.
 
 Every finding names the command that produced it. **UNVERIFIABLE is not a soft
 pass.** It means no command run here can settle the claim, and it should be read
@@ -20,13 +20,28 @@ What this cannot do, stated so a reader can discount it:
 
 | verdict | count |
 |---|---|
-| CONFIRMED | 101 |
-| DRIFTED | 0 |
-| UNVERIFIABLE | 32 |
+| CONFIRMED | 112 |
+| DRIFTED | 5 |
+| UNVERIFIABLE | 44 |
 
 ## DRIFTED — a command ran and the doc disagrees with it
 
-_Nothing._
+- **docs/READINESS.md:227 cites `convex/change.ts:72`**
+  - ran: `grep -nF 'sweep' convex/change.ts`
+  - got: `sweep` (rarest token, 1 occurrence(s)) is at **L148**, 76 lines from the cited L72. The citation points at unrelated code; the locus it describes is L148.
+- **docs/READINESS.md:228 cites `convex/mail.ts:1005`**
+  - ran: `grep -nF 'sweep' convex/mail.ts`
+  - got: `sweep` (rarest token, 2 occurrence(s)) is at **L947**, 58 lines from the cited L1005. The citation points at unrelated code; the locus it describes is L947.
+- **docs/READINESS.md:229 cites `convex/watch.ts:109`**
+  - ran: `grep -nF 'attach' convex/watch.ts`
+  - got: `attach` (rarest token, 2 occurrence(s)) is at **L67**, 42 lines from the cited L109. The citation points at unrelated code; the locus it describes is L67.
+- **docs/READINESS.md:283 cites `convex/mail.ts:164`**
+  - ran: `grep -nF 'repliedAt === null' convex/mail.ts`
+  - got: `repliedAt === null` (rarest token, 1 occurrence(s)) is at **L126**, 38 lines from the cited L164. The citation points at unrelated code; the locus it describes is L126.
+- **docs/READINESS.md:668 cites `mail.ts:868`**
+  - ran: `grep -nF 'npm run gate' convex/mail.ts`
+  - got: `npm run gate` (rarest token, 1 occurrence(s)) is at **L405**, 463 lines from the cited L868. The citation points at unrelated code; the locus it describes is L405.
+
 
 ## UNVERIFIABLE — no command run here can settle it
 
@@ -45,84 +60,120 @@ _Nothing._
 - **link in README.md → https://example.com/terms**
   - ran: `nothing that can settle it`
   - why: an illustrative address, not a live resource. Deliberately not fetched; whether it is 'correct' is not a question a request can answer.
-- **hackathon.md:1290 cites `mail.ts:289`**
+- **README.md:47 cites `convex/extract.ts:198`**
+  - ran: `sed -n '198p' convex/extract.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:1288 cites `mail.ts:289`**
   - ran: `grep -nF 'reply-all' convex/mail.ts`
   - why: `reply-all` is at L179, 110 lines from the cited L289 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:1556 cites `mail.ts:367`**
+- **hackathon.md:1554 cites `mail.ts:367`**
   - ran: `sed -n '367p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **hackathon.md:1864 cites `mail.ts:575`**
+- **hackathon.md:1862 cites `mail.ts:575`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L1009, 434 lines from the cited L575 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:1865 cites `mail.ts:222`**
+  - why: `.take(100)` is at L1015, 440 lines from the cited L575 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1863 cites `mail.ts:222`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L1009, 787 lines from the cited L222 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:1866 cites `mail.ts:689`**
+  - why: `.take(100)` is at L1015, 793 lines from the cited L222 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1864 cites `mail.ts:689`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - why: `.take(100)` is at L1009, 320 lines from the cited L689 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:1887 cites `mail.ts:289`**
+  - why: `.take(100)` is at L1015, 326 lines from the cited L689 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:1885 cites `mail.ts:289`**
   - ran: `sed -n '289p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **hackathon.md:1903 cites `mail.ts:575`**
+- **hackathon.md:1901 cites `mail.ts:575`**
   - ran: `sed -n '575p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **hackathon.md:3218 cites `mail.ts:523`**
+- **hackathon.md:3216 cites `mail.ts:523`**
   - ran: `grep -nF 'mode: "auto"' convex/mail.ts`
-  - why: `mode: "auto"` is at L556, 33 lines from the cited L523 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:3253 cites `mail.ts:114`**
+  - why: `mode: "auto"` is at L562, 39 lines from the cited L523 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:3251 cites `mail.ts:114`**
   - ran: `grep -nF 'formats: ["markdown"]' convex/mail.ts`
-  - why: `formats: ["markdown"]` is at L547, 433 lines from the cited L114 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:3254 cites `mail.ts:850`**
+  - why: `formats: ["markdown"]` is at L553, 439 lines from the cited L114 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:3252 cites `mail.ts:850`**
   - ran: `grep -nF 'formats: ["markdown"]' convex/mail.ts`
-  - why: `formats: ["markdown"]` is at L547, 303 lines from the cited L850 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **hackathon.md:3254 cites `change.ts:145`**
+  - why: `formats: ["markdown"]` is at L553, 297 lines from the cited L850 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:3252 cites `change.ts:145`**
   - ran: `sed -n '145p' convex/change.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:209 cites `watch.ts:169`**
+- **hackathon.md:3434 cites `extract.ts:198`**
+  - ran: `sed -n '198p' convex/extract.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:3437 cites `mail.ts:280`**
+  - ran: `sed -n '280p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:3464 cites `watch.ts:127`**
+  - ran: `sed -n '127p' convex/watch.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **hackathon.md:3466 cites `documents.ts:38`**
+  - ran: `grep -nF 'recent' convex/documents.ts`
+  - why: `recent` is at L23, 15 lines from the cited L38 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:3472 cites `mail.ts:1005`**
+  - ran: `grep -nF 'text' convex/mail.ts`
+  - why: `text` is at L955, 50 lines from the cited L1005 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **hackathon.md:3474 cites `watch.ts:109`**
+  - ran: `sed -n '109p' convex/watch.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **docs/READINESS.md:327 cites `watch.ts:169`**
   - ran: `sed -n '169p' convex/watch.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:219 cites `schema.ts:69`**
+- **docs/READINESS.md:337 cites `schema.ts:69`**
   - ran: `sed -n '69p' convex/schema.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:477 cites `documents.ts:61`**
+- **docs/READINESS.md:622 cites `documents.ts:61`**
   - ran: `sed -n '61p' convex/documents.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:727 cites `mail.ts:114`**
+- **docs/READINESS.md:645 cites `mail.ts:280`**
+  - ran: `sed -n '280p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **docs/READINESS.md:919 cites `mail.ts:114`**
   - ran: `sed -n '114p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:727 cites `mail.ts:850`**
+- **docs/READINESS.md:919 cites `mail.ts:850`**
   - ran: `sed -n '850p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:727 cites `convex/change.ts:145`**
+- **docs/READINESS.md:919 cites `convex/change.ts:145`**
   - ran: `sed -n '145p' convex/change.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:740 cites `mail.ts:114`**
+- **docs/READINESS.md:932 cites `mail.ts:114`**
   - ran: `sed -n '114p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:742 cites `mail.ts:850`**
+- **docs/READINESS.md:934 cites `mail.ts:850`**
   - ran: `sed -n '850p' convex/mail.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:743 cites `change.ts:145`**
+- **docs/READINESS.md:935 cites `change.ts:145`**
   - ran: `sed -n '145p' convex/change.ts`
   - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
-- **docs/READINESS.md:771 cites `convex/mail.ts:709`**
+- **docs/READINESS.md:963 cites `convex/mail.ts:709`**
   - ran: `grep -nF 'if (args.recheckOf !== null)' convex/mail.ts`
-  - why: `if (args.recheckOf !== null)` is at L749, 40 lines from the cited L709 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:772 cites `convex/mail.ts:788`**
+  - why: `if (args.recheckOf !== null)` is at L755, 46 lines from the cited L709 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:964 cites `convex/mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
-  - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:773 cites `convex/mail.ts:788`**
+  - why: `recheckOf: null` is at L770, 18 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:965 cites `convex/mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
-  - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:774 cites `mail.ts:597`**
+  - why: `recheckOf: null` is at L770, 18 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:966 cites `mail.ts:597`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
-  - why: `recheckOf: null` is at L609, 12 lines from the cited L597 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:774 cites `mail.ts:788`**
+  - why: `recheckOf: null` is at L615, 18 lines from the cited L597 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:966 cites `mail.ts:788`**
   - ran: `grep -nF 'recheckOf: null' convex/mail.ts`
-  - why: `recheckOf: null` is at L764, 24 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
-- **docs/READINESS.md:779 cites `mail.ts:829`**
+  - why: `recheckOf: null` is at L770, 18 lines from the cited L788 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:971 cites `mail.ts:829`**
   - ran: `grep -nF 'by_url' convex/mail.ts`
-  - why: `by_url` is at L882, 53 lines from the cited L829 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+  - why: `by_url` is at L888, 59 lines from the cited L829 — but this is a dated log entry, and a line number in one points into the tree as it stood that day. Whether it was right when written cannot be settled by reading today's file, and rewriting it would falsify the record.
+- **docs/READINESS.md:1508 cites `change.ts:72`**
+  - ran: `sed -n '72p' convex/change.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **docs/READINESS.md:1508 cites `mail.ts:164`**
+  - ran: `sed -n '164p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **docs/READINESS.md:1508 cites `mail.ts:1005`**
+  - ran: `sed -n '1005p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
+- **docs/READINESS.md:1508 cites `mail.ts:868`**
+  - ran: `sed -n '868p' convex/mail.ts`
+  - why: the line exists, but nothing else in that sentence names code found in the file, so the LINE NUMBER itself is unchecked. The citation is neither confirmed nor refuted.
 - **dated counts inside hackathon.md and docs/READINESS.md**
   - ran: `nothing that can settle it`
   - why: log entries record what was true on a named date ("66/66 tests", "five board rows"). They are deliberately NOT reconciled against today — a record of the past is not drift, and rewriting one would destroy the thing it is for.
@@ -141,10 +192,10 @@ _Nothing._
   - got: 6 documents, all isPublic
 - **production claim: every published answer carries its quote**
   - ran: `node scripts/gate.mjs`
-  - got: 35 answered findings, all quoted with a line number
+  - got: 36 answered findings, all quoted with a line number
 - **production claim: the watch has swept recently**
   - ran: `node scripts/gate.mjs`
-  - got: last sweep 0.7h ago, 6 documents stamped
+  - got: last sweep 12.8h ago, 6 documents stamped
 - **production claim: no document is failing its re-check**
   - ran: `node scripts/gate.mjs`
   - got: 16 documents, none carrying a watch error
@@ -319,82 +370,115 @@ _Nothing._
 - **docs/ASSESSMENT.md carries a superseded/archived banner**
   - ran: `git log -1 --format=%cI -- docs/ASSESSMENT.md`
   - got: banner asserts 2026-09-02; git says last touched 2026-09-05. Label is dated, not vibes.
-- **docs/READINESS.md:207 cites `convex/mail.ts:901`**
+- **hackathon.md:3462 cites `convex/watch.ts:117`**
+  - ran: `grep -nF 'failed' convex/watch.ts`
+  - got: `failed` (rarest token, 7 occurrence(s)) is at L116, 1 line(s) from the cited L117 — the citation points at the right code
+- **hackathon.md:3472 cites `change.ts:72`**
+  - ran: `grep -nF 'stillSays' convex/change.ts`
+  - got: `stillSays` (rarest token, 2 occurrence(s)) is at L72, 0 line(s) from the cited L72 — the citation points at the right code
+- **hackathon.md:3472 cites `mail.ts:164`**
+  - ran: `grep -nF 'text' convex/mail.ts`
+  - got: `text` (rarest token, 15 occurrence(s)) is at L170, 6 line(s) from the cited L164 — the citation points at the right code
+- **hackathon.md:3473 cites `mail.ts:868`**
+  - ran: `grep -nF 'text' convex/mail.ts`
+  - got: `text` (rarest token, 15 occurrence(s)) is at L868, 0 line(s) from the cited L868 — the citation points at the right code
+- **docs/READINESS.md:226 cites `convex/mail.ts:946`**
+  - ran: `grep -nF 'sweep' convex/mail.ts`
+  - got: `sweep` (rarest token, 2 occurrence(s)) is at L947, 1 line(s) from the cited L946 — the citation points at the right code
+- **docs/READINESS.md:284 cites `mail.ts:126`**
+  - ran: `grep -nF 'repliedAt === null' convex/mail.ts`
+  - got: `repliedAt === null` (rarest token, 1 occurrence(s)) is at L126, 0 line(s) from the cited L126 — the citation points at the right code
+- **docs/READINESS.md:293 cites `mail.ts:160`**
+  - ran: `grep -nF 'threads.error' convex/mail.ts`
+  - got: `threads.error` (rarest token, 1 occurrence(s)) is at L161, 1 line(s) from the cited L160 — the citation points at the right code
+- **docs/READINESS.md:325 cites `convex/mail.ts:901`**
   - ran: `grep -nF 'isPublic: args.threadRowId === null' convex/mail.ts`
-  - got: `isPublic: args.threadRowId === null` (rarest token, 1 occurrence(s)) is at L901, 0 line(s) from the cited L901 — the citation points at the right code
-- **docs/READINESS.md:213 cites `mail.ts:806`**
+  - got: `isPublic: args.threadRowId === null` (rarest token, 1 occurrence(s)) is at L907, 6 line(s) from the cited L901 — the citation points at the right code
+- **docs/READINESS.md:331 cites `mail.ts:806`**
   - ran: `grep -nF 'attach' convex/mail.ts`
-  - got: `attach` (rarest token, 34 occurrence(s)) is at L806, 0 line(s) from the cited L806 — the citation points at the right code
-- **docs/READINESS.md:232 cites `scripts/gate.mjs:161`**
+  - got: `attach` (rarest token, 35 occurrence(s)) is at L812, 6 line(s) from the cited L806 — the citation points at the right code
+- **docs/READINESS.md:350 cites `scripts/gate.mjs:161`**
   - ran: `grep -nF 'Math.max' scripts/gate.mjs`
   - got: `Math.max` (rarest token, 1 occurrence(s)) is at L162, 1 line(s) from the cited L161 — the citation points at the right code
-- **docs/READINESS.md:233 cites `convex/mail.ts:825`**
+- **docs/READINESS.md:351 cites `convex/mail.ts:825`**
   - ran: `grep -nF 'mail:probe' convex/mail.ts`
-  - got: `mail:probe` (rarest token, 1 occurrence(s)) is at L825, 0 line(s) from the cited L825 — the citation points at the right code
-- **docs/READINESS.md:260 cites `convex/mail.ts:391`**
+  - got: `mail:probe` (rarest token, 1 occurrence(s)) is at L831, 6 line(s) from the cited L825 — the citation points at the right code
+- **docs/READINESS.md:378 cites `convex/mail.ts:391`**
   - ran: `grep -nF 'stopFor' convex/mail.ts`
-  - got: `stopFor` (rarest token, 3 occurrence(s)) is at L391, 0 line(s) from the cited L391 — the citation points at the right code
-- **docs/READINESS.md:260 cites `mail.ts:304`**
+  - got: `stopFor` (rarest token, 3 occurrence(s)) is at L397, 6 line(s) from the cited L391 — the citation points at the right code
+- **docs/READINESS.md:378 cites `mail.ts:304`**
   - ran: `grep -nF 'stopFor' convex/mail.ts`
-  - got: `stopFor` (rarest token, 3 occurrence(s)) is at L304, 0 line(s) from the cited L304 — the citation points at the right code
-- **docs/READINESS.md:261 cites `mail.ts:393`**
+  - got: `stopFor` (rarest token, 3 occurrence(s)) is at L310, 6 line(s) from the cited L304 — the citation points at the right code
+- **docs/READINESS.md:379 cites `mail.ts:393`**
   - ran: `grep -nF 'convex/' convex/mail.ts`
-  - got: `convex/` (rarest token, 4 occurrence(s)) is at L393, 0 line(s) from the cited L393 — the citation points at the right code
-- **docs/READINESS.md:261 cites `mail.ts:393`**
+  - got: `convex/` (rarest token, 4 occurrence(s)) is at L399, 6 line(s) from the cited L393 — the citation points at the right code
+- **docs/READINESS.md:379 cites `mail.ts:393`**
   - ran: `grep -nF 'convex/' convex/mail.ts`
-  - got: `convex/` (rarest token, 4 occurrence(s)) is at L393, 0 line(s) from the cited L393 — the citation points at the right code
-- **docs/READINESS.md:414 cites `convex/mail.ts:878`**
+  - got: `convex/` (rarest token, 4 occurrence(s)) is at L399, 6 line(s) from the cited L393 — the citation points at the right code
+- **docs/READINESS.md:559 cites `convex/mail.ts:878`**
   - ran: `grep -nF 'url === null' convex/mail.ts`
-  - got: `url === null` (rarest token, 3 occurrence(s)) is at L878, 0 line(s) from the cited L878 — the citation points at the right code
-- **docs/READINESS.md:464 cites `convex/documents.ts:28`**
+  - got: `url === null` (rarest token, 3 occurrence(s)) is at L884, 6 line(s) from the cited L878 — the citation points at the right code
+- **docs/READINESS.md:609 cites `convex/documents.ts:28`**
   - ran: `grep -nF 'recent' convex/documents.ts`
   - got: `recent` (rarest token, 2 occurrence(s)) is at L23, 5 line(s) from the cited L28 — the citation points at the right code
-- **docs/READINESS.md:467 cites `convex/mail.ts:347`**
+- **docs/READINESS.md:612 cites `convex/mail.ts:347`**
   - ran: `grep -nF 'console.error' convex/mail.ts`
-  - got: `console.error` (rarest token, 1 occurrence(s)) is at L347, 0 line(s) from the cited L347 — the citation points at the right code
-- **docs/READINESS.md:470 cites `convex/mail.ts:1009`**
+  - got: `console.error` (rarest token, 1 occurrence(s)) is at L353, 6 line(s) from the cited L347 — the citation points at the right code
+- **docs/READINESS.md:615 cites `convex/mail.ts:1009`**
   - ran: `grep -nF '.take(100)' convex/mail.ts`
-  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L1009, 0 line(s) from the cited L1009 — the citation points at the right code
-- **docs/READINESS.md:475 cites `convex/schema.ts:172`**
+  - got: `.take(100)` (rarest token, 1 occurrence(s)) is at L1015, 6 line(s) from the cited L1009 — the citation points at the right code
+- **docs/READINESS.md:620 cites `convex/schema.ts:172`**
   - ran: `grep -nF 'by_documentId' convex/schema.ts`
   - got: `by_documentId` (rarest token, 3 occurrence(s)) is at L172, 0 line(s) from the cited L172 — the citation points at the right code
-- **docs/READINESS.md:477 cites `mail.ts:806`**
+- **docs/READINESS.md:622 cites `mail.ts:806`**
   - ran: `grep -nF 'attach' convex/mail.ts`
-  - got: `attach` (rarest token, 34 occurrence(s)) is at L806, 0 line(s) from the cited L806 — the citation points at the right code
-- **docs/READINESS.md:477 cites `mail.ts:1046`**
+  - got: `attach` (rarest token, 35 occurrence(s)) is at L812, 6 line(s) from the cited L806 — the citation points at the right code
+- **docs/READINESS.md:622 cites `mail.ts:1046`**
   - ran: `grep -nF 'attach' convex/mail.ts`
-  - got: `attach` (rarest token, 34 occurrence(s)) is at L1046, 0 line(s) from the cited L1046 — the citation points at the right code
-- **docs/READINESS.md:481 cites `convex/crons.ts:19`**
+  - got: `attach` (rarest token, 35 occurrence(s)) is at L1052, 6 line(s) from the cited L1046 — the citation points at the right code
+- **docs/READINESS.md:626 cites `convex/crons.ts:19`**
   - ran: `grep -nF 'daily' convex/crons.ts`
   - got: `daily` (rarest token, 1 occurrence(s)) is at L19, 0 line(s) from the cited L19 — the citation points at the right code
-- **docs/READINESS.md:485 cites `convex/mail.ts:862`**
+- **docs/READINESS.md:630 cites `convex/mail.ts:862`**
   - ran: `grep -nF 'text: v.array(v.string())' convex/mail.ts`
-  - got: `text: v.array(v.string())` (rarest token, 1 occurrence(s)) is at L862, 0 line(s) from the cited L862 — the citation points at the right code
-- **docs/READINESS.md:589 cites `convex/mail.ts:374`**
+  - got: `text: v.array(v.string())` (rarest token, 1 occurrence(s)) is at L868, 6 line(s) from the cited L862 — the citation points at the right code
+- **docs/READINESS.md:647 cites `convex/documents.ts:23`**
+  - ran: `grep -nF 'recent' convex/documents.ts`
+  - got: `recent` (rarest token, 2 occurrence(s)) is at L23, 0 line(s) from the cited L23 — the citation points at the right code
+- **docs/READINESS.md:652 cites `convex/watch.ts:83`**
+  - ran: `grep -nF 'db.query("documents").take(200)' convex/watch.ts`
+  - got: `db.query("documents").take(200)` (rarest token, 1 occurrence(s)) is at L83, 0 line(s) from the cited L83 — the citation points at the right code
+- **docs/READINESS.md:666 cites `convex/extract.ts:408`**
+  - ran: `grep -nF 'excerpt(lines[lineNo - 1], claim.support_quote)' convex/extract.ts`
+  - got: `excerpt(lines[lineNo - 1], claim.support_quote)` (rarest token, 1 occurrence(s)) is at L408, 0 line(s) from the cited L408 — the citation points at the right code
+- **docs/READINESS.md:681 cites `watch.ts:109`**
+  - ran: `grep -nF 'sweep' convex/watch.ts`
+  - got: `sweep` (rarest token, 7 occurrence(s)) is at L99, 10 line(s) from the cited L109 — the citation points at the right code
+- **docs/READINESS.md:781 cites `convex/mail.ts:374`**
   - ran: `grep -nF 'readString(message, "text")' convex/mail.ts`
-  - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L374, 0 line(s) from the cited L374 — the citation points at the right code
-- **docs/READINESS.md:589 cites `mail.ts:427`**
+  - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L380, 6 line(s) from the cited L374 — the citation points at the right code
+- **docs/READINESS.md:781 cites `mail.ts:427`**
   - ran: `grep -nF 'readString(message, "text")' convex/mail.ts`
-  - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L427, 0 line(s) from the cited L427 — the citation points at the right code
-- **docs/READINESS.md:610 cites `convex/http.ts:26`**
+  - got: `readString(message, "text")` (rarest token, 2 occurrence(s)) is at L433, 6 line(s) from the cited L427 — the citation points at the right code
+- **docs/READINESS.md:802 cites `convex/http.ts:26`**
   - ran: `grep -nF '@typescript-eslint/no-unnecessary-type-assertion' convex/http.ts`
   - got: `@typescript-eslint/no-unnecessary-type-assertion` (rarest token, 1 occurrence(s)) is at L26, 0 line(s) from the cited L26 — the citation points at the right code
-- **docs/READINESS.md:795 cites `change.ts:75`**
+- **docs/READINESS.md:987 cites `change.ts:75`**
   - ran: `grep -nF 'U' convex/change.ts`
   - got: `U` (rarest token, 2 occurrence(s)) is at L75, 0 line(s) from the cited L75 — the citation points at the right code
-- **docs/READINESS.md:825 cites `convex/reply.ts:308`**
+- **docs/READINESS.md:1017 cites `convex/reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:827 cites `reply.ts:308`**
+- **docs/READINESS.md:1019 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:827 cites `reply.ts:308`**
+- **docs/READINESS.md:1019 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:828 cites `reply.ts:308`**
+- **docs/READINESS.md:1020 cites `reply.ts:308`**
   - ran: `grep -nF 'changeBody' convex/reply.ts`
   - got: `changeBody` (rarest token, 1 occurrence(s)) is at L308, 0 line(s) from the cited L308 — the citation points at the right code
-- **docs/READINESS.md:833 cites `package.json:9`**
+- **docs/READINESS.md:1025 cites `package.json:9`**
   - ran: `grep -nF 'convex/' package.json`
   - got: `convex/` (rarest token, 1 occurrence(s)) is at L9, 0 line(s) from the cited L9 — the citation points at the right code
 - **hackathon.md is reachable**
