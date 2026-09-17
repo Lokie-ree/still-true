@@ -3619,6 +3619,16 @@ this hackathon renders, and it contains no aggregate that a seventh document can
 falsify. Dimensions went 1568×623 to 1290×710, which is nearer the 1.91:1 the
 scrapers actually want; the old ratio was being centre-cropped.
 
+Nearer was not near enough. Post Inspector, after the deploy, rendered the card
+with the fourth refusal sliced through the middle: LinkedIn crops toward 1.91:1
+and 1290×710 is 1.817:1, so it took the difference out of the bottom. Chasing the
+ratio by cropping is the wrong direction — every attempt costs content. Padded
+33px of `#17140f` onto each side instead, which is the page background, so the
+bars are invisible and the ratio moves to 1356×710 = 1.9099 with nothing lost.
+The lesson is not about pixels: **a preview is rendered by somebody else's
+cropper, so the frame is a claim about what survives their crop, not about what
+I exported.** Checking it meant looking at their render, not mine.
+
 Checked the live board against the submission copy while here. Livonia reads
 **416** lines today, not the 418 the README dates to 09-15 — entry notice at 264,
 late fee at 42 — and the board totals 5,138 lines, 36 answered, 11 refusals.
