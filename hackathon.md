@@ -3606,8 +3606,18 @@ reached the page and stopped at the picture of the page.
 Same defect shape as the second renderer, and the second time an asset has
 outlived the claim it depicts. `og:image:alt` had it too — it hard-coded "six
 public documents, 5,124 lines read", a sentence that expires the moment a
-seventh document lands. The alt now describes what the board *is* rather than
-what it currently counts; the JPG still needs re-shooting from the live page.
+seventh document lands. The alt now describes the image rather than
+what the board currently counts.
+
+Re-shot the JPG the same afternoon, and changed what it is a picture of. The old
+one framed the headline, the forward-a-document card and the stats bar — the part
+of the page that is mostly chrome, and the part that expires. The new one frames
+the model Summary of Benefits and Coverage under **WHAT NO SINGLE LINE SAYS**:
+four questions in a row it cannot answer, each refused with the count of lines
+searched, on a cms.gov URL. It is the only thing on the board no other entry in
+this hackathon renders, and it contains no aggregate that a seventh document can
+falsify. Dimensions went 1568×623 to 1290×710, which is nearer the 1.91:1 the
+scrapers actually want; the old ratio was being centre-cropped.
 
 Checked the live board against the submission copy while here. Livonia reads
 **416** lines today, not the 418 the README dates to 09-15 — entry notice at 264,
