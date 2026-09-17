@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="still-true">
+  <!-- A quoted passage. The accent rule on the left is the colour the board
+       uses for what a document does not say (color-absent, #e08a4e). The tile
+       is drawn on its own paper-dark ground rather than being theme-aware, so
+       it reads the same on a light tab strip as on a dark one. -->
+  <rect width="32" height="32" rx="7" fill="#17140f"/>
+  <rect x="7" y="8" width="2.5" height="16" rx="1.25" fill="#e08a4e"/>
+  <rect x="12.5" y="9" width="12.5" height="2.5" rx="1.25" fill="#f4efe5"/>
+  <rect x="12.5" y="14.75" width="12.5" height="2.5" rx="1.25" fill="#f4efe5"/>
+  <rect x="12.5" y="20.5" width="7" height="2.5" rx="1.25" fill="#b5ac9a"/>
+</svg>

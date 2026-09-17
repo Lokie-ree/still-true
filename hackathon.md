@@ -23,7 +23,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-15
+- **Last updated:** 2026-09-16
 
 ## Log
 
@@ -3592,3 +3592,31 @@ two are the known token-attribution false positives and both were re-opened with
 `sed -n` after the renumbering. Three of the five that survived on 09-15 stopped
 being flagged without anyone touching them — H10 closing took two of them out of
 the present tense.
+
+## 2026-09-16, later — the link preview was still selling a retracted number
+
+The og-image is a screenshot of the board taken 2026-09-05. Inside it, in the
+forward-a-document card, is the sentence *"The reply lands in about fifteen
+seconds."* That claim was retracted on 09-14 — the measured median is 20.4 s and
+the slowest is 42.6 — and `src/App.tsx` was fixed the same day. The screenshot
+was not, so for two days the only copy of the dead claim still in circulation was
+the one every scraper renders when somebody shares the URL. The correction
+reached the page and stopped at the picture of the page.
+
+Same defect shape as the second renderer, and the second time an asset has
+outlived the claim it depicts. `og:image:alt` had it too — it hard-coded "six
+public documents, 5,124 lines read", a sentence that expires the moment a
+seventh document lands. The alt now describes what the board *is* rather than
+what it currently counts; the JPG still needs re-shooting from the live page.
+
+Checked the live board against the submission copy while here. Livonia reads
+**416** lines today, not the 418 the README dates to 09-15 — entry notice at 264,
+late fee at 42 — and the board totals 5,138 lines, 36 answered, 11 refusals.
+Total findings is 47 either way, so one flipped from refusal to answered. This is
+**M6**, already scored: a byte-identical PDF does not parse to a stable line
+count. The README survives it because it dates the integer and says it can move.
+The submission copy did not, and that is the fix.
+
+Also added a favicon. The board had been shipping Convex's default `convex.svg`
+since 08-30.
+
