@@ -3781,3 +3781,43 @@ backoff was never going to fix.
 **09-19 stays free.** The fallback the 09-15 schedule kept for a second failure
 was spent on the arming run; it was not needed, because the run it was holding
 open for came back clean.
+
+## 2026-09-18, later — the guard that was held by review alone, and now is not
+
+**Yesterday's auth entry closed with a sentence it refused to make true, and
+today it cost ten minutes to make it true.** It read: *"No test and no gate
+check exercises `findingsFor` with a PRIVATE document id. The guard is three
+lines and it is read on every call, but the invariant is held by code review
+alone."* Writing that down is what made it obvious, which is the argument for
+writing down what you are not claiming.
+
+**The run.** All ten private document ids on production — read with credentials
+off the `documents` table — handed back to `documents:findingsFor` through the
+public HTTP endpoint with no credentials at all, which is exactly what a
+stranger holding an id has. **Ten of ten returned `[]`.** Two public ids
+answered 8 findings each, because a check that passes on a query returning
+nothing for everything proves nothing.
+
+**It is the gate's eighth check now**, not a one-off: `a private document
+cannot be read by id`. The private ids come from the table read that check six
+already does, so it costs one extra HTTP call per private document and no new
+credentials. Verified in the failing direction as well — pointed at public ids
+instead, it prints `6 of 6 private documents answer the public query` with the
+ids and exits non-zero.
+
+**The one thing it does not cover, recorded rather than left to be noticed
+later.** An id the query cannot resolve returns an uncaught `Server Error`
+while a real private id returns `success` with `[]`, so a caller who already
+holds a private id can learn that it exists. They learn nothing else, Convex
+ids are not guessable, and none of these are published anywhere — so it is
+written down and not scored. **No flag opened or closed; the score stays 24.**
+
+**Why this was worth doing on a day with nothing to build.** The alternative
+use of the afternoon was forwarding more documents to "strengthen the data
+picture", and the arithmetic said no: the corpus is 16 url-backed documents,
+this morning's sweep already threw seven `Firecrawl 429`s (M10), and every
+document added is another first-attempt request in the same minute — with the
+09-20 submission sweep two days out. Forwarding is this project's best defect
+finder and that is precisely why it is the wrong instrument two days before a
+deadline with the fix order frozen. A check that closes a named gap and adds no
+recurring cost is the one that fits the day.

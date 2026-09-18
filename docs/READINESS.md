@@ -302,7 +302,7 @@ argument of `attach` — `true` from `probe`, `false` from `ingest`, `false` fro
 
 ### M13 — the gate's sweep receipt can be minted by hand, and by a stranger (medium)
 
-`scripts/gate.mjs:161` takes `Math.max` over every public document's
+`scripts/gate.mjs:237` takes `Math.max` over every public document's
 `lastCheckedAt`; `convex/mail.ts:895` stamps that field on **every** re-read of
 an existing row — which includes an inbound forward and a hand-run `mail:probe`,
 not only the watch.
@@ -1562,8 +1562,8 @@ Documented decisions with named upgrade paths:
   `documents.isPublic` is set once at insert, `documents.recent` gates on the
   `by_isPublic` index so a private row is never read, and
   `documents.findingsFor` returns `[]` for a private id (`documents.ts:57`).
-  **Not scored because nothing is exposed**, and the gate re-asserts the board
-  half of it on every run.
+  **Not scored because nothing is exposed**, and the gate now re-asserts both
+  halves of it on every run — see the 09-18 amendment below.
 
   **It is an absence of features, not an absence of a guard.** There is no
   per-person view to protect: a sender's copy of their answers is the reply in
@@ -1583,6 +1583,24 @@ Documented decisions with named upgrade paths:
   gate only ever calls that query with public ids, because that is what the
   board hands it. Stated rather than implied; whether it earns a flag number is
   a decision for the next pass, not a thing to quietly leave sounding covered.
+
+  **Amended 2026-09-18: something exercises it now, and writing this paragraph
+  is what got it done.** All ten private document ids on production were handed
+  to `documents:findingsFor` through the public HTTP endpoint with no
+  credentials — what a stranger holding an id has — and every one returned
+  `[]`, with two public ids answering 8 findings each as the control. It is the
+  gate's eighth check now (`scripts/gate.mjs`), so it is re-proved on every run
+  rather than once by hand, and it was verified in the failing direction too:
+  pointed at public ids it reports `6 of 6 private documents answer the public
+  query` and exits non-zero. **Still not a flag** — nothing was exposed, and
+  what changed is that the guard is no longer held by review alone.
+
+  **One thing THIS amendment will not claim.** An id the query cannot resolve
+  comes back as an uncaught `Server Error`, while a real private id comes back
+  `success` with `[]` — so a caller who already holds a private id can learn it
+  exists, and gets nothing else. Convex ids are not guessable and none of these
+  are published anywhere, so it is recorded here rather than scored. Whether it
+  earns an L is the next pass's call.
 
 ## Coverage — what the audit could not see
 
