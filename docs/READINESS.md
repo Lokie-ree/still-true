@@ -1680,6 +1680,16 @@ proved is that the field populates on every row and that nothing errored doing
 it. That is an **arming run**, not a receipt. The read is the 09-17 entry in
 `hackathon.md`; the cost is in the fallback below.
 
+**Amended 2026-09-18: the one receipt was read, and it suppressed. Nothing is
+left before submission.** Sixteen documents, twelve early exits, four full
+re-reads, and none of the four watched PDFs was re-read at all; their stored
+source hashes were re-checked by hand against a fresh fetch afterwards and
+still matched, where the arming sweep had sent two of them through to `attach`
+on a moved parse. Zero notices. **The fallback below is not being taken**, and
+09-19 — the day it was holding open — is free. The read is the 09-18 entry in
+`hackathon.md`, and what that run cannot show is recorded in H10's closed
+entry beside what it can.
+
 Everything below is the order for after 09-22, carried forward unchanged:
 **M13 → M12 → the three free reads → H11 → M8 → (measure H6 again) → M10 → M2 →
 M6 → (L3, L4, L9, L10, L11, L13, L14, L15, L16).**
