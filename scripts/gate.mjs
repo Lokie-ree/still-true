@@ -34,6 +34,32 @@ const LIMITS = {
   minBoardDocuments: 1,
 };
 
+// The table read three of the checks below share. Each needs rows the public
+// surface deliberately does not return — `watchError`, `fromEmail`, and the
+// private documents themselves — so it asks the deployment directly, with the
+// credentials the person running this already has.
+//
+// ponytail: `npx` per call rather than a Convex client. Three subprocesses on
+// a command somebody runs by hand is cheaper than a dependency, and the gate
+// is already waiting on the network.
+async function tableRows(table) {
+  const { execFileSync } = await import("node:child_process");
+  const raw = execFileSync(
+    "npx",
+    [
+      "convex", "data", table,
+      "--deployment", PROD,
+      "--format", "jsonLines",
+      "--limit", "500",
+    ],
+    { encoding: "utf8", shell: process.platform === "win32" },
+  );
+  return raw
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line));
+}
+
 const checks = [];
 const check = (name, fn) => checks.push({ name, fn });
 
@@ -115,6 +141,55 @@ check("the public board returns only public documents", async () => {
   return `${documents.length} documents, all isPublic`;
 });
 
+// H1's other half, and until 2026-09-18 nothing had ever asked it.
+//
+// The check above proves the board does not OFFER a private document. This one
+// proves the query cannot be made to hand one over when the caller supplies the
+// id — which is the shape H1 actually had: `findingsFor` takes a client-supplied
+// `documentId` and answers with verbatim quotes. The board is where a private
+// row would be listed; this is where it would be read.
+//
+// The gate could not ask this before, because it only ever called `findingsFor`
+// with ids `documents:recent` had just handed it — public by construction. The
+// private ids come off the table read above, and go back at production through
+// the PUBLIC query with no credentials at all: what a stranger holding an id
+// has. Run by hand on 2026-09-18 against all ten; this is that run, kept.
+//
+// A private document with no findings would pass this vacuously, so the control
+// is asserted too: a public id must still answer.
+check("a private document cannot be read by id", async () => {
+  const priv = (await tableRows("documents")).filter((d) => d.isPublic !== true);
+  if (priv.length === 0) {
+    throw new Error("no private document on this deployment to test against");
+  }
+  const leaked = [];
+  for (const document of priv) {
+    const findings = await callQuery("documents:findingsFor", {
+      documentId: document._id,
+    });
+    if (findings.length > 0) {
+      leaked.push(`${document._id} (${findings.length} findings)`);
+    }
+  }
+  if (leaked.length > 0) {
+    throw new Error(
+      `${leaked.length} of ${priv.length} private documents answer the public query:\n` +
+        `          ${leaked.join("\n          ")}`,
+    );
+  }
+  const board = await callQuery("documents:recent");
+  const control = await callQuery("documents:findingsFor", {
+    documentId: board[0]._id,
+  });
+  if (control.length === 0) {
+    throw new Error(
+      "control failed: a PUBLIC document returned nothing either, so this check " +
+        "proves nothing about the private ones",
+    );
+  }
+  return `${priv.length} private documents, none readable by id (control: ${control.length} findings on a public one)`;
+});
+
 // The product's whole invariant, asserted where a reader would meet it: no
 // answer without a receipt. The schema makes an answered finding without a
 // quote unrepresentable; this checks that what is actually stored on production
@@ -183,21 +258,7 @@ check("the watch has swept recently", async () => {
 // `documents.ts`), so the only way to see it is with the credentials the person
 // running this already has. Same shell-out as the function-spec check above.
 check("no document is failing its re-check", async () => {
-  const { execFileSync } = await import("node:child_process");
-  const raw = execFileSync(
-    "npx",
-    [
-      "convex", "data", "documents",
-      "--deployment", PROD,
-      "--format", "jsonLines",
-      "--limit", "500",
-    ],
-    { encoding: "utf8", shell: process.platform === "win32" },
-  );
-  const documents = raw
-    .split("\n")
-    .filter((line) => line.trim() !== "")
-    .map((line) => JSON.parse(line));
+  const documents = await tableRows("documents");
   const failing = documents.filter(
     (d) => typeof d.watchError === "string" && d.watchError !== "",
   );
@@ -228,21 +289,7 @@ check("no document is failing its re-check", async () => {
 // could not identify — which `mail.received` stores raw on purpose, so it is
 // visible here instead of silent — or a regression.
 check("every sender identity is a bare address", async () => {
-  const { execFileSync } = await import("node:child_process");
-  const raw = execFileSync(
-    "npx",
-    [
-      "convex", "data", "threads",
-      "--deployment", PROD,
-      "--format", "jsonLines",
-      "--limit", "500",
-    ],
-    { encoding: "utf8", shell: process.platform === "win32" },
-  );
-  const threads = raw
-    .split("\n")
-    .filter((line) => line.trim() !== "")
-    .map((line) => JSON.parse(line));
+  const threads = await tableRows("threads");
 
   const bare = /^[^\s<>@",]+@[^\s<>@",]+\.[^\s<>@",]+$/;
   const bad = threads.filter((t) => {
