@@ -85,7 +85,7 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-17
+## Status — 2026-09-18
 
 **Live on production and answering real mail. The demo is recorded.**
 
@@ -107,9 +107,22 @@ because the deploy landed after the previous day's cron and only a sweep writes
 one. A null baseline never matches, **so the gate could not suppress anything on
 its first run** — it wrote the baselines instead. All 16 rows carry a source
 hash now, the sweep finished with no errors, and no subscriber was mailed.
-**Suppression has still never been observed on production. The 11:17 UTC cron
-on 09-18 is the first run that can show it**, and this line says so until it
-does.
+**Suppression had still never been observed on production, and the 11:17 UTC
+cron on 09-18 was the first run that could show it.** It did — see the entry
+below.
+
+**2026-09-18 — it suppressed, and the revert was not taken.** Sixteen documents
+swept, twelve early exits, four full re-reads, and **not one of the four
+watched PDFs was re-read at all**. Every stored source hash was re-checked by
+hand against a fresh fetch an hour later: ten of the twelve early exits still
+matched, all four PDFs among them. The day before, with null baselines, two of
+those PDFs had been re-read on a moved parse; with the bytes provably
+unchanged, both stopped. No subscriber was mailed — `mail:send` does not appear
+anywhere in a fourteen-hour log span. The one finding stamped as changed was an
+HTML page, which is the residual this fix names in
+[`docs/READINESS.md`](docs/READINESS.md) rather than covering, and it reached
+nobody only because that thread had replied STOP. The sweep's real defect was
+M10: seven Firecrawl rate-limit failures, all of which recovered.
 
 **2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
 interview, five of them Convex-shaped, closed and were filed in one sitting:
@@ -174,9 +187,10 @@ forwards** — plus emailed attachments, which are never watched.
   thread now; apologies, rate-limit notices and unsubscribe confirmations go to
   whoever wrote.
 
-The public board carries six documents, 36 answered findings and 11 refusals, as
-of the `npm run gate` run on 2026-09-15. It said 35 and 12 on 09-14, 36 and 11 on
-09-07, 37 and 10 the day before that, and 35 and 12 the day before that. The counts move on their own: two deployments reading
+The public board carries six documents, 37 answered findings and 10 refusals, as
+of the `npm run gate` run on 2026-09-18. It said 36 and 11 on 09-15, 35 and 12 on
+09-14, 36 and 11 on 09-07, 37 and 10 the day before that, and 35 and 12 the day
+before that. The counts move on their own: two deployments reading
 these same six documents hours apart on 09-04 disagreed on 2 of 47 cells with
 nothing about the documents changing, so a cell crossing between answered and
 refused overnight is the expected amount of drift, not a finding. This system
@@ -186,7 +200,7 @@ to put beside it.
 
 Which is why this paragraph is the least trustworthy thing on the page, and why
 `npm run gate` reads the numbers off production rather than believing it. It has
-now caught this sentence drifting four times.
+now caught this sentence drifting five times.
 
 - Build log and every decision, including the ones that were reversed: [`hackathon.md`](hackathon.md)
 - **Known open issues, scored, with a fix order: [`docs/READINESS.md`](docs/READINESS.md)**

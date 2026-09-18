@@ -3725,3 +3725,59 @@ only ever calls it with the ids the board just handed it. The guard is three
 lines and runs on every call, and it is held by review alone. Writing "verified"
 there would have been the cheapest sentence in the file and the only false one.
 
+
+## 2026-09-18 — the receipt the arming run cost a day to get, and it holds
+
+**The 11:17 UTC sweep suppressed. H10's fix is proven on production and the
+revert is not being taken.** Sixteen documents, 11:17:07 to 11:21:14 UTC,
+`npm run gate` 7/7 an hour later, no row carrying a `watchError`.
+
+**Twelve early exits, four full re-reads** — `mail:checked` twelve times,
+`mail:attach` four: forever21, facebook and grindr among the private forwards,
+paypal on the board. **All four are HTML. No PDF was re-read at all**, which is
+the population H10 was written about.
+
+**The evidence that the byte gate is what stopped them.** Every stored
+`sourceHash` was re-hashed by hand at 12:30 UTC against a fresh fetch of the
+same URL: ten of the twelve early exits still match, **including all four
+watched PDFs** (karecondo, livonia, lasvegasnevada, cms.gov). Yesterday, with
+null baselines, karecondo and cms.gov both re-parsed differently and went
+through to `attach`; today, baselines written and bytes provably unchanged, both
+stopped. M6 measured four line counts from one unchanged PDF in an afternoon, so
+a `contentHash` match on both of them would have been luck.
+
+**What the logs cannot say, said here rather than left implied.** Nothing
+records *which* gate fired — `unchangedUpstream` and the `contentHash` check
+both exit through the same `mail.checked` mutation, so the two are
+indistinguishable from outside. The two early exits whose bytes differ now
+(att, spotify) may well have exited on the parsed comparison. The claim this
+entry makes is about the four PDFs, where the bytes are the thing that held.
+
+**One change stamped, and it is the residual, not a document.** `facebook`
+question T4, 11:17:49Z, `previousLineNo: 894 → lineNo: 341` — a different clause
+on a page whose bytes churn on every fetch, which is exactly the case the closed
+entry says gets no suppression from this fix. HTML, so the gate never had
+anything to match.
+
+**Zero mail went out**, and not because the gate caught that one: `mail:send`
+does not appear anywhere in a fourteen-hour log span, and the single thread on
+that document carries `stopped: true`. **Without that STOP the notice would have
+gone.** The suppression that held there was M4's, not H10's, and saying
+otherwise would credit this fix with a save it did not make.
+
+**The silence check, which is the direction this fix can fail in.** Every
+suppression today was either bytes-identical — which cannot be a changed
+document — or the `contentHash` path that shipped before H10 existed. The board
+moved 5,135 lines to **5,133** (PayPal re-read 1,245 → 1,243 and the diff
+reported nothing), and held at 47 findings, 37 answered and 10 refusals.
+
+**The defect this sweep actually had is M10, not H10.** Seven `Firecrawl 429`
+failures, seven `watch:failed` writes and 23 `watch:recheck` executions for
+sixteen documents. All of them recovered on the 60s/120s backoff and nothing
+carries a `watchError` — better than 09-11, where two documents held one for a
+day — but the fan-out still outruns the per-minute limit, which is the half the
+backoff was never going to fix.
+
+**09-19 stays free.** The fallback the 09-15 schedule kept for a second failure
+was spent on the arming run; it was not needed, because the run it was holding
+open for came back clean.
