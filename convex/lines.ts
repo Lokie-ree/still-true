@@ -226,8 +226,9 @@ export async function sourceFingerprint(url: string): Promise<string | null> {
   }
 }
 
-// Whether a re-check can stop before the scrape: the bytes upstream are the
-// bytes we last read, and our own parser has not moved either.
+// Whether a re-check can stop before the model runs: the bytes upstream are the
+// bytes we last read, and our own parser has not moved either. The scrape is
+// not skipped — `readAndPublish` calls Firecrawl before it asks this.
 //
 // Both clauses are load-bearing and the second is the subtle one. Unchanged
 // bytes say the DOCUMENT did not change; they say nothing about what `toLines`

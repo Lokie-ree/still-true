@@ -94,7 +94,10 @@ export default defineSchema({
     // flip count structurally cannot see.
     //
     // Only ever used to SUPPRESS: bytes match and the parser has not moved, so
-    // the re-check stops before the scrape. A hash that differs, or is absent
+    // the re-check stops before the MODEL runs. Not before the scrape: the
+    // Firecrawl call in `readAndPublish` precedes the gate (see the note there),
+    // and this comment said "before the scrape" for two days while the code
+    // never did. A hash that differs, or is absent
     // because the fetch failed or the row predates this field, falls through to
     // exactly the behaviour that shipped without it. Optional for that reason —
     // no backfill, and the first sweep after this deploy writes one.

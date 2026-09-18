@@ -3016,8 +3016,8 @@ instance of on purpose.
 ### What the measurement found that the fix did not need
 
 Latency does not track document length, and the ranking is close to inverted.
-The **fastest** run of the twenty is the **1,182-line** PayPal user agreement at
-11.6s. A **46-line** page took 30.0s. One **418-line** lease, forwarded five
+The **fastest** run of the twenty is the **1,182-line** Facebook privacy policy at
+11.6s (this said "PayPal user agreement" until 09-18; see that day's entry). A **46-line** page took 30.0s. One **418-line** lease, forwarded five
 times in one evening, spanned **14.8s to 42.6s** — same document, same parser,
 same night, a 3× spread.
 
@@ -3728,8 +3728,14 @@ there would have been the cheapest sentence in the file and the only false one.
 
 ## 2026-09-18 — the receipt the arming run cost a day to get, and it holds
 
-**The 11:17 UTC sweep suppressed. H10's fix is proven on production and the
-revert is not being taken.** Sixteen documents, 11:17:07 to 11:21:14 UTC,
+> **Retracted the same evening, in part.** The two sentences below said
+> "suppressed" and "proven". The run is *consistent with* suppression and does
+> not prove it, for the reason this same entry gives four paragraphs down. See
+> "2026-09-18, evening" for the verification that caught it and the other
+> three things it caught.
+
+**The 11:17 UTC sweep is consistent with suppression. H10's fix is not proven
+on production, and the revert is not being taken.** Sixteen documents, 11:17:07 to 11:21:14 UTC,
 `npm run gate` 7/7 an hour later, no row carrying a `watchError`.
 
 **Twelve early exits, four full re-reads** — `mail:checked` twelve times,
@@ -3821,3 +3827,83 @@ document added is another first-attempt request in the same minute — with the
 finder and that is precisely why it is the wrong instrument two days before a
 deadline with the fix order frozen. A check that closes a named gap and adds no
 recurring cost is the one that fits the day.
+
+## 2026-09-18, evening — the third retraction, and it was the word "proven"
+
+An adversarial pass over every capability sentence in the README, the landing
+copy, the READINESS Closed list and the three newest entries here, with the
+gate run first and production read for everything a table or a log could
+answer. Sixty-three claims. Fifty-five held. Eight did not, and one of them is
+the sentence this project spent 09-17 waiting to be able to write.
+
+**"Proven" was an inference.** The 09-18 entry above said the sweep suppressed
+and that H10 was proven on production; the READINESS header and the Closed
+entry said the same. The evidence is real and reproduced tonight — all four
+watched PDFs byte-identical to their stored `sourceHash` at 14:10 UTC, ten of
+twelve early exits matching, `att` and `spotify` the two that churned, zero
+`mail:send` across a 15.5-hour log span, and the sweep fired by the cron at
+11:17:08Z. What it is not is proof. `readAndPublish` exits the byte gate and
+the parsed-lines gate through the same `mail.checked` call with the same
+arguments and logs nothing, and `sourceFingerprint` returns a silent `null` on
+a failed fetch, which routes to the second gate and leaves the row looking
+identical afterwards. Two of four PDFs exited on the second gate on 09-17, so
+that path is not rare. The Closed entry already said all of this in its "What
+that run does NOT show" paragraph; its own opening line, the README and this
+log said "proven" anyway. **Every one of those now says "consistent with".**
+The word the project uses for a claim without a receipt is "unverified", and
+the three days this project spent building that vocabulary did not stop it
+writing "proven" the first morning it wanted to.
+
+**The scrape is not skipped, and two comments said it was.** `schema.ts` and
+`lines.ts` both described the byte gate as stopping "before the scrape". The
+code calls Firecrawl first and asks the gate second — its own `ponytail:` note
+at the gate says so — which is why the same sweep threw seven `429`s while
+"suppressing" twelve documents. The README's 09-16 line read the same way. All
+three now say the stop is before the model, and that the scrape still costs
+what it cost. M15's class, a fifth time: a comment describing the design the
+author had in mind rather than the one that shipped.
+
+**The fastest run was Facebook, not PayPal.** The 11.6s answer on 09-06 was
+the 1,182-line Facebook privacy policy; PayPal is 1,243 lines, took 23.2s, and
+arrived on 09-14 at 18:01Z, after the twenty were measured. Three files said
+PayPal. The README's version put "1,182-line PayPal" next to a board card that
+reads 1,243 lines, which is precisely the mismatch a judge checks.
+
+**"Plus emailed attachments" — there were none, and then there was one.** The
+`documents` table on production had sixteen rows and every one had a URL; the
+attachment path's only receipt was the 09-04 forward on development. The first
+draft of this entry demoted the README and the board to "verified on
+development", and the answer to that was not to demote it but to send one.
+Randall forwarded the Louisiana Attorney General's landlord-tenant guide as a
+1.9 MB PDF attachment from Gmail at 14:41:05 UTC. Webhook at 14:41:05.4,
+`mail:ingest` 37.6s, `mail:attach` at 14:41:43, `mail:send` accepted at
+14:41:44 — **38.7 seconds**, inside the bound the board states. Row: `url:
+null`, private, `kind: other`, 625 lines, `sourceHash: null` because there is
+nothing to go back to. Eight findings, seven quoted with a line, one refusal
+(U1b, 625 lines searched). Louisiana's own guide states the ten-day notice at
+line 188 and the five-day eviction clock at line 420. Six minutes later, the
+Louisiana Association of Realtors residential lease form, 172 KB: 20.3
+seconds, classified `lease`, 495 lines, three answers and four refusals. The
+refusals are the blanks — late fee amount, the day it starts, entry notice,
+termination notice are all fill-in lines on a form nobody has filled — and
+the answers are the printed clauses: auto-renewal at line 78, tenant repairs
+at line 108, and at line 177 *"a return of the security deposit within 30
+days"*, which is the exact question the Livonia lease refused on 09-04 and
+the reason that refusal is the demo. The attachment path is on production
+now, twice, and the README says "PDF or a link" again with a receipt under it
+instead of a memory of dev.
+
+**And the score line did not sum to its label.** READINESS said 9/100 over a
+formula that summed to 24: the `−15(H10)` term was deleted when H10 closed and
+the label was not re-derived, which is the one thing CLAUDE.md says to do when
+a flag closes. Restored, past tense.
+
+The smaller one: the board's comment said 6 of 20 replies ran past 30s; the
+threads say 4, and the 46-line page is 29.998s.
+
+**No flag opened or closed; the score stays 24.** Nothing about production
+changed tonight but two private rows — eighteen documents now, the same 47
+public findings, the same cron.
+What changed is five sentences that claimed more than the deployment could
+show, found by a reader who had not written them and trusted nothing in the
+repository, which is the reader the submission gets.

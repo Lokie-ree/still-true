@@ -90,8 +90,10 @@ used: the signal is consumable, so reading it spends it. See
 **Live on production and answering real mail. The demo is recorded.**
 
 **2026-09-16 — the last build, and it was one field.** A re-check now hashes the
-document's **source bytes** before the scrape and stops when they are the bytes
-it last read. That closes H10: an upstream renderer changing how it lays out a
+document's **source bytes** and, when they are the bytes it last read, stops
+before the model runs. The Firecrawl scrape still happens first — the stop
+saves the two model calls and the re-publish, not the scrape, and the 09-18
+sweep's seven rate-limit failures are the receipt for that. That closes H10: an upstream renderer changing how it lays out a
 PDF — a dash, a pipe, where a table cell breaks — used to move every PDF's
 content hash in the same sweep and mail every subscriber that their lease had
 changed. Identical bytes cannot be a changed document, so it holds for one PDF
@@ -108,10 +110,17 @@ one. A null baseline never matches, **so the gate could not suppress anything on
 its first run** — it wrote the baselines instead. All 16 rows carry a source
 hash now, the sweep finished with no errors, and no subscriber was mailed.
 **Suppression had still never been observed on production, and the 11:17 UTC
-cron on 09-18 was the first run that could show it.** It did — see the entry
-below.
+cron on 09-18 was the first run that could show it.** What it showed is
+consistent with suppression and does not prove it — see the entry below, and
+the retraction under 2026-09-18 in [`hackathon.md`](hackathon.md).
 
-**2026-09-18 — it suppressed, and the revert was not taken.** Sixteen documents
+**2026-09-18 — consistent with suppression, not proven, and the revert was not
+taken.** This entry said "it suppressed" for six hours. Nothing in the system
+records which of the two gates stopped a document — the byte gate and the
+parsed-lines gate exit through the same mutation with the same arguments, and a
+source fetch that fails is a silent null that routes to the second gate and
+leaves the row looking identical. So what follows is the evidence, and the
+word for it is *consistent*. Sixteen documents
 swept, twelve early exits, four full re-reads, and **not one of the four
 watched PDFs was re-read at all**. Every stored source hash was re-checked by
 hand against a fresh fetch an hour later: ten of the twelve early exits still
@@ -132,7 +141,17 @@ nothing broke; every one of them has been shipping for days. The one thing it
 said would be built before submission was H10, and it was built the next day —
 smaller than the design it had, because a measurement was run first. The
 corpus on production is **16 url-backed documents — 6 public, 10 private
-forwards** — plus emailed attachments, which are never watched.
+forwards** — plus, since 2026-09-18 14:41 UTC, **two emailed attachments**,
+which are never watched. This sentence said "plus emailed attachments" for
+three days while the table held zero rows without a URL; the 09-18
+verification found that, and the same evening two real forwards closed it. The
+Louisiana Attorney General's landlord-tenant guide as a 1.9 MB PDF attachment:
+625 lines, seven answers and one refusal, replied in 38.7 seconds. Then the
+Louisiana Association of Realtors residential lease form: 495 lines, three
+answers and four refusals, 20.3 seconds — and it states at line 177 the one
+thing the Livonia lease refused, that the deposit comes back within 30 days.
+Both rows are private, with `sourceHash` null because there is no URL to go
+back to.
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and
@@ -142,7 +161,9 @@ forwards** — plus emailed attachments, which are never watched.
   from `threads.repliedAt`, two fields that had been sitting there since P1. The
   board said "about fifteen seconds" until that measurement and now says "under a
   minute", which is true of all twenty. Latency does not track document length:
-  the fastest run of the twenty is the 1,182-line PayPal agreement, and one
+  the fastest run of the twenty is the 1,182-line Facebook privacy policy (this
+  said "PayPal" until 09-18; PayPal is 1,243 lines, took 23.2s, and arrived
+  after the twenty were measured), and one
   418-line lease spanned 14.8s to 42.6s in a single evening. The board was designed on 2026-09-10 and is now a pleading page:
   line numbers in a gutter down the left edge, the quote as the largest text on
   a card, the model's summary demoted to an annotation above it — and a refusal

@@ -379,7 +379,9 @@ export default function App() {
             generalised a best case into a typical case, which is the same class
             of drift this file has now logged four times.
 
-            An upper bound rather than the median, because 6 of 20 ran past 30s
+            An upper bound rather than the median, because 4 of 20 ran past 30s
+            (this said 6 until the 09-18 verification recounted; the 46-line
+            page is 29.998s, not past)
             and a page that argues it only claims what it can show should miss
             in the direction of arriving early. 20 of 20 landed inside a minute.
 
