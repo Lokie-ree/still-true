@@ -3640,3 +3640,61 @@ The submission copy did not, and that is the fix.
 Also added a favicon. The board had been shipping Convex's default `convex.svg`
 since 08-30.
 
+
+## 2026-09-17 — the first receipt was not a receipt
+
+The plan written on 09-15 and amended on 09-16 said: deploy on 09-16, then read
+two cron receipts, 09-17 and 09-18, and if both misbehave, revert. Read the
+first one this morning and it is not a test of anything.
+
+**Every row went into the 11:17 UTC sweep with `sourceHash: null`.** The deploy
+landed after the 09-16 cron, and nothing writes a `sourceHash` except a sweep,
+so there was no baseline anywhere in the table. `null` never matches, so the
+source gate could not fire on a single document. All 16 were scraped,
+`mail.checked` wrote the baseline on the way past, and the sweep finished
+clean. What that proves is that the field populates on every row and that
+nothing errored doing it — which is worth having, and is not what the schedule
+was counting. **09-17 is an arming run. 09-18 is the receipt, and there is only
+one.**
+
+The plan could have known this. The mechanism was written down on 09-16 — the
+bug `tsc` was green across was precisely that `attach` alone would not
+baseline a document that never reaches it, which is why `mail.checked` advances
+`sourceHash` too. One line further and "so the first sweep after the deploy
+arms rather than tests" falls out of the same sentence. It was not drawn,
+because the schedule was written before the fix was, and nobody re-read the
+schedule against the fix that replaced the fix it was written for. **A plan that
+survives a change of design is not thereby still correct about it.**
+
+**What the sweep actually did, since the receipt exists either way.** Sixteen
+documents checked between 11:17 and 11:21 UTC, zero `watchError`. Eleven
+stopped at the `contentHash` gate — scraped, parsed identically to yesterday,
+early exit, no model call. Five re-parsed differently and went through to
+`attach`: forever21, verizon and facebook among the private forwards, karecondo
+and cms.gov on the board. **Zero change notices.** The newest `changedAt`
+anywhere in `findings` is still 2026-09-14 18:01Z, the PayPal pair.
+
+**And the silence was checked rather than assumed, because silence is the
+direction this fix can fail in.** The board moved overnight: 5,138 lines to
+**5,135**, and 36 answered / 11 refusals to **37 / 10**. The three lines are
+karecondo, 693 to 690 — cms.gov re-parsed to 169 again, and the other four
+public documents were not re-read at all, so they could not have moved. The
+verdict delta is a net one `not_stated` → `answered`, with total findings held
+at 47, which is a clause **appearing**. `change.ts:129` deliberately does not
+report those: there is no old quote for `stillSays` to search for, and a clause
+that appears is as likely to be this run's extraction finding what the last run
+missed as it is to be new text. Nothing went `gone` unreported. The silence is
+the documented behaviour, and today it could not have been anything else.
+
+**The cost, recorded where the fallback lives.** The schedule kept 09-19 as the
+day a second failure could still be reverted on. Arming spent it. If 09-18
+misbehaves, the 19th is the fix and the retest in one day, and the bias on that
+day goes to reverting rather than to a third attempt.
+
+Also checked while here, because this is the week assets go stale quietly: the
+live `og.jpg` is 1356×710 and byte-identical to the padded file in `public/`,
+so the card that renders is the padded one and not the sliced one; the cms.gov
+refusals it frames still read "169 lines" after this morning's re-parse; the
+demo video resolves and is public; the vibeapps listing answers 200. No flag
+opened or closed today, so the score line does not move.
+
