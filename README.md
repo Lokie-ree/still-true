@@ -23,8 +23,7 @@ Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
 Live: **https://impressive-marten-163.convex.site**
 Demo: **https://youtu.be/HofqXKI8KJs** (2:42)
-Try it: forward a link — or a PDF, which is verified on development only — to
-**still-true@agentmail.to**
+Try it: forward a PDF or a link to **still-true@agentmail.to**
 **Check your spam folder the first time.** Measured 2026-09-14 across three
 Gmail accounts: two landed in the inbox and one went to spam. Which one is not
 predictable — the first reading of this was "an address with no history gets
@@ -142,10 +141,13 @@ nothing broke; every one of them has been shipping for days. The one thing it
 said would be built before submission was H10, and it was built the next day —
 smaller than the design it had, because a measurement was run first. The
 corpus on production is **16 url-backed documents — 6 public, 10 private
-forwards**. No emailed attachment has produced a document on production: the
-attachment path has one receipt, on development on 2026-09-04, and the sentence
-here said "plus emailed attachments" until the 09-18 verification read the
-table and found zero rows without a URL.
+forwards** — plus, since 2026-09-18 14:41 UTC, **one emailed attachment**,
+which is never watched. This sentence said "plus emailed attachments" for
+three days while the table held zero rows without a URL; the 09-18
+verification found that, and the same evening a real forward closed it: the
+Louisiana Attorney General's landlord-tenant guide as a 1.9 MB PDF attachment,
+625 lines, seven answers and one refusal, replied in 38.7 seconds, private row,
+`sourceHash` null because there is no URL to go back to.
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and

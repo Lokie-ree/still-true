@@ -3869,11 +3869,21 @@ arrived on 09-14 at 18:01Z, after the twenty were measured. Three files said
 PayPal. The README's version put "1,182-line PayPal" next to a board card that
 reads 1,243 lines, which is precisely the mismatch a judge checks.
 
-**"Plus emailed attachments" — there are none.** The `documents` table on
-production has sixteen rows and every one has a URL. The attachment path's
-only receipt is the 09-04 forward on development, so the README and the board
-now say a link, or a PDF verified on development, the way the CC paragraph has
-said "verified on development" since 09-15.
+**"Plus emailed attachments" — there were none, and then there was one.** The
+`documents` table on production had sixteen rows and every one had a URL; the
+attachment path's only receipt was the 09-04 forward on development. The first
+draft of this entry demoted the README and the board to "verified on
+development", and the answer to that was not to demote it but to send one.
+Randall forwarded the Louisiana Attorney General's landlord-tenant guide as a
+1.9 MB PDF attachment from Gmail at 14:41:05 UTC. Webhook at 14:41:05.4,
+`mail:ingest` 37.6s, `mail:attach` at 14:41:43, `mail:send` accepted at
+14:41:44 — **38.7 seconds**, inside the bound the board states. Row: `url:
+null`, private, `kind: other`, 625 lines, `sourceHash: null` because there is
+nothing to go back to. Eight findings, seven quoted with a line, one refusal
+(U1b, 625 lines searched). Louisiana's own guide states the ten-day notice at
+line 188 and the five-day eviction clock at line 420. The attachment path is
+on production now, and the README says "PDF or a link" again with a receipt
+under it instead of a memory of dev.
 
 **And the score line did not sum to its label.** READINESS said 9/100 over a
 formula that summed to 24: the `−15(H10)` term was deleted when H10 closed and
@@ -3884,7 +3894,8 @@ The smaller one: the board's comment said 6 of 20 replies ran past 30s; the
 threads say 4, and the 46-line page is 29.998s.
 
 **No flag opened or closed; the score stays 24.** Nothing about production
-changed tonight — the same sixteen rows, the same 47 findings, the same cron.
+changed tonight but one private row — seventeen documents now, the same 47
+public findings, the same cron.
 What changed is five sentences that claimed more than the deployment could
 show, found by a reader who had not written them and trusted nothing in the
 repository, which is the reader the submission gets.

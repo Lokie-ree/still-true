@@ -410,7 +410,7 @@ export default function App() {
             headers: SPF, both DKIM signatures and DMARC all pass, DMARC at
             p=REJECT, and the reply is correctly threaded. See C3. */}
         <p className="mt-2 text-[0.78rem] leading-5 text-muted">
-          A link in the body, or a PDF attachment. The reply lands in under a
+          A PDF attachment or a link in the body. The reply lands in under a
           minute — check spam the first time, it sometimes goes there. Nothing
           you forward appears on this page.
         </p>

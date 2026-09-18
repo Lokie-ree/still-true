@@ -22,7 +22,9 @@ Nothing was built on 09-15 and nothing broke; every one of these has been
 shipping for days. The corpus on production that day: **16 url-backed documents,
 6 public and 10 private forwards**, and no attachment documents at all — the
 09-18 verification read the table and found zero rows without a URL, where this
-line had said "plus emailed attachments".
+line had said "plus emailed attachments". **One exists as of 09-18 14:41 UTC**:
+a 625-line PDF forwarded from Gmail, answered on production in 38.7s, private,
+and never watched. 17 documents.
 **H10 closed 2026-09-16 — the one build this file said was left.** Not by the
 breaker it designed on 09-15, but by the smaller thing the same entry named as
 covering the n=1 hole: hash the source bytes. A measurement run before any code
