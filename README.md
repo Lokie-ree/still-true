@@ -141,13 +141,17 @@ nothing broke; every one of them has been shipping for days. The one thing it
 said would be built before submission was H10, and it was built the next day —
 smaller than the design it had, because a measurement was run first. The
 corpus on production is **16 url-backed documents — 6 public, 10 private
-forwards** — plus, since 2026-09-18 14:41 UTC, **one emailed attachment**,
-which is never watched. This sentence said "plus emailed attachments" for
+forwards** — plus, since 2026-09-18 14:41 UTC, **two emailed attachments**,
+which are never watched. This sentence said "plus emailed attachments" for
 three days while the table held zero rows without a URL; the 09-18
-verification found that, and the same evening a real forward closed it: the
-Louisiana Attorney General's landlord-tenant guide as a 1.9 MB PDF attachment,
-625 lines, seven answers and one refusal, replied in 38.7 seconds, private row,
-`sourceHash` null because there is no URL to go back to.
+verification found that, and the same evening two real forwards closed it. The
+Louisiana Attorney General's landlord-tenant guide as a 1.9 MB PDF attachment:
+625 lines, seven answers and one refusal, replied in 38.7 seconds. Then the
+Louisiana Association of Realtors residential lease form: 495 lines, three
+answers and four refusals, 20.3 seconds — and it states at line 177 the one
+thing the Livonia lease refused, that the deposit comes back within 30 days.
+Both rows are private, with `sourceHash` null because there is no URL to go
+back to.
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and

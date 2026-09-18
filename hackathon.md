@@ -3881,9 +3881,17 @@ Randall forwarded the Louisiana Attorney General's landlord-tenant guide as a
 null`, private, `kind: other`, 625 lines, `sourceHash: null` because there is
 nothing to go back to. Eight findings, seven quoted with a line, one refusal
 (U1b, 625 lines searched). Louisiana's own guide states the ten-day notice at
-line 188 and the five-day eviction clock at line 420. The attachment path is
-on production now, and the README says "PDF or a link" again with a receipt
-under it instead of a memory of dev.
+line 188 and the five-day eviction clock at line 420. Six minutes later, the
+Louisiana Association of Realtors residential lease form, 172 KB: 20.3
+seconds, classified `lease`, 495 lines, three answers and four refusals. The
+refusals are the blanks — late fee amount, the day it starts, entry notice,
+termination notice are all fill-in lines on a form nobody has filled — and
+the answers are the printed clauses: auto-renewal at line 78, tenant repairs
+at line 108, and at line 177 *"a return of the security deposit within 30
+days"*, which is the exact question the Livonia lease refused on 09-04 and
+the reason that refusal is the demo. The attachment path is on production
+now, twice, and the README says "PDF or a link" again with a receipt under it
+instead of a memory of dev.
 
 **And the score line did not sum to its label.** READINESS said 9/100 over a
 formula that summed to 24: the `−15(H10)` term was deleted when H10 closed and
@@ -3894,7 +3902,7 @@ The smaller one: the board's comment said 6 of 20 replies ran past 30s; the
 threads say 4, and the 46-line page is 29.998s.
 
 **No flag opened or closed; the score stays 24.** Nothing about production
-changed tonight but one private row — seventeen documents now, the same 47
+changed tonight but two private rows — eighteen documents now, the same 47
 public findings, the same cron.
 What changed is five sentences that claimed more than the deployment could
 show, found by a reader who had not written them and trusted nothing in the
