@@ -66,6 +66,37 @@ This rule exists because the README spent three days claiming the watch was not
 built, on a repository whose whole premise is that a claim without a current
 receipt is not worth reading.
 
+## Two PRs open at once WILL conflict, and it is the rule above's own doing
+
+The docs-currency rule means every PR here touches the same two or three files.
+Measured 2026-09-17: of the last 25 commits, **23 touched at least one of
+`README.md`, `docs/READINESS.md` and `hackathon.md`, and 8 touched all
+three.** Combine that with one-concern-per-PR and the collision is structural —
+**any two branches cut from `main` at the same time conflict**, hardest at the
+tail of `hackathon.md`, where both append a dated entry to the same last line.
+
+**So keep one PR in flight at a time.** Merge the first, pull `main`, then cut
+the second from it. That is the whole rule, and it costs nothing here because
+these PRs are small and land the same day. Cutting both from `main` and hoping
+the edits are far apart is not a third option — they never are, because both
+entries land at EOF.
+
+**Do NOT stack the second branch on the first.** It is the obvious fix, it is
+what a merge conflict makes you want, and it has already cost this workflow
+twice — a portfolio repo in 2026-07 and this one on 2026-09-07, where four PRs
+all read MERGED and only one reached `main`. A PR based on an intermediate
+branch merges cleanly **into that branch** and lands nothing, unless every base
+is merged bottom-up *and* deleted so GitHub re-targets the children. A
+`PreToolUse` hook blocks a non-`main` base for exactly this reason; when it
+fires, the answer is to wait for the first PR, not to override it.
+
+**What not to reach for: `merge=union` on `hackathon.md`.** It is the obvious
+answer for an append-only log, and this log is not one — 3 of the last 12
+commits to it deleted lines, one of them 14. Union resolves an overlap by
+silently keeping both copies, with no marker and no failure, in the one file
+whose entire job is to be an accurate record of what was true. **A conflict
+that stops you is cheaper than a log that quietly says a thing twice.**
+
 ## The shoot, until it is shot
 
 Five files, and they are not interchangeable:
