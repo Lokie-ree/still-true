@@ -3697,4 +3697,31 @@ so the card that renders is the padded one and not the sliced one; the cms.gov
 refusals it frames still read "169 lines" after this morning's re-parse; the
 demo video resolves and is public; the vibeapps listing answers 200. No flag
 opened or closed today, so the score line does not move.
+## 2026-09-17, later — the oldest open item was a paragraph, and it took ten minutes
+
+**Auth has been "undecided" since P3 and the decision was never actually
+missing.** Six recon flights across three weeks all reached the same place and
+none of them wrote it down, so every later pass re-noticed the absence and
+re-opened the question. The decision: **no accounts, and the trigger that would
+change that is named.**
+
+What made it easy is that the part people mean by "no auth" — private forwards
+being readable by strangers — closed in P3 as H1, and not with a session.
+`documents.isPublic` is set once at insert, `recent` gates on the
+`by_isPublic` index so a private row is never read, and `findingsFor` returns
+`[]` for a private id. What is left is not an unguarded door; it is that there
+is no room behind it. A sender's copy of their answers is the reply in their
+inbox and unsubscribing is a STOP reply, so there is no per-person view to
+protect. Accounts buy somewhere to come back to, and this does not offer one.
+
+**The trigger, written now so it is not re-derived:** anything rendered to one
+person and not another. On that day the foundation goes in first and the
+feature second, because injecting `ctx.auth` into today's queries without an
+`auth.config.ts` 401s every call.
+
+**And the entry refuses one claim it would have been easy to make.** Nothing
+exercises `findingsFor` with a private id — not a test, not the gate, which
+only ever calls it with the ids the board just handed it. The guard is three
+lines and runs on every call, and it is held by review alone. Writing "verified"
+there would have been the cheapest sentence in the file and the only false one.
 

@@ -57,6 +57,20 @@ change is only ever reported when a SHA-256 of the parsed lines has moved *and*
 the exact clause a finding used to quote is no longer in the document. Both
 gates are deterministic; neither asks the model a second time.
 
+**There is no sign-in, and that is a decision rather than a gap.** No
+`auth.config.ts`, no users table, and nothing in the backend calls `ctx.auth`.
+The public surface is two read-only queries, and both are gated on provenance
+rather than on a session: `documents.isPublic` is set once at insert —
+`mail:probe` sets it, inbound mail never does — so `recent` reads public rows
+through an index and never touches a private one, and `findingsFor` returns an
+empty array for a private id instead of trusting the board to decline to link
+it. What accounts would buy
+is the one thing this deliberately does not offer: somewhere to come back to.
+**Your copy is the reply in your inbox**, and the unsubscribe is replying STOP.
+The day that stops being enough — a page listing your own forwards, anything
+rendered to one person and not another — is the day this needs accounts, and the
+foundation goes in before that feature rather than after it.
+
 Two things it deliberately does not do: it never interprets, advises, or judges a
 document, and it is not legal advice. It quotes and it counts.
 
