@@ -379,7 +379,9 @@ export default function App() {
             generalised a best case into a typical case, which is the same class
             of drift this file has now logged four times.
 
-            An upper bound rather than the median, because 6 of 20 ran past 30s
+            An upper bound rather than the median, because 4 of 20 ran past 30s
+            (this said 6 until the 09-18 verification recounted; the 46-line
+            page is 29.998s, not past)
             and a page that argues it only claims what it can show should miss
             in the direction of arriving early. 20 of 20 landed inside a minute.
 
@@ -408,7 +410,7 @@ export default function App() {
             headers: SPF, both DKIM signatures and DMARC all pass, DMARC at
             p=REJECT, and the reply is correctly threaded. See C3. */}
         <p className="mt-2 text-[0.78rem] leading-5 text-muted">
-          A PDF attachment or a link in the body. The reply lands in under a
+          A link in the body, or a PDF attachment. The reply lands in under a
           minute — check spam the first time, it sometimes goes there. Nothing
           you forward appears on this page.
         </p>

@@ -14,22 +14,28 @@ list, and the score was **44/100**.
 **Interview filing 2026-09-15 — nine rounds of a mock judge interview, closed
 and filed in one sitting.** Two highs (H10, H11), four lows (L13–L16) and one
 amended medium (M8, re-measured), then **L17 the same evening** on review of the
-filing, and the score is **9/100**:
-`100 − 15(H6) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
+filing, and the score was **9/100**:
+`100 − 15(H6) − 15(H10) − 15(H11) − 5(M2) − 5(M6) − 5(M8) − 5(M10) − 5(M12) − 5(M13) − 5(M14) − 1×11(L3,L4,L5,L9,L10,L11,L13,L14,L15,L16,L17)`.
+(The H10 term was dropped from this line when H10 closed and the "9" was left
+standing, so the line summed to 24 under a label of 9 until 09-18.)
 Nothing was built on 09-15 and nothing broke; every one of these has been
 shipping for days. The corpus on production that day: **16 url-backed documents,
-6 public and 10 private forwards**, plus emailed attachments that are never
-watched.
+6 public and 10 private forwards**, and no attachment documents at all — the
+09-18 verification read the table and found zero rows without a URL, where this
+line had said "plus emailed attachments".
 **H10 closed 2026-09-16 — the one build this file said was left.** Not by the
 breaker it designed on 09-15, but by the smaller thing the same entry named as
 covering the n=1 hole: hash the source bytes. A measurement run before any code
 found all four watched PDFs byte-identical across two fetches, which is what
 made the smaller fix the sufficient one. Score **9 → 24**.
-**Proven on production 2026-09-18**, on the second 11:17 UTC cron after the
-deploy — the first only wrote the baselines. Four watched PDFs, none re-read,
-bytes re-hashed by hand afterwards and still matching. **No flag opened or
-closed, so the score stays at 24**; what changed is that the closed entry no
-longer rests on a dev run. **M10 recurred the same morning** and recovered.
+**Consistent with suppression on production 2026-09-18, not proven** — this
+line said "proven" for six hours. On the second 11:17 UTC cron after the deploy
+(the first only wrote the baselines) four watched PDFs went through no model
+call, and their bytes re-hashed by hand afterwards still matched. But the two
+gates exit through one mutation and nothing logs which fired, so the run is
+evidence for the fix and not a proof of it; the Closed entry says so and its
+opening line now agrees with it. **No flag opened or closed, so the score stays
+at 24.** **M10 recurred the same morning** and recovered.
 
 Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9 → 24** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
@@ -864,8 +870,10 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
   `contentHash` standing after a parse that provably differs is the new gate.
   The perturbation was reverted and dev redeployed before commit.
 
-  **Proven on production 2026-09-18, on the second cron after the deploy.** The
-  first, on 09-17, could only arm it: every row entered that sweep with a null
+  **Consistent with suppression on production 2026-09-18, on the second cron
+  after the deploy — not proven, and this line said "proven" for six hours
+  before the 09-18 verification made it agree with the paragraph two below
+  it.** The first cron, on 09-17, could only arm it: every row entered that sweep with a null
   baseline and null never matches. On 09-18 the sweep took twelve early exits
   and four full re-reads, **and not one of the four watched PDFs was re-read**.
   Every stored `sourceHash` was re-hashed by hand an hour later against a fresh
@@ -1087,7 +1095,7 @@ the score measures what is open, not how embarrassing it is.
 
   **The measurement's own finding, which is worth more than the fix.** Latency
   does not track document length. The fastest of the twenty is the **1,182-line**
-  PayPal agreement at 11.6s; a **46-line** page took 30.0s; one **418-line**
+  Facebook privacy policy at 11.6s (it said "PayPal" until 09-18); a **46-line** page took 30.0s; one **418-line**
   lease spanned **14.8s to 42.6s in a single evening**. So there is no "your PDF
   was long" story available, and an upper bound is the only honest shape for
   this claim. The variance is in the model call, not in the parse.
