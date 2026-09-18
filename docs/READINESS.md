@@ -25,6 +25,11 @@ breaker it designed on 09-15, but by the smaller thing the same entry named as
 covering the n=1 hole: hash the source bytes. A measurement run before any code
 found all four watched PDFs byte-identical across two fetches, which is what
 made the smaller fix the sufficient one. Score **9 → 24**.
+**Proven on production 2026-09-18**, on the second 11:17 UTC cron after the
+deploy — the first only wrote the baselines. Four watched PDFs, none re-read,
+bytes re-hashed by hand afterwards and still matching. **No flag opened or
+closed, so the score stays at 24**; what changed is that the closed entry no
+longer rests on a dev run. **M10 recurred the same morning** and recovered.
 
 Passes have scored **58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10 → 9 → 24** (09-03, 09-05,
 09-05 evening, 09-07 morning, 09-07 evening, 09-08 morning, 09-08 evening,
@@ -554,6 +559,15 @@ nobody is looking.
 **Not scheduled before the video.** The backoff ships tonight only because it is
 one constant in a deploy that is happening anyway. The limiter waits.
 
+**Recurred 2026-09-18, and the mitigation held.** Seven `Firecrawl 429`s in the
+11:17 UTC sweep, seven `watch:failed` writes and 23 `watch:recheck` executions
+for sixteen documents. **Every one recovered** and no row carried a `watchError`
+afterwards — the 60s/120s backoff is doing what it was changed to do. The
+fan-out is untouched: the corpus has grown from fourteen documents to sixteen,
+and which documents 429 on first attempt is still a coin toss. This is the
+second dated instance; the free step, reading the real per-minute limit off the
+plan, is still unclaimed.
+
 ### Low
 
 - **L3** `convex/documents.ts:28` — `recent` orders by `_creationTime`, but a
@@ -850,11 +864,36 @@ twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
   `contentHash` standing after a parse that provably differs is the new gate.
   The perturbation was reverted and dev redeployed before commit.
 
+  **Proven on production 2026-09-18, on the second cron after the deploy.** The
+  first, on 09-17, could only arm it: every row entered that sweep with a null
+  baseline and null never matches. On 09-18 the sweep took twelve early exits
+  and four full re-reads, **and not one of the four watched PDFs was re-read**.
+  Every stored `sourceHash` was re-hashed by hand an hour later against a fresh
+  fetch: ten of the twelve early exits still matched, all four PDFs among them.
+  The 09-17 sweep had sent karecondo and cms.gov through to `attach` on a moved
+  parse; on 09-18, with the bytes provably unchanged, both stopped. Zero change
+  notices, and `mail:send` absent from a fourteen-hour log span.
+
+  **What that run does NOT show, because nothing measures it.** The two gates
+  exit through the same `mail.checked` mutation and neither logs which one
+  fired, so “suppressed by bytes” is an inference from the four PDFs' hashes
+  and M6's measured parse non-determinism, not a line in a log. The two early
+  exits whose bytes have since churned (att, spotify) may have exited on the
+  parsed comparison. A log line naming the gate would settle it, and it is not
+  worth a deploy before submission.
   **The residual, stated rather than scored.** HTML pages whose bytes churn get
   no suppression from this — the hash never matches, so they behave exactly as
   they did yesterday. H10 was written about PDFs and closes about PDFs. If a
   vendor ever re-renders *HTML* corpus-wide, the flip-count breaker is still
   the instrument for it, and its design is in the 09-15 log entry unspent.
+  **The residual has a dated instance now.** On the 09-18 sweep the one finding
+  stamped `changedAt` was `facebook` T4, moving from line 894 to line 341 — a
+  different clause on a page whose bytes differ on every fetch, so the gate had
+  nothing to match and the change was computed exactly as it would have been
+  before this fix. It mailed nobody only because the single thread on that
+  document had replied STOP. **That is M4 covering for the residual, not the
+  residual being narrow**, and the next HTML page with a live subscriber will
+  not have that cover.
 
 - **M15 (four comments described the Firecrawl design this project rejected)**
   closed 2026-09-14, in the H9 PR as the flag asked. All four rewritten: the
