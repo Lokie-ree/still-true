@@ -3904,6 +3904,15 @@ threads say 4, and the 46-line page is 29.998s.
 **No flag opened or closed; the score stays 24.** Nothing about production
 changed tonight but two private rows — eighteen documents now, the same 47
 public findings, the same cron.
+
+**The listing was re-derived, not patched.** The 09-16 submission copy
+carried six of the same eight defects — "seven claims", drift "three times",
+5,138 lines and 36/11, the SBC at 172 lines, "2 minutes 17 seconds" with the
+deployment left off, and "it never writes the answer text", which it does; it
+never writes the *quote*. Per that file's own rule, the fix is a new dated
+snapshot, [`docs/submission-2026-09-18.md`](docs/submission-2026-09-18.md),
+which also gains the third gate and the two Louisiana leases side by side.
+Reply time across the 25 real answers now: median 21s, slowest 43s.
 What changed is five sentences that claimed more than the deployment could
 show, found by a reader who had not written them and trusted nothing in the
 repository, which is the reader the submission gets.
