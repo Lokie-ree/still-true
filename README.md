@@ -71,7 +71,7 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-16
+## Status — 2026-09-17
 
 **Live on production and answering real mail. The demo is recorded.**
 
@@ -82,8 +82,20 @@ PDF — a dash, a pipe, where a table cell breaks — used to move every PDF's
 content hash in the same sweep and mail every subscriber that their lease had
 changed. Identical bytes cannot be a changed document, so it holds for one PDF
 as well as for all of them, which a corpus-wide flip count could not. Score
-9 → 24. **Verified on dev, not yet on production** — the receipt is the 11:17
-UTC cron, and this line says "dev" until that run exists.
+9 → 24.
+
+**2026-09-17 — deployed, armed, and not yet proven.** The line above used to say
+"verified on dev, not yet on production — this line says dev until that run
+exists." The run exists. It did not prove what it was scheduled to prove, and
+saying so is cheaper than letting a date stand in for a result. Every one of the
+16 watched rows went into the 11:17 UTC sweep with no stored `sourceHash`,
+because the deploy landed after the previous day's cron and only a sweep writes
+one. A null baseline never matches, **so the gate could not suppress anything on
+its first run** — it wrote the baselines instead. All 16 rows carry a source
+hash now, the sweep finished with no errors, and no subscriber was mailed.
+**Suppression has still never been observed on production. The 11:17 UTC cron
+on 09-18 is the first run that can show it**, and this line says so until it
+does.
 
 **2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
 interview, five of them Convex-shaped, closed and were filed in one sitting:

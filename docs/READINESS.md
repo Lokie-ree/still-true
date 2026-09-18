@@ -1600,6 +1600,17 @@ production and reading two cron receipts, 09-17 and 09-18 at 11:17 UTC. The
 fallback is unchanged and now cheaper than it was written: revert one field and
 one guard, and submit with H10 open and a dated note.
 
+**Amended 2026-09-17, after the first of those two receipts was read: there is
+only one receipt, and it is 09-18.** The paragraph above counts 09-17 and 09-18
+as two tests of the same gate. They are not. The deploy landed after the 09-16
+cron, and nothing writes a `sourceHash` except a sweep, so all 16 rows went
+into the 09-17 sweep with `sourceHash: null` — and `null` never matches.
+**The source gate could not fire on a single document.** Every document was
+scraped, `mail.checked` wrote the baseline on the way past, and what 09-17
+proved is that the field populates on every row and that nothing errored doing
+it. That is an **arming run**, not a receipt. The read is the 09-17 entry in
+`hackathon.md`; the cost is in the fallback below.
+
 Everything below is the order for after 09-22, carried forward unchanged:
 **M13 → M12 → the three free reads → H11 → M8 → (measure H6 again) → M10 → M2 →
 M6 → (L3, L4, L9, L10, L11, L13, L14, L15, L16).**
@@ -1657,6 +1668,16 @@ genuine change that never mails. That is the direction this fix can fail in and
 the old behaviour could not, so a quiet receipt is not the same as a good one.
 **Nothing else is built before 09-22.** Everything else this week is
 documentation of what is true.
+
+**What the arming run costs this fallback, amended 2026-09-17.** It was written
+for two tests and there is one. If the 09-18 receipt shows the gate
+misbehaving, 09-19 is the fix **and** the retest in the same day, with 09-20 the
+submission — the spare day this schedule kept for a second failure was spent on
+arming. So the choice the fallback defers to *"if the second fails too"* has to
+be made on the 19th off a single retest, and the bias goes to reverting: one
+field, one guard, a dated note, H10 re-opened, and a submission that is late
+about nothing. **A revert on 09-19 is cheap; a gate nobody has watched suppress
+anything is not.**
 
 **Before the rewrite, as it stood 09-14 night:** M13 → M12 → the three free
 reads → M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L9, L10, L11).
