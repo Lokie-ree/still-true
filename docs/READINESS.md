@@ -1514,6 +1514,36 @@ Documented decisions with named upgrade paths:
 - The `occRetried` warning on `agentmail/callbackPool` (2 calls,
   `occ_retry_count: 0`) — inside the component's sandboxed tables, not our
   code, not actionable.
+- **No authentication. Decided 2026-09-17, and written down here so it stops
+  being re-opened by every pass that notices it.** There is no `auth.config.ts`,
+  no users table, and no `ctx.auth` call anywhere in `convex/`. This has been
+  the oldest open item in the project and it was open only in the sense that
+  nobody had written the decision down; the *leak* half closed in P3 as H1.
+  What protects private forwards is provenance, not a session:
+  `documents.isPublic` is set once at insert, `documents.recent` gates on the
+  `by_isPublic` index so a private row is never read, and
+  `documents.findingsFor` returns `[]` for a private id (`documents.ts:57`).
+  **Not scored because nothing is exposed**, and the gate re-asserts the board
+  half of it on every run.
+
+  **It is an absence of features, not an absence of a guard.** There is no
+  per-person view to protect: a sender's copy of their answers is the reply in
+  their inbox, and unsubscribing is a STOP reply, not a settings page.
+
+  **The trigger that reverses this, named now so the next person does not have
+  to re-derive it:** anything rendered to one person and not another — a page
+  listing your own forwards, a managed subscription, a shared document. On that
+  day the foundation goes first (`auth.config.ts` plus a subject-keyed users
+  table) and the feature second; injecting `ctx.auth` into today's queries
+  without a foundation 401s every call, which is why this is a foundation and
+  not a patch.
+
+  **One thing this entry will not claim.** No test and no gate check exercises
+  `findingsFor` with a PRIVATE document id. The guard is three lines and it is
+  read on every call, but the invariant is held by code review alone — the
+  gate only ever calls that query with public ids, because that is what the
+  board hands it. Stated rather than implied; whether it earns a flag number is
+  a decision for the next pass, not a thing to quietly leave sounding covered.
 
 ## Coverage — what the audit could not see
 
