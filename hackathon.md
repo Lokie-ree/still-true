@@ -3916,3 +3916,74 @@ Reply time across the 25 real answers now: median 21s, slowest 43s.
 What changed is five sentences that claimed more than the deployment could
 show, found by a reader who had not written them and trusted nothing in the
 repository, which is the reader the submission gets.
+
+## 2026-09-19 — the two drafts were stale in opposite directions
+
+The day's plan was a health check and a decision about a second LinkedIn post.
+The gate read **8/8, 99 tests, lint clean** against production, and today's
+11:17 UTC cron looked exactly like yesterday's: 16 documents enqueued, 23
+`watch:recheck` executions, 7 Firecrawl `429`s all recovered, 12 early exits,
+4 full re-reads, and **no `mail:send` anywhere** — the only two sends in a
+29-hour log window are the two Louisiana attachment replies from 09-18. Same
+shape two days running, and the same thing it was yesterday: *consistent with*
+suppression, because both gates still exit through one `mail.checked` call and
+nothing logs which fired. A second matching run is more evidence, not a
+different kind of it.
+
+**So the real work was the oldest open item, and it had rotted.** §9 of
+[`handoff-2026-09-10.md`](docs/handoff-2026-09-10.md) has said since 09-10 that
+the two sponsor issues in [`docs/sponsor-issues.md`](docs/sponsor-issues.md)
+get filed after the shoot and before submitting. They are not filed: 27 issues
+authored on this GitHub account, the most recent created **2025-11-29**.
+Submission is tomorrow. Both drafts were read against the artifacts before
+filing rather than trusted, and **neither survived intact — in opposite
+directions.**
+
+**Firecrawl was understating its own evidence, and the fix that closed H10 is
+why.** The draft had 171/174/174/171 from one afternoon. The board reads the
+same CMS PDF at **169** today, and `PARSER_VERSION` is still 2 — `git log -S`
+over the whole history returns exactly one commit that assigns it, H3's. So it
+is three distinct parses across eleven days, not two across six hours. The
+bytes are now confirmed three independent ways where there was one: the two
+hand hashes on 09-08, the `sourceHash` H10 stores automatically before every
+scrape (`863bf56fdf99f7f9…`, written `2026-09-19T11:17:34Z`), and a fresh
+download today at 440,883 bytes with the same digest. **The byte gate built to
+stop M6 from mailing anybody turned out to be a daily automatic witness that
+M6 is real.** Their open #4050 pins `pdf-parse` at `^1.1.1` against `~2.4.x`,
+which is a plausible mechanism and makes the report corroboration rather than
+a new complaint. Their tracker is public GitHub and holds nothing on this.
+
+**AgentMail was overstating, and half of it was simply wrong.** The title
+pinned Convex 1.44; we are on **1.45.0**, so the first reply would have been
+"does this repro on the latest?" — a question that cannot be answered before
+submission, because the send path was replaced and no deploy happens now. The
+platform version was never load-bearing: the component's whole
+`dist/component/convex.config.js` is `defineComponent("agentmail")` plus two
+workpools, so there is nothing for *any* Convex version to bind. The title
+names the package version now and quotes the file.
+
+**The withdrawn half is the one worth recording.** The draft claimed real
+messages carry a scalar `from` "not the `from_` array the docs example shows,"
+and that the two `as unknown as` casts existed because of it. Checked against
+the published artifacts: `from_` appears **only in AgentMail's Python
+examples**, where it is the reserved-word escape for `from`, and it is a scalar
+there too — their own examples hedge with
+`message.get('from_', '') or message.get('from', '')`. The Node SDK has no
+`from_`, the component README has no `from_`, and there is **no Convex page in
+their docs at all**. The schema's `from: string` and the live scalar `from`
+agree; there was never a discrepancy. The casts are `WebhookCtx` and
+`OnMessageReceived`, neither about `from`. It is marked withdrawn in the draft
+rather than deleted, and the same correction went into `convex/mail.ts` where
+the comment had said it too.
+
+**The lesson is the one this repository keeps re-learning from a new angle.**
+A draft is a claim, and claims here are dated. These two were written on 09-10,
+were true then, and were read nine days later as if writing them down had
+preserved them. What made them wrong is not carelessness — it is that the
+project moved: H10 shipped a byte hash that strengthened one of them, and a
+`convex` bump weakened the other. **The check that caught both is the same one
+the 09-18 verification used: read the artifact, not the note about the
+artifact.** One of the two was going to be answered in a single line by a
+maintainer, on the one document whose whole purpose is to arrive credible.
+
+No flag opened or closed. Score stays **24**.
