@@ -39,8 +39,8 @@ import { documentKind, extractedFinding } from "./schema";
 //
 // The component owns Svix verification, `event_id` dedupe, and the workpool
 // that dispatches this callback, all in its own sandboxed tables. It does NOT
-// send: on Convex 1.44 its sandbox cannot see AGENTMAIL_API_KEY, so outbound
-// is `send` below. See the note there for the proof.
+// send: its sandbox cannot see AGENTMAIL_API_KEY, so outbound is `send` below.
+// See the note there for the proof.
 type OnMessageReceived = NonNullable<
   NonNullable<ConstructorParameters<typeof AgentMail>[1]>["onMessageReceived"]
 >;
@@ -149,10 +149,14 @@ async function notify(
 // project does not use `@agentmail/convex` for what it is for.
 //
 // `@agentmail/convex` 0.1.0 reads `process.env.AGENTMAIL_API_KEY` inside its
-// own sandbox (component/utils.ts), and Convex 1.44 populates a component's
+// own sandbox (component/utils.ts), and Convex populates a component's
 // environment only from what the parent binds through
 // `app.use(child, { env })`. The component declares no env vars, so there is
-// nothing to bind and the key is invisible to it. Proven rather than reasoned:
+// nothing to bind and the key is invisible to it — its whole
+// `dist/component/convex.config.js` is `defineComponent("agentmail")` plus two
+// workpools, so this does not depend on the Convex version. First observed on
+// 1.44; we are on 1.45.0 now and have not re-tested, because `send` below
+// replaced the path. Proven rather than reasoned:
 // at 19:31:51 on 2026-09-04, on one deployment, `attachmentUrl` below fetched a
 // PDF with `requireEnv("AGENTMAIL_API_KEY")` while the component threw
 // "AGENTMAIL_API_KEY is not set on this Convex deployment" — same key, same
@@ -394,11 +398,16 @@ export const received = internalMutation({
         ? "cc"
         : "forward";
 
-    // Real AgentMail messages carry a scalar `from` ("Name <addr>"), not the
-    // `from_` array the docs example shows. Checked against a live message
-    // rather than the docs — and the component's own `inboundMessages` schema
-    // declares `from: string` too, so there is no structured sender address
-    // anywhere upstream to prefer over parsing the header ourselves.
+    // Real AgentMail messages carry a scalar `from` ("Name <addr>"), and the
+    // component's own `inboundMessages` schema declares `from: string`, so
+    // there is no structured sender address anywhere upstream to prefer over
+    // parsing the header ourselves.
+    //
+    // This comment used to say the docs showed a `from_` ARRAY and that the
+    // types disagreed with them. Both halves were wrong (checked 2026-09-19):
+    // `from_` appears only in AgentMail's Python examples, where it is the
+    // reserved-word escape for `from`, and it is a scalar there too. Nothing
+    // disagrees with anything. Do not re-add it.
     //
     // H4. This is the identity BOTH spend gates and `stopFor` key on, so it has
     // to be the mailbox and not the way a client chose to format it. See
