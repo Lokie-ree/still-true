@@ -11,11 +11,24 @@ its date, cut the sentence rather than soften it.
 **Revised 2026-09-19, and the revision is the point.** Both drafts were written
 around 09-10 and both had drifted by the time they were due to be filed. The
 Firecrawl one was *understating* its evidence — it had two line counts from one
-afternoon, and there are now three across eleven days, on bytes confirmed
+afternoon, and there are now four across twelve days, on bytes confirmed
 identical by three independent measurements. The AgentMail one was
 *overstating*: its title pinned a Convex version we no longer run, and its
 second half was wrong on two counts and is withdrawn below. A draft is a claim
 like any other here, and it goes stale the same way.
+
+**Corrected again 2026-09-20 — the 09-19 revision introduced a false
+instruction.** It said 172 was "never a measured parse" and told a reader not
+to cite it. **172 was a production reading on 2026-09-16**, and two artifacts
+prove it: `submission-2026-09-16.md`, whose header states its numbers were read
+from production `documents:recent`, and `public/og.jpg`, a screenshot of the
+board taken that afternoon showing *"172 lines"* and four refusals reading
+*"Searched all 172 lines."* The 09-18 verification listed "the SBC at 172
+lines" as a defect because that copy had gone **stale**, not because the number
+was invented, and the 09-19 pass collapsed those two things. **The error was
+made by grepping this repository's prose instead of opening the artifact** —
+the exact check the 09-19 revision was performing on everything except itself.
+The set is 169 / 171 / 172 / 174.
 
 **Before filing:** both trackers were searched on 2026-09-19 and neither holds
 an existing report — the venue and the result are recorded in each draft. Both
@@ -30,7 +43,7 @@ build and both say so.
 and a better venue than support because the submission can cite it. Searched
 2026-09-19: no existing report of this. **Title:**
 
-> `/scrape` returns three different line counts (169 / 171 / 174) for the same PDF bytes over eleven days
+> `/scrape` returns four different line counts (169 / 171 / 172 / 174) for the same PDF bytes over twelve days
 
 **Body:**
 
@@ -40,8 +53,8 @@ system this was found in handled it correctly and shipped.
 URL: `https://www.cms.gov/cciio/resources/forms-reports-and-other-resources/downloads/english-sample-completed-sbc-accessible-format-012825.pdf`
 (CMS's completed sample Summary of Benefits and Coverage, 440,883 bytes.)
 
-**Six reads, three distinct parses, one unchanged file.** All with `maxAge: 0`,
-so none was a cache hit.
+**Seven reads, four distinct parses, one unchanged file.** All with
+`maxAge: 0`, so none was a cache hit.
 
 | date | read | lines returned |
 |---|---|---|
@@ -49,8 +62,9 @@ so none was a cache hit.
 | 2026-09-08 | 17:49 round trip | 174 |
 | 2026-09-08 | 18:31 forward | 174 |
 | 2026-09-08 | 18:46 forward | **171** |
+| 2026-09-16 | 11:18 cron sweep | **172** |
 | 2026-09-17 | 11:17 cron sweep | **169** |
-| 2026-09-19 | 11:17 cron sweep | 169 (unchanged) |
+| 2026-09-20 | 11:17 cron sweep | 169 (unchanged) |
 
 **The source file did not move, and three independent measurements say so.**
 
@@ -62,9 +76,9 @@ so none was a cache hit.
    written automatically at `2026-09-19T11:17:34Z`.
 3. Downloaded again on 2026-09-19: 440,883 bytes, same sha256.
 
-So the bytes are constant from 09-08 to 09-19 and the parse returned 171, then
-174, then 169. Our own parser version is a single constant that has not changed
-across that window, so the variance is not ours.
+So the bytes are constant from 09-08 to 09-20 and the parse returned 171, then
+174, then 172, then 169. Our own parser version is a single constant that has
+not changed across that window, so the variance is not ours.
 
 **A possible mechanism, from your own tracker.** Issue #4050 (open, 2026-07-28)
 lists `pdf-parse` pinned at `^1.1.1` against a current `~2.4.x`, described there

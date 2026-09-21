@@ -40,10 +40,11 @@ evidence for the fix and not a proof of it; the Closed entry says so and its
 opening line now agrees with it. **No flag opened or closed, so the score stays
 at 24.** **M10 recurred the same morning** and recovered.
 **2026-09-19 — M6 re-measured, no flag moved, score stays 24.** The pre-filing
-check on the sponsor drafts found a third distinct line count for the CMS PDF
-(169, against 171 and 174) on bytes confirmed unchanged three independent ways,
-at a `PARSER_VERSION` git shows was never bumped. M6's evidence is stronger; M6
-is not. Today's 11:17 cron: 16 enqueued, 12 early exits, 4 full re-reads, 7
+check on the sponsor drafts found further distinct line counts for the CMS PDF
+on bytes confirmed unchanged three independent ways, at a `PARSER_VERSION` git
+shows was never bumped. **Amended 2026-09-20: the set is four — 169 / 171 /
+172 / 174 — not three; the 09-19 pass wrongly ruled 172 out as never measured.
+See M6.** M6's evidence is stronger; M6 is not. Today's 11:17 cron: 16 enqueued, 12 early exits, 4 full re-reads, 7
 Firecrawl 429s all recovered, **zero `mail:send`** — the same shape as 09-18,
 and the same two-gate ambiguity, so it is still *consistent with* suppression.
 
@@ -506,18 +507,33 @@ The file did not move. Downloaded at 17:49 and again at 18:47, `sha256
 different readings of them.
 
 **Re-measured 2026-09-19, and it is worse than one afternoon.** The board reads
-this document at **169** lines today, a third distinct value, and
-`PARSER_VERSION` is still 2 — `git log -S` over the whole history returns
-exactly one commit that assigns it, H3's. The bytes are now confirmed three
-independent ways rather than one: the two hand hashes above, the `sourceHash`
-H10 stores automatically before every scrape (written
-`2026-09-19T11:17:34Z`, value
+this document at **169** lines today, and `PARSER_VERSION` is still 2 —
+`git log -S` over the whole history returns exactly one commit that assigns it,
+H3's. The bytes are now confirmed three independent ways rather than one: the
+two hand hashes above, the `sourceHash` H10 stores automatically before every
+scrape (written `2026-09-19T11:17:34Z`, value
 `863bf56fdf99f7f9493d6c9a8a988685348f5f2200b8655bcc92484a111f079c`), and a
-fresh download today at 440,883 bytes with the same digest. So: **169 / 171 /
-174 from one unchanging file over eleven days, under one parser version.**
-The 169 was first seen on the 09-17 sweep. *Do not cite 172 — it appears in
-`submission-2026-09-16.md` and was one of the eight defects the 09-18
-verification caught. It was never a measured parse.*
+fresh download at 440,883 bytes with the same digest. The 169 was first seen on
+the 09-17 sweep.
+
+**Amended 2026-09-20 — the count is four, and the line above said three.** The
+09-19 pass wrote *"do not cite 172 — it was never a measured parse."* **172 was
+a production reading on 2026-09-16.** Two artifacts: `submission-2026-09-16.md`,
+whose header states its numbers were read from production `documents:recent`,
+and `public/og.jpg`, a screenshot of the board that afternoon showing
+*"172 lines"* and four refusals reading *"Searched all 172 lines."* The 09-18
+verification called 172 a defect because that dated copy had gone **stale**;
+the 09-19 pass read "defect" as "fabricated." So the set is **169 / 171 / 172 /
+174 from one unchanging file over twelve days, under one parser version** — and
+M6 is worse than this file has ever recorded, not better.
+
+**How the error was made, because it is this repository's own named defect.**
+The 09-19 claim was verified by grepping this repository's prose for "172" and
+reasoning from the word "defect." The artifact — a JPEG in `public/` — was
+never opened. That pass was at that moment correcting two sponsor drafts for
+exactly this, and did not turn the check on itself. *Do not re-derive the
+parse history from prose. Open `public/og.jpg` and the dated submission
+copies; they are the receipts.*
 
 **H10 turned this flag into its own instrument.** The byte gate exists to stop
 a moved parse from mailing anybody, and the hash it stores to do that is a

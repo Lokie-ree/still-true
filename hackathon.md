@@ -3943,7 +3943,10 @@ directions.**
 why.** The draft had 171/174/174/171 from one afternoon. The board reads the
 same CMS PDF at **169** today, and `PARSER_VERSION` is still 2 — `git log -S`
 over the whole history returns exactly one commit that assigns it, H3's. So it
-is three distinct parses across eleven days, not two across six hours. The
+is three distinct parses across eleven days, not two across six hours.
+*Corrected 2026-09-20: it is **four** across twelve days. This entry also went
+on to call 172 a number that was never measured, and 172 was a production
+reading on 09-16. See the 09-20 entry.* The
 bytes are now confirmed three independent ways where there was one: the two
 hand hashes on 09-08, the `sourceHash` H10 stores automatically before every
 scrape (`863bf56fdf99f7f9…`, written `2026-09-19T11:17:34Z`), and a fresh
@@ -3985,5 +3988,57 @@ project moved: H10 shipped a byte hash that strengthened one of them, and a
 the 09-18 verification used: read the artifact, not the note about the
 artifact.** One of the two was going to be answered in a single line by a
 maintainer, on the one document whose whole purpose is to arrive credible.
+
+No flag opened or closed. Score stays **24**.
+
+## 2026-09-20 — the correction pass put a false claim into the correction
+
+Yesterday's entry is directly above, and its subject is that a draft goes stale
+and has to be read against the artifact rather than remembered. In the middle
+of making that argument it wrote: *"Never cite 172 — it was never a measured
+parse."* **172 was a production reading on 2026-09-16.** That sentence shipped
+in PR #71 into `docs/READINESS.md`, `docs/sponsor-issues.md`, this log and a
+memory file, and it would have gone to Firecrawl inside a bug report whose
+whole value is that its numbers are checkable.
+
+**The two artifacts that settle it, neither of which was opened yesterday.**
+`docs/submission-2026-09-16.md` states in its own header that its numbers were
+read from production `documents:recent` on 2026-09-16, and it says the SBC is
+172 lines. `public/og.jpg` is a screenshot of the board taken that same
+afternoon: the card reads *"172 lines · read Sep 16 · re-checked Sep 16,
+11:18 AM UTC"* and four refusals under it read *"Searched all 172 lines."* A
+number rendered by the board is the board's `lineCount`, which is the parse.
+
+**What went wrong is one substitution.** The 09-18 verification listed "the SBC
+at 172 lines" among eight defects in the 09-16 submission copy. It was a defect
+because that dated snapshot had gone **stale** — the board had moved to 169 by
+then — not because anyone had invented the number. Yesterday's pass read
+"defect" as "fabricated," confirmed it by grepping this repository's prose for
+"172", found only the 09-16 copy and the 09-18 entry calling it a defect, and
+concluded it was never real. **Every step of that was reading the notes about
+the artifact instead of the artifact**, which is the failure the same entry was
+written to correct in two sponsor drafts. The check was aimed outward and never
+turned around.
+
+**So M6 is worse than recorded, and the report is stronger.** The set under one
+unchanged `PARSER_VERSION` is **169 / 171 / 172 / 174** — four distinct parses
+of one byte-identical file across twelve days, not three across eleven. The
+Firecrawl draft's title and table now say four, and the header carries the
+correction so a reader meets it before the evidence.
+
+**Found by looking at the link preview, for an unrelated reason.** The og-image
+was being checked for submission-day staleness — the documented worry being
+that a correction reaches the page and stops at the picture of the page, which
+happened to this same file on 09-16. It is stale again: it serves 172 while the
+board serves 169, and the 09-17 entry claims it was verified and reads 169,
+which it does not. That check looked at the board and wrote it up as the image.
+**The stale asset turned out to be the receipt that the number was real.**
+
+**Not re-shooting it today.** Replacing it needs a `static-hosting deploy` on
+submission day, which rebuilds and ships the whole frontend; LinkedIn caches
+previews, so a new card may not even render on today's posts; and the image is
+dated on its own face, showing a true reading from a stated day. A custom SVG
+exported to raster is the durable fix — with the rule that **no number in it
+can be one the deployment changes** — and it lands after submission.
 
 No flag opened or closed. Score stays **24**.
