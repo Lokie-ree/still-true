@@ -1,5 +1,38 @@
 # Readiness flags — open at the start of P5
 
+## Open flags at a glance
+
+**Score 24/100** — `100 − 15/high − 5/medium − 1/low`, counted over open findings
+only. It measures how hard this project has looked at itself, not how much works;
+[what the score measures](#what-the-score-measures-and-what-it-does-not) says why a
+green gate and a low score are the expected shape rather than a contradiction.
+Ten open flags, every one of them shipping in production right now.
+
+| Flag | Severity | What it is | Locus |
+|---|---|---|---|
+| [H6](#h6) | high | An answer can out-run the line it cites | `convex/extract.ts` |
+| [H11](#h11) | high | A failed send silently ends the watch for that thread, and nothing repairs it | `convex/mail.ts:170` |
+| [M2](#m2) | medium | Attachment documents never dedupe | `convex/mail.ts:952` |
+| [M6](#m6) | medium | Firecrawl's PDF parse is not deterministic — 169/171/172/174 on one byte-identical file across twelve days at one `PARSER_VERSION` | vendor-side |
+| [M8](#m8) | medium | Reflow leaves a sentence broken when the continuation starts with a capital | `convex/lines.ts` |
+| [M10](#m10) | medium | The sweep's retries arrive during the minute they are not welcome | `convex/watch.ts` |
+| [M12](#m12) | medium | Disclosure is derived from the absence of a thread id | `convex/mail.ts:976` |
+| [M13](#m13) | medium | The gate's sweep receipt can be minted by hand, and by a stranger | `convex/mail.ts:895` |
+| [M14](#m14) | medium | `From` is attacker-controlled, and three gates key on it | `convex/mail.ts:397` |
+| [C3](#c3) | unscored | The reply sometimes lands in spam, and which time is not predictable | relay-side |
+
+**If you have five minutes and work at a sponsor**, these are the ones that are
+yours: [M6](#m6) is Firecrawl's, [C3](#c3) touches AgentMail's relay, and the
+Convex-shaped findings came out of the 09-15 mock interview —
+[H11](#h11) and [M12](#m12), where a transaction boundary is the whole argument.
+The two filed-upstream write-ups are in [`sponsor-issues.md`](sponsor-issues.md).
+
+**Everything below this table is the audit's own history** — which pass found
+what, which flags closed and why, and the fix order. It is the evidence, not the
+summary, and it is long on purpose.
+
+---
+
 Last audit **2026-09-08** (fourth pass). **M5 closed 2026-09-09**; three flags
 opened the same day by the probe-v4 playtest, which is not an audit either —
 it is the product being used; **H5 and M7 closed the same evening**, together,
@@ -120,6 +153,7 @@ same morning this was written. That gap is the finding: **the gate is green and
 the score is 22**, and both are true, because the gate asks whether the promises
 being made today are being kept and the score asks what is waiting to break one.
 
+<a id="what-the-score-measures-and-what-it-does-not"></a>
 ## What the score measures, and what it does not
 
 Added 2026-09-14, because the number moved forty points in one afternoon and its
@@ -250,6 +284,7 @@ found by the check written to confirm the third was fixed.
 
 ## Open
 
+<a id="h11"></a>
 ### H11 — a failed send silently ends the watch for that thread, and nothing repairs it (high)
 
 `convex/mail.ts:170` — `send` is one POST with no retry, and `recordSend` runs
@@ -292,6 +327,7 @@ and visibility with no repair is what this flag is.
 is scheduled, and retry the send with an idempotency key. Not built before
 submission.
 
+<a id="m12"></a>
 ### M12 — disclosure is derived from the absence of a thread id (medium)
 
 `convex/mail.ts:976` — `isPublic: args.threadRowId === null`, on the insert
@@ -317,6 +353,7 @@ argument about likelihood does not need settling: make `isPublic` an explicit
 argument of `attach` — `true` from `probe`, `false` from `ingest`, `false` from
 `recheck`. Two lines, and the leak stops being contingent on a lookup.
 
+<a id="m13"></a>
 ### M13 — the gate's sweep receipt can be minted by hand, and by a stranger (medium)
 
 `scripts/gate.mjs:237` takes `Math.max` over every public document's
@@ -345,6 +382,7 @@ means every watched document is fresh rather than at least one; and keep the
 watch's stamp distinct from a read's, so only `checked`/`recheck` set
 `lastCheckedAt` and the mail path does not.
 
+<a id="m14"></a>
 ### M14 — `From` is attacker-controlled, and three gates key on it (medium)
 
 `convex/mail.ts:397` parses the sender; `stopFor` (`mail.ts:310`), the burst
@@ -378,6 +416,7 @@ for people who had done nothing but own two mail clients. This one requires
 somebody to decide to do it. That is a real difference in who gets hurt by
 accident, and it is the difference this file has used before.
 
+<a id="h6"></a>
 ### H6 — an answer can out-run the line it cites (high)
 
 `convex/extract.ts`: the `SYSTEM` prompt's central instruction, and `verify()`,
@@ -437,6 +476,7 @@ receipt is still a real sentence a reader can find. Not scored lower because the
 answer above it was wrong, on production, in a reply a person would have acted
 on.
 
+<a id="m8"></a>
 ### M8 — reflow leaves a sentence broken when the continuation starts with a capital (medium)
 
 **Amended 2026-09-15 with the measurement, and the numeral is not where the
@@ -490,6 +530,7 @@ help while the continuation test still rejects a capital `D`, and loosening
 was built around. Measure a candidate against the four real PDFs before
 believing it, the way the original 1,688-to-0 measurement was taken.
 
+<a id="m6"></a>
 ### M6 — Firecrawl's PDF parse is not deterministic (medium)
 
 Observed on production 2026-09-08, not inferred. The CMS Summary of Benefits at
@@ -561,6 +602,7 @@ Confirm the scope before acting: this is one document. Whether it affects the
 other PDFs is unmeasured, and the fix is not obvious — normalising the parse
 would mean finding what actually varies first.
 
+<a id="m2"></a>
 ### M2 — attachment documents never dedupe (medium)
 
 `convex/mail.ts:952`. `attach` skips the `by_url` lookup when `url === null`,
@@ -571,6 +613,7 @@ Confirmed live: dev holds two identical Livonia rows (`j5728ejqz…`,
 
 Fix: dedupe attachments on `contentHash`, which is already computed.
 
+<a id="m10"></a>
 ### M10 — the sweep's retries arrive during the minute they are not welcome (medium)
 
 `convex/watch.ts`, the `Workpool` retry behaviour. Opened 2026-09-11 by reading
@@ -702,6 +745,7 @@ is a one-day gap at worst and it is named here rather than scored.
 
 ## Candidate — evidence too thin to score
 
+<a id="c3"></a>
 ### C3 — the reply sometimes lands in spam, and which time is not predictable
 
 **Measured 2026-09-14 night, three Gmail accounts, same sender and
@@ -874,6 +918,7 @@ Confirm before acting: run
 `npx convex run mail:probe '{"url":"https://www.paypal.com/us/legalhub/useragreement-full"}'`
 twice, ten minutes apart, and compare `contentHash`. Two scrapes settles it.
 
+<a id="closed"></a>
 ## Closed — do not re-flag
 
 - **H10 (an upstream re-render mailed every PDF subscriber a change that did
@@ -1029,8 +1074,11 @@ other way round:
 
 **This is H7's class, in the code rather than on the page**, and it is the fourth
 discovery mode doing its job: *compare a claim about the pipeline to the
-pipeline*. It is also the second-renderer defect this project has now logged four
-times — a decision was reversed in one place and left standing in three others.
+pipeline*. It is also the second-renderer defect this project has now logged six
+times (four when this line was written; the fifth and sixth are both
+2026-09-20 — the demo duration, and the README trust section still describing
+the watch as two gates for the four days since it became three) — a decision was reversed
+in one place and left standing in three others.
 
 **Scored 5 rather than 1 because of who reads it.** One of seventeen judges works
 at Firecrawl. He opens one file — the one containing the Firecrawl call — and the
@@ -1835,9 +1883,12 @@ reads → M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L9, L10, 
 
 **The freeze is lifted, and that is the single largest change to this file
 today.** The clause that stood here said *"nothing in this fix order happens
-before the video is shot."* **The video was shot on 2026-09-13** — 2:42, and the
+before the video is shot."* **The video was shot on 2026-09-13** — 2:43, and the
 11:17 UTC cron found the fixture edit on the morning of 09-12, which is the
-receipt beat C is built on. The reason for the freeze was specific and it has
+receipt beat C is built on. *(Said 2:42 until 2026-09-20; YouTube serves 2:43
+and the 09-14 publish entry recorded `PT2M43S` in the same sentence that wrote
+2:42. See the 09-20 entry in `hackathon.md`.)* The reason for the freeze was
+specific and it has
 expired: M8 bumps `PARSER_VERSION`, and a bump between the enrolment and the edit
 would have made `attach` re-baseline and swallow the change the video exists to
 show. There is no longer a change waiting to be shown.
