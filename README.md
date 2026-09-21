@@ -101,96 +101,40 @@ used: the signal is consumable, so reading it spends it. See
 
 **Live on production and answering real mail. The demo is recorded.**
 
-**2026-09-20 — submission day.** `npm run gate` reads **8/8 against production**,
-99 tests, lint clean. The board re-read through the public query is unchanged
-from 09-18: six documents, 5,133 lines, 37 answered findings, 10 refusals. Two
-days of identical counts is a first for a paragraph this file calls its least
-trustworthy. Nothing was built. Two things were corrected, and the second is the
-one worth reading: **"Why it can be trusted" above described the watch as two
-gates, and it has had three since 09-16** — the source-byte hash that closed H10
-never reached the section whose job is to make the watch believable, though it is
-described forty lines below and has been on the live submission listing for two
-days. The other was the demo's runtime, 2:42 → **2:43**. Both are the same
-defect — a correction reaching the file being edited and not the files that
-quote it — and the [build log](hackathon.md) counts them as its fifth and sixth,
-along with what a judge's-eye read of these docs found and what it did not fix.
+Verified today, read-only against production `impressive-marten-163`:
+`npm run gate` **8/8**, 99 tests, lint clean. The corpus is **18 documents** — 6
+on the public board, 12 forwarded privately and never shown — of which 16 are
+url-backed and re-read daily, and 2 are emailed PDF attachments, which are not
+watched because there is no URL to go back to. Replies: **25 sent, median 21s,
+slowest 43s.** Score **24/100** over ten open flags, each one scored, dated and
+given a locus in [`docs/READINESS.md`](docs/READINESS.md), which opens with a
+table of all ten.
 
-**2026-09-16 — the last build, and it was one field.** A re-check now hashes the
-document's **source bytes** and, when they are the bytes it last read, stops
-before the model runs. The Firecrawl scrape still happens first — the stop
-saves the two model calls and the re-publish, not the scrape, and the 09-18
-sweep's seven rate-limit failures are the receipt for that. That closes H10: an upstream renderer changing how it lays out a
-PDF — a dash, a pipe, where a table cell breaks — used to move every PDF's
-content hash in the same sweep and mail every subscriber that their lease had
-changed. Identical bytes cannot be a changed document, so it holds for one PDF
-as well as for all of them, which a corpus-wide flip count could not. Score
-9 → 24.
+**The last two weeks, in one line each.** The dated entries in
+[`hackathon.md`](hackathon.md) are the record, including the reversals; this is
+only the index into it.
 
-**2026-09-17 — deployed, armed, and not yet proven.** The line above used to say
-"verified on dev, not yet on production — this line says dev until that run
-exists." The run exists. It did not prove what it was scheduled to prove, and
-saying so is cheaper than letting a date stand in for a result. Every one of the
-16 watched rows went into the 11:17 UTC sweep with no stored `sourceHash`,
-because the deploy landed after the previous day's cron and only a sweep writes
-one. A null baseline never matches, **so the gate could not suppress anything on
-its first run** — it wrote the baselines instead. All 16 rows carry a source
-hash now, the sweep finished with no errors, and no subscriber was mailed.
-**Suppression had still never been observed on production, and the 11:17 UTC
-cron on 09-18 was the first run that could show it.** What it showed is
-consistent with suppression and does not prove it — see the entry below, and
-the retraction under 2026-09-18 in [`hackathon.md`](hackathon.md).
-
-**2026-09-18 — consistent with suppression, not proven, and the revert was not
-taken.** This entry said "it suppressed" for six hours. Nothing in the system
-records which of the two gates stopped a document — the byte gate and the
-parsed-lines gate exit through the same mutation with the same arguments, and a
-source fetch that fails is a silent null that routes to the second gate and
-leaves the row looking identical. So what follows is the evidence, and the
-word for it is *consistent*. Sixteen documents
-swept, twelve early exits, four full re-reads, and **not one of the four
-watched PDFs was re-read at all**. Every stored source hash was re-checked by
-hand against a fresh fetch an hour later: ten of the twelve early exits still
-matched, all four PDFs among them. The day before, with null baselines, two of
-those PDFs had been re-read on a moved parse; with the bytes provably
-unchanged, both stopped. No subscriber was mailed — `mail:send` does not appear
-anywhere in a fourteen-hour log span. The one finding stamped as changed was an
-HTML page, which is the residual this fix names in
-[`docs/READINESS.md`](docs/READINESS.md) rather than covering, and it reached
-nobody only because that thread had replied STOP. The sweep's real defect was
-M10: seven Firecrawl rate-limit failures, all of which recovered.
-
-**2026-09-15 — the interview filed.** Nine rounds of a mock hostile-judge
-interview, five of them Convex-shaped, closed and were filed in one sitting:
-two highs, five lows and one re-measured medium in
-[`docs/READINESS.md`](docs/READINESS.md), score 44 → 9. Nothing was built and
-nothing broke; every one of them has been shipping for days. The one thing it
-said would be built before submission was H10, and it was built the next day —
-smaller than the design it had, because a measurement was run first. The
-corpus on production is **16 url-backed documents — 6 public, 10 private
-forwards** — plus, since 2026-09-18 14:41 UTC, **two emailed attachments**,
-which are never watched. This sentence said "plus emailed attachments" for
-three days while the table held zero rows without a URL; the 09-18
-verification found that, and the same evening two real forwards closed it. The
-Louisiana Attorney General's landlord-tenant guide as a 1.9 MB PDF attachment:
-625 lines, seven answers and one refusal, replied in 38.7 seconds. Then the
-Louisiana Association of Realtors residential lease form: 495 lines, three
-answers and four refusals, 20.3 seconds — and it states at line 177 the one
-thing the Livonia lease refused, that the deposit comes back within 30 days.
-Both rows are private, with `sourceHash` null because there is no URL to go
-back to.
+| Date | What happened |
+|---|---|
+| **09-20** | A judge's-eye read of these docs. *Why it can be trusted* had described the watch as two gates since 09-16, when it became three. Corrected, with five smaller things. |
+| **09-19** | Both sponsor bug-report drafts read against the artifacts before filing. Neither survived: Firecrawl's was understating its own evidence, AgentMail's was half wrong and that half is withdrawn. |
+| **09-18** | The word "proven" retracted six hours after it shipped — the sweep's behaviour is *consistent with* suppression and the system cannot tell you which gate fired. Same evening, the first two PDF attachments answered on production, 38.7s and 20.3s. |
+| **09-17** | The first receipt was not a receipt. Every row went into the sweep with a null `sourceHash`, which never matches, so the gate could not suppress anything — an arming run, not proof. |
+| **09-16** | The last build, and it was one field: hash the source bytes and stop before the model when they match. Closes H10. Score 9 → 24. A ten-minute measurement replaced a four-part design. |
+| **09-15** | Nine rounds of a mock hostile-judge interview, filed in one sitting. Two highs, five lows, one re-measured medium. Nothing was built and nothing broke. Score 44 → 9. |
 
 - **P1–P3 — the inbox, the parser, the extractor and the cited reply:** shipped.
   Production answered a forwarded link in 15 seconds with six quoted findings and
   one refusal. **That 15 seconds is one event on 09-06, and it is the fast end.**
-  Across the 20 real answers production has sent, the median is 20.4 seconds and
-  the slowest is 42.6 — measured 2026-09-14 by subtracting `threads.receivedAt`
-  from `threads.repliedAt`, two fields that had been sitting there since P1. The
-  board said "about fifteen seconds" until that measurement and now says "under a
-  minute", which is true of all twenty. Latency does not track document length:
-  the fastest run of the twenty is the 1,182-line Facebook privacy policy (this
-  said "PayPal" until 09-18; PayPal is 1,243 lines, took 23.2s, and arrived
-  after the twenty were measured), and one
-  418-line lease spanned 14.8s to 42.6s in a single evening. The board was designed on 2026-09-10 and is now a pleading page:
+  Across the **25 real answers** production has sent, the median is **21 seconds**
+  and the slowest **43** — re-measured 2026-09-18 by subtracting
+  `threads.receivedAt` from `threads.repliedAt`, two fields that had been sitting
+  there since P1. The board said "about fifteen seconds" until the first such
+  measurement on 09-14 and now says "under a minute", which is true of all
+  twenty-five. Latency does not track document length: the fastest of the first
+  twenty was the 1,182-line Facebook privacy policy (this said "PayPal" until
+  09-18; PayPal is 1,243 lines and took 23.2s), and one lease spanned 14.8s to
+  42.6s in a single evening. The board was designed on 2026-09-10 and is now a pleading page:
   line numbers in a gutter down the left edge, the quote as the largest text on
   a card, the model's summary demoted to an annotation above it — and a refusal
   rendered with an EMPTY gutter, because there is no line to name. No new claim
@@ -203,8 +147,9 @@ back to.
   stamped all six documents between 11:17:09 and 11:19:16 UTC, the cron's
   scheduled minute: three read identically and stopped before the model ran,
   three had moved text and were re-extracted, and **no clause any finding had
-  quoted was gone, so nobody was emailed.** That is both gates, on real
-  documents, with nobody watching. Enrolment is still automatic and takes no
+  quoted was gone, so nobody was emailed.** That is both gates of the day, on
+  real documents, with nobody watching — the source-byte gate described above is
+  the third and did not exist until 09-16. Enrolment is still automatic and takes no
   opt-in; **replying STOP now ends it** — that thread and every other one from
   the same address — and a re-check that fails now says so on the document row
   instead of only in logs nobody can read. **A second forward of a URL already
