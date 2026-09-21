@@ -1029,8 +1029,10 @@ other way round:
 
 **This is H7's class, in the code rather than on the page**, and it is the fourth
 discovery mode doing its job: *compare a claim about the pipeline to the
-pipeline*. It is also the second-renderer defect this project has now logged four
-times — a decision was reversed in one place and left standing in three others.
+pipeline*. It is also the second-renderer defect this project has now logged five
+times (four when this line was written; the fifth is the demo duration,
+2026-09-20) — a decision was reversed in one place and left standing in three
+others.
 
 **Scored 5 rather than 1 because of who reads it.** One of seventeen judges works
 at Firecrawl. He opens one file — the one containing the Firecrawl call — and the

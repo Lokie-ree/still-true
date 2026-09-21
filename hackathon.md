@@ -4074,7 +4074,10 @@ own parenthetical disagree across eleven words. The oEmbed reading was correct
 and was written down; the human summary beside it rounded the wrong way and that
 is the number three files copied.
 
-**This is the second-renderer defect, for the third recorded time.** The 09-18
+**This is the second-renderer defect, for the fifth recorded time** — `READINESS.md`
+counts four and the 09-13 entry names the fourth, and writing "third" here was
+the first draft of this very paragraph, which is the undercount `CLAUDE.md`
+warns is the defect committing itself again. The 09-18
 verification found the 09-16 submission copy stale, re-derived it — and 2:43 was
 one of the corrections it made. It reached the new snapshot and stopped there.
 Nothing propagated it to the README a judge reads first, to READINESS, or to the

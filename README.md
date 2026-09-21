@@ -100,7 +100,7 @@ file, `docs/READINESS.md` and the build log all said the video is 2:42; YouTube
 serves **2:43**, and the 09-14 entry that published it recorded the oEmbed
 duration `PT2M43S` in the same sentence that wrote 2:42. The 09-18 submission
 copy had it right and the correction never reached the three files that cite it
-— the same second-renderer defect this log has now recorded three times.
+— the same second-renderer defect this log has now recorded five times.
 **Still stale on purpose:** `public/og.jpg` serves *172 lines* where the board
 serves 169. Replacing it needs a frontend deploy on submission day, it is dated
 on its own face, and the 09-20 entry in [`hackathon.md`](hackathon.md) is why it
