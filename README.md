@@ -5,16 +5,24 @@
 Send a lease, a terms-of-service update, an insurance renewal — as an attachment
 or a link — to an email address. You get back what that document requires of you
 and by when, with **every claim quoted from the source and the line it came
-from**. Where the document is silent, it says so and tells you how many lines it
-searched — and since 2026-09-09 it says that precisely. A fact stated **across
-two lines** cannot be cited under a one-line contract, so the refusal claims
-only what it can know: *"Searched all 418 lines. No single line states it."* —
-418 being the Livonia lease's count on the board as of 2026-09-15, and for a PDF
-that number can move without the document changing
-([M6](docs/READINESS.md)). It
-said *"This document does not state it"* until a playtest caught that being
-false on a document that states the fact twice
-([H5](docs/READINESS.md), closed).
+from**. Where no single line answers, you get a counted refusal rather than a
+guess:
+
+> *"Searched all 416 lines. No single line states it."*
+
+That is the Livonia Housing Authority's public housing lease, asked when the
+deposit has to come back after move-out. Six of its seven questions returned a
+quote and a line number — the 48-hour entry notice at line 264, the $25.00 late
+fee at line 42. The seventh returned a count. A tenant cannot learn when their
+money comes back by reading the lease they signed.
+
+**Both halves of that sentence were wrong once, and both are now claims the
+system can keep.** It read *"This document does not state it"* until a playtest
+caught that being false on a document stating the fact across two lines
+([H5](docs/READINESS.md#closed), closed) — a refusal is a search result, not a
+verdict about the world. And 416 is what the board read today; it has also read
+418, because a PDF's line count can move without the document changing
+([M6](docs/READINESS.md#m6), open and scored).
 
 For documents that live at a URL it keeps watching, and tells you when the
 specific thing you asked about changes.
@@ -28,7 +36,7 @@ Try it: forward a PDF or a link to **still-true@agentmail.to**
 Gmail accounts: two landed in the inbox and one went to spam. Which one is not
 predictable — the first reading of this was "an address with no history gets
 filtered" and the third account falsified it the same hour — so the instruction
-is unconditional rather than aimed at a group. ([C3](docs/READINESS.md).)
+is unconditional rather than aimed at a group. ([C3](docs/READINESS.md#c3).)
 
 ## Why it can be trusted
 
@@ -53,9 +61,13 @@ every citation is visible and one click from its source.
 **The watch is held to the same standard.** It never reports a change from a
 diff of two model runs — the same six documents read on two deployments hours
 apart disagreed on 2 of 47 cells with nothing about the documents changing. A
-change is only ever reported when a SHA-256 of the parsed lines has moved *and*
-the exact clause a finding used to quote is no longer in the document. Both
-gates are deterministic; neither asks the model a second time.
+change is only ever reported when **three deterministic gates all open**: a
+SHA-256 of the **source bytes** has moved, a SHA-256 over the **parsed lines**
+has moved, and the exact clause a finding used to quote is **no longer in the
+text**. None of the three asks the model a second time. The first is the newest
+thing here — it shipped 2026-09-16 — and it is what stops a vendor re-rendering
+a PDF from mailing every subscriber that their lease changed: identical bytes
+cannot be a changed document, at any number of documents, including one.
 
 **There is no sign-in, and that is a decision rather than a gap.** No
 `auth.config.ts`, no users table, and nothing in the backend calls `ctx.auth`.
@@ -89,22 +101,19 @@ used: the signal is consumable, so reading it spends it. See
 
 **Live on production and answering real mail. The demo is recorded.**
 
-**2026-09-20 — submission day, and the only thing that moved was a number about
-the video.** `npm run gate` reads **8/8 on production**, 99 tests, lint clean.
-The board was re-read through the public query today and has not drifted since
-09-18: six documents, 5,133 lines, **37 answered findings and 10 refusals**, the
-Summary of Benefits and Coverage still at 169 lines and still refusing four of
-eight. Two days running with identical counts is the first time this paragraph
-has been able to say that. **What did move is the demo's stated length.** This
-file, `docs/READINESS.md` and the build log all said the video is 2:42; YouTube
-serves **2:43**, and the 09-14 entry that published it recorded the oEmbed
-duration `PT2M43S` in the same sentence that wrote 2:42. The 09-18 submission
-copy had it right and the correction never reached the three files that cite it
-— the same second-renderer defect this log has now recorded five times.
-**Still stale on purpose:** `public/og.jpg` serves *172 lines* where the board
-serves 169. Replacing it needs a frontend deploy on submission day, it is dated
-on its own face, and the 09-20 entry in [`hackathon.md`](hackathon.md) is why it
-waits. Nothing under `convex/` was touched.
+**2026-09-20 — submission day.** `npm run gate` reads **8/8 against production**,
+99 tests, lint clean. The board re-read through the public query is unchanged
+from 09-18: six documents, 5,133 lines, 37 answered findings, 10 refusals. Two
+days of identical counts is a first for a paragraph this file calls its least
+trustworthy. Nothing was built. Two things were corrected, and the second is the
+one worth reading: **"Why it can be trusted" above described the watch as two
+gates, and it has had three since 09-16** — the source-byte hash that closed H10
+never reached the section whose job is to make the watch believable, though it is
+described forty lines below and has been on the live submission listing for two
+days. The other was the demo's runtime, 2:42 → **2:43**. Both are the same
+defect — a correction reaching the file being edited and not the files that
+quote it — and the [build log](hackathon.md) counts them as its fifth and sixth,
+along with what a judge's-eye read of these docs found and what it did not fix.
 
 **2026-09-16 — the last build, and it was one field.** A re-check now hashes the
 document's **source bytes** and, when they are the bytes it last read, stops
@@ -202,7 +211,7 @@ back to.
   known no longer ends that watch:** the row is shared by design, and until
   2026-09-14 the second arrival re-classified it, replaced every published
   finding, and left the first sender enrolled in a watch that would never fire
-  ([H9](docs/READINESS.md), closed).
+  ([H9](docs/READINESS.md#closed), closed).
 - **P5 — the CC reply:** shipped, and smaller than it was described as being.
   Cc this address on a thread and the document is read out of the quoted
   original, with the cited answer replied to **everyone on the thread** — which

@@ -4102,9 +4102,55 @@ gate and the public queries, with the last-build date and the last-verified date
 now separated, because conflating them is how the block went stale in the first
 place.
 
+**Then the pass was re-aimed, and the second finding is the one that mattered.**
+The work above was internal consistency — a number agreeing with itself across
+four files. It was not a reading of the docs as **a judge with limited time**
+reads them, which is what `docs/handoff-2026-09-10.md` §5 says the depth is for:
+seventeen judges, fourteen of them employed by the sponsors this is built on.
+Re-read that way, the README gave up something worse than a stale runtime.
+
+**`## Why it can be trusted` describes the watch as two gates. It has had three
+since 09-16.** The source-byte hash that closed H10 — the last thing built, the
+subject of a whole Status paragraph forty-five lines below, and the entire
+argument of the 09-18 LinkedIn post — never reached the section whose only job
+is to establish that the watch can be believed. The live vibeapps listing has
+said three gates for two days. So the README **understated its own system in its
+trust argument**, and contradicted itself within one screen, in the file the
+handoff calls *"the surface a judge reads first."*
+
+**That is the same defect as the runtime, and they are the fifth and sixth.**
+Both are a correction landing on the artifact being edited and not on the
+artifacts that quote it. The runtime is cosmetic; this one cost the project
+credit for the best thing it built this week, in front of the readers most
+likely to recognise it.
+
+**Three more things a judge hits that a maintainer never does**, all measured
+rather than felt:
+
+- **Seven links from the README into `READINESS.md` and not one carried an
+  anchor.** A judge clicking `[M6]` — the Firecrawl finding the handoff says is
+  *theirs* — landed at the top of a 1,939-line file, **253 lines before the
+  first flag**, with no table of contents. The citations in a project whose
+  thesis is that every claim carries its receipt did not resolve. Fixed: ten
+  open flags and the closed section now carry anchors, and the file opens with
+  an at-a-glance table of all ten, with severity, locus, and a line naming which
+  flags belong to which sponsor's engineer.
+- **The README's opening sentence ran eleven lines and spent four of them
+  qualifying before the product landed.** Rewritten so the counted refusal
+  arrives as a blockquote in the first five lines, with the caveats kept, dated
+  and moved one beat later.
+- **The headline refusal quoted 418 lines; the board reads 416.** Dated to
+  09-15 so not false, but a judge who clicks the board sees the mismatch on the
+  one sentence this project is known for. Now current, with 418 named as the
+  same document's earlier count and M6 linked as the reason.
+
 **What is deliberately not fixed today.** `public/og.jpg` still serves *172
 lines* against a board serving 169; the reasoning is in the entry above and it
-has not changed. The two sponsor issues in
+has not changed. **`## Status` is 61% of the README** — 159 lines of 290, 1,859
+words of 3,044 — and most of it is dated entries that also live in this log.
+That is the largest remaining thing between a judge and the good part of this
+repository, and it is a restructure, not a correction, so it is not being done
+at speed on submission day. The two sponsor issues in
 [`docs/sponsor-issues.md`](docs/sponsor-issues.md) are still unfiled — §9 of the
 09-10 handoff has had them open for ten days, and filing is Randall's.
 
