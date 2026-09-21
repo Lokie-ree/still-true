@@ -116,6 +116,7 @@ only the index into it.
 
 | Date | What happened |
 |---|---|
+| **09-21** | Both sponsor bug reports filed, eleven days after the handoff called for them: [firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712) and [agentmail-to/convex#7](https://github.com/agentmail-to/convex/issues/7). Drafts in [`docs/sponsor-issues.md`](docs/sponsor-issues.md), with what was re-checked before sending. |
 | **09-20** | A judge's-eye read of these docs. *Why it can be trusted* had described the watch as two gates since 09-16, when it became three. Corrected, with five smaller things. |
 | **09-19** | Both sponsor bug-report drafts read against the artifacts before filing. Neither survived: Firecrawl's was understating its own evidence, AgentMail's was half wrong and that half is withdrawn. |
 | **09-18** | The word "proven" retracted six hours after it shipped — the sweep's behaviour is *consistent with* suppression and the system cannot tell you which gate fired. Same evening, the first two PDF attachments answered on production, 38.7s and 20.3s. |

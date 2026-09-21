@@ -13,7 +13,7 @@ Ten open flags, every one of them shipping in production right now.
 | [H6](#h6) | high | An answer can out-run the line it cites | `convex/extract.ts` |
 | [H11](#h11) | high | A failed send silently ends the watch for that thread, and nothing repairs it | `convex/mail.ts:170` |
 | [M2](#m2) | medium | Attachment documents never dedupe | `convex/mail.ts:952` |
-| [M6](#m6) | medium | Firecrawl's PDF parse is not deterministic — 169/171/172/174 on one byte-identical file across twelve days at one `PARSER_VERSION` | vendor-side |
+| [M6](#m6) | medium | Firecrawl's PDF parse is not deterministic — 169/171/172/174 on one byte-identical file across twelve days at one `PARSER_VERSION`. [Reported upstream](https://github.com/firecrawl/firecrawl/issues/4712) 09-21 | vendor-side |
 | [M8](#m8) | medium | Reflow leaves a sentence broken when the continuation starts with a capital | `convex/lines.ts` |
 | [M10](#m10) | medium | The sweep's retries arrive during the minute they are not welcome | `convex/watch.ts` |
 | [M12](#m12) | medium | Disclosure is derived from the absence of a thread id | `convex/mail.ts:976` |
@@ -25,7 +25,11 @@ Ten open flags, every one of them shipping in production right now.
 yours: [M6](#m6) is Firecrawl's, [C3](#c3) touches AgentMail's relay, and the
 Convex-shaped findings came out of the 09-15 mock interview —
 [H11](#h11) and [M12](#m12), where a transaction boundary is the whole argument.
-The two filed-upstream write-ups are in [`sponsor-issues.md`](sponsor-issues.md).
+Both are now filed on the sponsors' own public trackers —
+[firecrawl/firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712)
+and [agentmail-to/convex#7](https://github.com/agentmail-to/convex/issues/7),
+2026-09-21 — with the write-ups and what was checked before sending in
+[`sponsor-issues.md`](sponsor-issues.md).
 
 **Everything below this table is the audit's own history** — which pass found
 what, which flags closed and why, and the fix order. It is the evidence, not the
@@ -532,6 +536,12 @@ believing it, the way the original 1,688-to-0 measurement was taken.
 
 <a id="m6"></a>
 ### M6 — Firecrawl's PDF parse is not deterministic (medium)
+
+**Reported upstream 2026-09-21T01:57Z:
+[firecrawl/firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712).**
+The flag stays open and stays scored — filing a report is not a fix, and this one
+is a stability report rather than a correctness one. What the issue adds is that
+the evidence is now checkable by somebody who does not have to trust this file.
 
 Observed on production 2026-09-08, not inferred. The CMS Summary of Benefits at
 one URL, one `PARSER_VERSION`, one afternoon:
