@@ -1,6 +1,31 @@
 # Two issues to file — drafts
 
-Copy-paste bodies for the Firecrawl and AgentMail trackers. **File after the
+**BOTH FILED 2026-09-21T01:57Z — twelve seconds apart, the evening of Sunday
+09-20 in the US — eleven days
+after §5 first called for it and hours before the submission.**
+
+| Sponsor | Issue | Title |
+|---|---|---|
+| Firecrawl | [firecrawl/firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712) | `/scrape` returns four different line counts (169 / 171 / 172 / 174) for the same PDF bytes over twelve days |
+| AgentMail | [agentmail-to/convex#7](https://github.com/agentmail-to/convex/issues/7) | 0.1.0 cannot send: the component reads `process.env.AGENTMAIL_API_KEY`, which a component sandbox never sees |
+
+**Three things were checked against the artifacts in the hour before filing,
+and one of them was wrong.** Both trackers were re-searched on the day rather
+than trusted from the 09-19 search: `firecrawl/firecrawl` still holds no report
+of this, and `agentmail-to/convex` still has exactly one issue ever, closed and
+unrelated. Firecrawl's #4050 was opened and read directly — it is open, and the
+phrase this draft quotes from it is verbatim, `pdf-parse` at `^1.1.1` against
+`~2.4.x`, "PDF parsing of untrusted input on an old major". **Its date was
+wrong here: 2026-07-16, not 07-28**, corrected below before the body was filed.
+The 09-20 row of the parse table was confirmed the same way — the board reads
+the SBC at 169 today and the sweep that wrote it ran at 11:20 UTC.
+
+Both bodies as filed carry a closing line the drafts below do not: a link to
+this repository, a statement that the product is in the shipped build and did
+not block it, and — for Firecrawl — a link to [M6](READINESS.md#m6) so a reader
+lands on the flag rather than the top of the file.
+
+Copy-paste bodies for the Firecrawl and AgentMail trackers. **Filed after the
 shoot, before the submission**, per §5 of
 [`handoff-2026-09-10.md`](handoff-2026-09-10.md).
 
@@ -38,6 +63,8 @@ build and both say so.
 ---
 
 ## 1 · Firecrawl — PDF parse is not deterministic for one URL
+
+**FILED: https://github.com/firecrawl/firecrawl/issues/4712** (filed 2026-09-21T01:57:16Z)
 
 **Where:** <https://github.com/firecrawl/firecrawl/issues> — a public tracker,
 and a better venue than support because the submission can cite it. Searched
@@ -80,7 +107,7 @@ So the bytes are constant from 09-08 to 09-20 and the parse returned 171, then
 174, then 172, then 169. Our own parser version is a single constant that has
 not changed across that window, so the variance is not ours.
 
-**A possible mechanism, from your own tracker.** Issue #4050 (open, 2026-07-28)
+**A possible mechanism, from your own tracker.** Issue #4050 (open, 2026-07-16)
 lists `pdf-parse` pinned at `^1.1.1` against a current `~2.4.x`, described there
 as "PDF parsing of untrusted input on an old major." This may simply be that.
 
@@ -106,6 +133,8 @@ Happy to supply all three hashes, the raw responses, and timestamps.
 ---
 
 ## 2 · AgentMail — `@agentmail/convex` 0.1.0 cannot send
+
+**FILED: https://github.com/agentmail-to/convex/issues/7** (filed 2026-09-21T01:57:28Z)
 
 **Where:** <https://github.com/agentmail-to/convex/issues> (the `bugs` URL in
 the package). Searched 2026-09-19: one issue ever, closed, unrelated.

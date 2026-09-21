@@ -4150,9 +4150,58 @@ has not changed. **`## Status` is 61% of the README** — 159 lines of 290, 1,85
 words of 3,044 — and most of it is dated entries that also live in this log.
 That is the largest remaining thing between a judge and the good part of this
 repository, and it is a restructure, not a correction, so it is not being done
-at speed on submission day. The two sponsor issues in
-[`docs/sponsor-issues.md`](docs/sponsor-issues.md) are still unfiled — §9 of the
-09-10 handoff has had them open for ten days, and filing is Randall's.
+at speed on submission day. *(Both were done later the same session — see the
+entry below.)* The two sponsor issues in
+[`docs/sponsor-issues.md`](docs/sponsor-issues.md) were still unfiled when this
+paragraph was written — §9 of the 09-10 handoff had had them open for eleven
+days.
 
 No flag opened or closed. Score stays **24**.
 
+## 2026-09-21, 01:57 UTC — the oldest open item closed, eleven days late
+
+The `## Status` restructure named above was done in the same session after all —
+README **290 → 244 lines**, the five dated entries replaced by a six-row index
+into this log, after verifying every one of those dates has a longer counterpart
+here. Then the item that had outlived every other one on the list.
+
+**Both sponsor issues are filed.** §5 of `handoff-2026-09-10.md` called for them
+on 09-10 and §9 listed them as the third of three still-open items; the other two
+closed within days. These sat **eleven days** —
+[firecrawl/firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712)
+and [agentmail-to/convex#7](https://github.com/agentmail-to/convex/issues/7),
+filed twelve seconds apart, hours before the submission. **The reason they sat is
+one this log already knows**: nothing forced them. The drafts were ready on
+09-10. Shipping was the bottleneck, and it was again.
+
+**The hour before filing found one error, and it was in a citation.** The
+Firecrawl draft cites the sponsor's own issue #4050 as corroboration — `pdf-parse`
+pinned at `^1.1.1` against `~2.4.x`. It was dated **2026-07-28** here; the issue
+was opened **2026-07-16**. The quoted phrase checked out verbatim and the issue
+is open, so the citation held — only the date was wrong. Small, and it was in
+the one sentence of that report whose whole job is to be checkable by the
+maintainer reading it. Both trackers were re-searched on the day rather than
+trusted from the 09-19 search — still no existing report on either — and the
+09-20 row of the parse table was confirmed against the board, which reads 169,
+and the sweep that wrote it, which ran at 11:20 UTC.
+
+**And the title arrived mangled, which is the 09-05 lesson in a new costume.**
+The Firecrawl title begins `/scrape`, and the shell path-converted the leading
+slash: the issue went live reading *"C:/Program Files/Git/scrape returns four
+different line counts…"* on a sponsor's tracker. Fixed inside a minute, but it
+was live, and it was found by **opening the issue rather than reading the
+command's exit code** — the same check that found the og-image, the link-preview
+card and the 2:43. The tool reported success and the artifact was wrong. There is
+no way to catch that except looking at the thing.
+
+Both bodies close with a line the drafts do not carry: this repository, a
+statement that the product is in the shipped build and did not block it, and —
+for Firecrawl — a deep link to [M6](docs/READINESS.md#m6), which lands on the
+flag because the anchors added earlier today exist.
+
+**M6 stays open and stays scored at 5.** Reporting a defect upstream is not
+fixing it. What changed is that its evidence is now checkable by somebody who
+does not have to trust this repository, which is the argument this whole file
+makes about itself.
+
+No flag opened or closed. Score stays **24**.
