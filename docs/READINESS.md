@@ -1835,9 +1835,12 @@ reads → M8 → (measure H6 again) → M10 → M2 → M6 → (L3, L4, L9, L10, 
 
 **The freeze is lifted, and that is the single largest change to this file
 today.** The clause that stood here said *"nothing in this fix order happens
-before the video is shot."* **The video was shot on 2026-09-13** — 2:42, and the
+before the video is shot."* **The video was shot on 2026-09-13** — 2:43, and the
 11:17 UTC cron found the fixture edit on the morning of 09-12, which is the
-receipt beat C is built on. The reason for the freeze was specific and it has
+receipt beat C is built on. *(Said 2:42 until 2026-09-20; YouTube serves 2:43
+and the 09-14 publish entry recorded `PT2M43S` in the same sentence that wrote
+2:42. See the 09-20 entry in `hackathon.md`.)* The reason for the freeze was
+specific and it has
 expired: M8 bumps `PARSER_VERSION`, and a bump between the enrolment and the edit
 would have made `attach` re-baseline and swallow the change the video exists to
 show. There is no longer a change waiting to be shown.

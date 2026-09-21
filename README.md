@@ -22,7 +22,7 @@ specific thing you asked about changes.
 Built for the Convex All Gas Hackathon (Aug–Sep 2026).
 
 Live: **https://impressive-marten-163.convex.site**
-Demo: **https://youtu.be/HofqXKI8KJs** (2:42)
+Demo: **https://youtu.be/HofqXKI8KJs** (2:43)
 Try it: forward a PDF or a link to **still-true@agentmail.to**
 **Check your spam folder the first time.** Measured 2026-09-14 across three
 Gmail accounts: two landed in the inbox and one went to spam. Which one is not
@@ -85,9 +85,26 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-18
+## Status — 2026-09-20
 
 **Live on production and answering real mail. The demo is recorded.**
+
+**2026-09-20 — submission day, and the only thing that moved was a number about
+the video.** `npm run gate` reads **8/8 on production**, 99 tests, lint clean.
+The board was re-read through the public query today and has not drifted since
+09-18: six documents, 5,133 lines, **37 answered findings and 10 refusals**, the
+Summary of Benefits and Coverage still at 169 lines and still refusing four of
+eight. Two days running with identical counts is the first time this paragraph
+has been able to say that. **What did move is the demo's stated length.** This
+file, `docs/READINESS.md` and the build log all said the video is 2:42; YouTube
+serves **2:43**, and the 09-14 entry that published it recorded the oEmbed
+duration `PT2M43S` in the same sentence that wrote 2:42. The 09-18 submission
+copy had it right and the correction never reached the three files that cite it
+— the same second-renderer defect this log has now recorded three times.
+**Still stale on purpose:** `public/og.jpg` serves *172 lines* where the board
+serves 169. Replacing it needs a frontend deploy on submission day, it is dated
+on its own face, and the 09-20 entry in [`hackathon.md`](hackathon.md) is why it
+waits. Nothing under `convex/` was touched.
 
 **2026-09-16 — the last build, and it was one field.** A re-check now hashes the
 document's **source bytes** and, when they are the bytes it last read, stops
@@ -208,8 +225,9 @@ back to.
   thread now; apologies, rate-limit notices and unsubscribe confirmations go to
   whoever wrote.
 
-The public board carries six documents, 37 answered findings and 10 refusals, as
-of the `npm run gate` run on 2026-09-18. It said 36 and 11 on 09-15, 35 and 12 on
+The public board carries six documents, 37 answered findings and 10 refusals,
+re-read through the public query on 2026-09-20 and unchanged from the
+`npm run gate` run on 2026-09-18. It said 36 and 11 on 09-15, 35 and 12 on
 09-14, 36 and 11 on 09-07, 37 and 10 the day before that, and 35 and 12 the day
 before that. The counts move on their own: two deployments reading
 these same six documents hours apart on 09-04 disagreed on 2 of 47 cells with

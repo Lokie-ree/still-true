@@ -4,17 +4,21 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes.
 - **Live app:** https://impressive-marten-163.convex.site
-- **Built as of 2026-09-15:** the inbox, the parser, the extractor and its grounding
+- **Built as of 2026-09-16** (last build; last verified 2026-09-20)**:** the inbox,
+  the parser, the extractor and its grounding
   guarantee, the cited reply, the daily watch and the CC reply — all **live on
-  production**, which has sent 20 real answers at a median of 20.4 s (the 15 s
-  first quoted here was the fast end of one event). The watch caught a fixture
-  edit on the morning of 2026-09-12 by cron, unattended, and mailed the change
-  into the thread that had asked; that receipt is what the 2:42 demo is built on.
-  The board carries six public documents and never a forwarded one; the corpus
-  on production is 16 url-backed documents, 6 public and 10 private. The findings
+  production**, which has sent 25 real answers at a median of 21 s, slowest 43
+  (measured 2026-09-18; the 15 s first quoted here was the fast end of one
+  event, and the 20.4 s that replaced it was 20 answers ago). The watch caught a
+  fixture edit on the morning of 2026-09-12 by cron, unattended, and mailed the
+  change into the thread that had asked; that receipt is what the 2:43 demo is
+  built on. The board carries six public documents and never a forwarded one; the
+  corpus on production is **18 documents — 6 public and 12 private**, of which 16
+  are url-backed and 2 are emailed PDF attachments. The findings
   count is one `npm run gate` reads from production rather than from this line.
-  **Known open flags are scored in `docs/READINESS.md`** — 10/100 as of 09-15,
-  and the number goes down when somebody looks harder, which is what it is for.
+  **Known open flags are scored in `docs/READINESS.md`** — **24/100** as of
+  09-20, and the number goes down when somebody looks harder, which is what it
+  is for.
 - **Repo:** https://github.com/Lokie-ree/still-true (public)
 - **Frontend:** Convex static hosting
 - **Convex deployments:** impressive-marten-163 (production), charming-kookabura-768 (development)
@@ -23,7 +27,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-16
+- **Last updated:** 2026-09-20
 
 ## Log
 
@@ -3282,7 +3286,10 @@ has been one person the entire time.
 ### 2026-09-14 — the video is public, and the README named a line count no document has
 
 Published: https://youtu.be/HofqXKI8KJs, 2:42, verified reachable with no auth
-(`isUnlisted:false`, oEmbed resolves, duration `PT2M43S`). 20 of 22 entries in
+(`isUnlisted:false`, oEmbed resolves, duration `PT2M43S`).
+*Corrected 2026-09-20: it is **2:43**, and this sentence carried the evidence
+against itself — the prose and the parenthetical disagree on one line. See the
+second 09-20 entry.* 20 of 22 entries in
 this hackathon carry a video; this was the only gap visible from the listing
 index without reading a word.
 
@@ -4042,3 +4049,61 @@ exported to raster is the durable fix — with the rule that **no number in it
 can be one the deployment changes** — and it lands after submission.
 
 No flag opened or closed. Score stays **24**.
+
+## 2026-09-20, later — the demo is 2:43, and the sentence that said 2:42 proved it
+
+A submission-day currency pass, scoped to verification and documentation. The
+gate reads **8/8 on production `impressive-marten-163`**, 99 tests, lint clean.
+The board was re-read through the public query the way a stranger reads it: six
+documents, **5,133 lines, 37 answered, 10 refusals**, SBC at **169**, Livonia at
+**416** refusing the deposit-return question — byte-for-byte the numbers
+[`docs/submission-2026-09-18.md`](docs/submission-2026-09-18.md) is serving on
+the live vibeapps listing. Two days with identical counts on a paragraph the
+README calls its least trustworthy is worth recording, because it is the first
+time.
+
+**The one defect is the demo's length, and four files disagreed about it.**
+`README.md`, `docs/READINESS.md` and the 09-14 entry in this log say **2:42**;
+`docs/submission-2026-09-18.md` says **2:43**, and 2:43 is what the live listing
+has been telling readers for two days. YouTube's player reads **2:43** today.
+
+**The evidence was already in the log, inside the sentence that got it wrong.**
+The 09-14 publish entry reads: *"2:42, verified reachable with no auth
+(`isUnlisted:false`, oEmbed resolves, duration `PT2M43S`)."* The prose and its
+own parenthetical disagree across eleven words. The oEmbed reading was correct
+and was written down; the human summary beside it rounded the wrong way and that
+is the number three files copied.
+
+**This is the second-renderer defect, for the third recorded time.** The 09-18
+verification found the 09-16 submission copy stale, re-derived it — and 2:43 was
+one of the corrections it made. It reached the new snapshot and stopped there.
+Nothing propagated it to the README a judge reads first, to READINESS, or to the
+log entry that is the original record. Same shape as the og-image on 09-16 and
+the five shoot-mechanics sections `CLAUDE.md` warns about: **a correction lands
+on the artifact that was being edited and not on the artifacts that quote it.**
+The cheap check is the one that found this — grep the number across the repo,
+not just the file you came to fix.
+
+**Grepping the number found a worse thing than the number: this file's own
+header.** The block at the top — the first prose in the build log, and the part
+a judge skimming it actually reads — was stale in four places at once. It said
+**20 real answers at a median of 20.4 s** (25 and 21 s since 09-18, five answers
+and two days out of date); **16 url-backed documents, 6 public and 10 private**,
+written before the two Louisiana attachments landed on 09-18 and so silent about
+the corpus being **18**; the demo at 2:42; and **`10/100` as of 09-15**, a score
+that matches nothing in `READINESS.md` — that pass was labelled 9, the label was
+wrong and summed to 24, and 24 is what the file has said since 09-18. Its
+`Last updated` read 2026-09-16. **Four dated claims, none of them load-bearing
+individually, all of them in the first twelve lines.** Corrected against the
+gate and the public queries, with the last-build date and the last-verified date
+now separated, because conflating them is how the block went stale in the first
+place.
+
+**What is deliberately not fixed today.** `public/og.jpg` still serves *172
+lines* against a board serving 169; the reasoning is in the entry above and it
+has not changed. The two sponsor issues in
+[`docs/sponsor-issues.md`](docs/sponsor-issues.md) are still unfiled — §9 of the
+09-10 handoff has had them open for ten days, and filing is Randall's.
+
+No flag opened or closed. Score stays **24**.
+
