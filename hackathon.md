@@ -4,16 +4,18 @@
 - **Event:** Convex All Gas Hackathon
 - **What it does:** Forward it a document — a lease, a terms-of-service update, an insurance renewal — and it replies with what that document requires of you. Every claim is quoted from the source with the line it came from, and it says plainly where the document is silent. For documents that live at a URL it keeps watching, and tells you when the specific thing you asked about changes.
 - **Live app:** https://impressive-marten-163.convex.site
-- **Built as of 2026-09-16** (last build; last verified 2026-09-20)**:** the inbox,
+- **Built as of 2026-09-16** (last build; last verified 2026-09-22)**:** the inbox,
   the parser, the extractor and its grounding
   guarantee, the cited reply, the daily watch and the CC reply — all **live on
-  production**, which has sent 25 real answers at a median of 21 s, slowest 43
+  production**, which had sent 25 real answers at a median of 21 s, slowest 43
   (measured 2026-09-18; the 15 s first quoted here was the fast end of one
-  event, and the 20.4 s that replaced it was 20 answers ago). The watch caught a
+  event, and the 20.4 s that replaced it was 20 answers ago), and has answered
+  at least one more since — **2026-09-21, in 23.7 s, to somebody who is not
+  me**. The watch caught a
   fixture edit on the morning of 2026-09-12 by cron, unattended, and mailed the
   change into the thread that had asked; that receipt is what the 2:43 demo is
   built on. The board carries six public documents and never a forwarded one; the
-  corpus on production is **18 documents — 6 public and 12 private**, of which 16
+  corpus on production is **19 documents — 6 public and 13 private**, of which 17
   are url-backed and 2 are emailed PDF attachments. The findings
   count is one `npm run gate` reads from production rather than from this line.
   **Known open flags are scored in `docs/READINESS.md`** — **24/100** as of
@@ -27,7 +29,7 @@
 - **Auth:** none
 - **AI models:** gpt-5.6-terra (OpenAI Responses API, strict JSON schema). gpt-5.6-sol held as the tiebreaker if a gate ever fails; gpt-5.6-luna, the plan's original pick, has never run.
 - **Started:** 2026-08-29T15:29:17Z
-- **Last updated:** 2026-09-20
+- **Last updated:** 2026-09-22 (closed)
 
 ## Log
 
@@ -4203,5 +4205,58 @@ flag because the anchors added earlier today exist.
 fixing it. What changed is that its evidence is now checkable by somebody who
 does not have to trust this repository, which is the argument this whole file
 makes about itself.
+
+No flag opened or closed. Score stays **24**.
+
+## 2026-09-22, 00:50 UTC — the log closes, and the last answer was not mine
+
+The last entry. Submitted 2026-09-20, feature-frozen since 09-16, and nothing
+below changes the system. It is a reading of it, on the day it stopped being
+built.
+
+**Something used it while nobody was looking.** At 2026-09-21T11:17:20.8Z an
+address on `@agentmail.to` forwarded the Creative Commons BY 4.0 legal code —
+the first forward from a domain other than the two this was ever tested from.
+It was answered **23.7 seconds later**, unattended: eight questions against 417
+lines, **four quoted with a line number** (217, 278, and 315 twice) and **four
+returned as counted refusals**. Nobody saw it happen. It surfaced tonight only
+because the gate counted nineteen documents against the eighteen every file
+here still claimed.
+
+**The timing is the part worth keeping.** That email landed eight seconds after
+the day's sweep began stamping at 11:17:12.8Z. The sweep covered all sixteen
+url-backed documents that existed when it started and never saw the one
+arriving mid-run, so the new row's `lastCheckedAt` is still `null` and its first
+check is the 11:17 cron on 09-22. That is the schedule working exactly as
+designed, and in the table it looks exactly like a gap. Read it as one and you
+would go fix something that is not broken.
+
+**The gate, 2026-09-22 00:30 UTC, read-only against `impressive-marten-163`:**
+**8/8**, 99 tests, lint clean. **19 documents** — 6 public, 13 private; 17
+url-backed, 2 emailed attachments. 37 answered findings, every one carrying a
+quote and a line number. 32 threads across 4 senders, every stored identity a
+bare address. No document failing its re-check.
+
+**The score went the only direction that means anything.** Eighteen passes:
+58 → 67 → 82 → 72 → 92 → 72 → 82 → 87 → 62 → 82 → 67 → 62 → 62 → 22 → 44 → 10
+→ 9 → 24. It fell every time somebody looked harder. It ends at 24 because one
+build on 09-16 closed a 15-point high — not because the other ten flags got
+safer. They are open, scored, and named in
+[`docs/READINESS.md`](docs/READINESS.md), which is the entire point of having
+written them down.
+
+**Three claims were retracted, and they are the best thing here.** "Fifteen
+seconds" was the fast end of one event, not a median. The 09-17 receipt was an
+arming run — every row swept with a null `sourceHash`, which never matches, so
+the gate could not have suppressed anything. And "proven" became "consistent
+with" on 09-18, everywhere it appeared, because `readAndPublish` leaves both
+gates through the same log line and cannot say which one fired. Six separate
+times a correction reached the artifact being edited and not the artifacts
+quoting it.
+
+**What cost the most was never the building.** The two sponsor issues were
+draft-ready on 09-10 and filed on 09-21; nothing blocked them for eleven days.
+This log has now recorded that three times, which is enough to call it the
+finding rather than the anecdote.
 
 No flag opened or closed. Score stays **24**.

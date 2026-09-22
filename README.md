@@ -20,7 +20,7 @@ money comes back by reading the lease they signed.
 system can keep.** It read *"This document does not state it"* until a playtest
 caught that being false on a document stating the fact across two lines
 ([H5](docs/READINESS.md#closed), closed) — a refusal is a search result, not a
-verdict about the world. And 416 is what the board read today; it has also read
+verdict about the world. And 416 is what the board read on 2026-09-22; it has also read
 418, because a PDF's line count can move without the document changing
 ([M6](docs/READINESS.md#m6), open and scored).
 
@@ -97,18 +97,19 @@ Firecrawl's own `changeTracking` was the first design for the watch and is not
 used: the signal is consumable, so reading it spends it. See
 [`convex/lines.ts`](convex/lines.ts) for the live run that settled it.
 
-## Status — 2026-09-20
+## Status — 2026-09-22
 
-**Live on production and answering real mail. The demo is recorded.**
+**Live on production and answering real mail — including, on 09-21, somebody
+who did not build it. The demo is recorded. The build is closed.**
 
-Verified today, read-only against production `impressive-marten-163`:
-`npm run gate` **8/8**, 99 tests, lint clean. The corpus is **18 documents** — 6
-on the public board, 12 forwarded privately and never shown — of which 16 are
+Verified 2026-09-22, read-only against production `impressive-marten-163`:
+`npm run gate` **8/8**, 99 tests, lint clean. The corpus is **19 documents** — 6
+on the public board, 13 forwarded privately and never shown — of which 17 are
 url-backed and re-read daily, and 2 are emailed PDF attachments, which are not
 watched because there is no URL to go back to. Replies: **25 sent, median 21s,
-slowest 43s.** Score **24/100** over ten open flags, each one scored, dated and
-given a locus in [`docs/READINESS.md`](docs/READINESS.md), which opens with a
-table of all ten.
+slowest 43s** as measured 2026-09-18, and **one more on 09-21 in 23.7s.** Score
+**24/100** over ten open flags, each one scored, dated and given a locus in
+[`docs/READINESS.md`](docs/READINESS.md), which opens with a table of all ten.
 
 **The last two weeks, in one line each.** The dated entries in
 [`hackathon.md`](hackathon.md) are the record, including the reversals; this is
@@ -116,6 +117,7 @@ only the index into it.
 
 | Date | What happened |
 |---|---|
+| **09-22** | The log closes. A stranger had already used it: on 09-21 an `@agentmail.to` address forwarded the CC BY 4.0 legal code and got four quoted answers and four counted refusals back in **23.7s**, unattended. Corpus 18 → 19. |
 | **09-21** | Both sponsor bug reports filed, eleven days after the handoff called for them: [firecrawl#4712](https://github.com/firecrawl/firecrawl/issues/4712) and [agentmail-to/convex#7](https://github.com/agentmail-to/convex/issues/7). Drafts in [`docs/sponsor-issues.md`](docs/sponsor-issues.md), with what was re-checked before sending. |
 | **09-20** | A judge's-eye read of these docs. *Why it can be trusted* had described the watch as two gates since 09-16, when it became three. Corrected, with five smaller things. |
 | **09-19** | Both sponsor bug-report drafts read against the artifacts before filing. Neither survived: Firecrawl's was understating its own evidence, AgentMail's was half wrong and that half is withdrawn. |
