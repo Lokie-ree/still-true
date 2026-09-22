@@ -724,7 +724,7 @@ plan, is still unclaimed.
   `watchError`, no gate failure and no signal of any kind. Moved here from
   "listed, not scored" on 2026-09-15: the `ponytail:` note names the upgrade
   but not that the failure is silent, and the sweep is the promise. Prod holds
-  16 url-backed rows plus attachments.
+  **19 rows as of 2026-09-22** — 17 url-backed plus 2 attachments.
 - **L16** `convex/mail.ts:980–1083` — a stranger forwarding a URL that is
   already on the public board reaches the existing row, re-runs extract, and
   replaces every published finding with their own model run, bumping
